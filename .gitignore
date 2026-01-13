@@ -1,0 +1,29 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.so
+
+# Environments
+.venv/
+env/
+venv/
+
+# Data artifacts
+data/
+outputs/
+data_cache/
+
+# Packaging
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# pytest
+.cache
+.pytest_cache/
