@@ -18,7 +18,7 @@ Repository layout
 
 CI
 --
-A GitHub Actions workflow is included at `.github/workflows/python-ci.yml` to run tests on push and PR.
+[![Python CI](https://github.com/er-vinay-india/cti-recommender/actions/workflows/python-ci.yml/badge.svg)](https://github.com/er-vinay-india/cti-recommender/actions/workflows/python-ci.yml)
 
 License
 -------
