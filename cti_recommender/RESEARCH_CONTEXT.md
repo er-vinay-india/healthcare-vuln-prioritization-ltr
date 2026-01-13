@@ -54,4 +54,33 @@ Saved: 2026-01-13
 
   - Quick evaluation: enabling ATT&CK mapping (with baseline `w_attack=0.05`) increases `precision@20` for `attack_flag` in our top-20 list (example run saved as `outputs/attack_integration_report.txt` and top-20 CSVs `outputs/top20_before_attack.csv` / `outputs/top20_after_attack.csv`). See outputs for the precise deltas and top-20 changes.
 
-If you'd like, I can: (a) add an initial `CPE_HEALTHCARE_MAPPING.csv` placeholder, (b) implement the `build_healthcare_features` prototype, or (c) draft the evaluation plan and the first baseline weights for the heuristic scorer.
+- **GitHub repository:** https://github.com/er-vinay-india/cti-recommender (private)
+- **Snapshot commit:** `f17586224614a53cc48cfac8a5f3fe3e8aeb1815`
+
+## Recent engineering actions (snapshot)
+- CHPL fetcher implemented and run (6,900 products). Artifacts: `data_cache/chpl_products.pkl.gz`, `data/processed/CHPL_products.parquet`, `data_cache/chpl_v3_search_page_*.json`.
+- ATT&CK integration implemented (techniques fetched from MITRE CTI and cached). Simple CVE→ATT&CK mapping added via substring matching (technique names/aliases) -> `attack_flag`.
+- Grid tuning performed:
+  - `w_chpl` fine-tuned; **best found: 0.08** (precision@20 improvement recorded in `outputs/weight_fine_grid_chpl.csv` and `outputs/chpl_finetune_report.txt`).
+  - `w_attack` fine-tuned; **best found: 0.05** (results in `outputs/weight_fine_grid_attack.csv` and `outputs/attack_finetune_report.txt`).
+- LightGBM learning-to-rank prototype added in `cti_recommender/ltr.py` with weak-supervision labels (KEV=2, CHPL/ATT&CK=1). Artifacts saved: `models/ltr_model.pkl`, `outputs/top_scored_ltr.csv`, `outputs/top20_ltr.csv`, `outputs/ltr_eval_summary.txt`.
+
+## Current tuned heuristic defaults (recorded)
+- w_recency = 0.35
+- w_kev = 0.35
+- w_cvss = 0.20
+- w_attack = 0.05
+- w_health = 0.05
+- w_chpl = 0.08
+
+## Artifacts & where to find them
+- `outputs/` — scored CSVs and evaluation reports (top20, grid CSVs, finetune reports).
+- `data/processed/` — persisted NVD, KEV, CHPL, and ATT&CK processed files.
+- `data_cache/` — raw fetch caches and pickled caches.
+- `models/` — LTR model (`ltr_model.pkl`).
+
+## Notes & next steps
+- Labels for LTR are weak; recommend improving labels (curated positives, exploit timelines, or distant supervision) before trusting model-backed decisions.
+- Next tasks planned: improve ATT&CK mapping (CAPEC/external refs), expand healthcare token mapping (CPE-based), run LTR hyperparameter tuning, and perform ablation studies comparing CHPL vs ATT&CK contributions.
+
+If you'd like, I can: (a) add an initial `CPE_HEALTHCARE_MAPPING.csv` placeholder, (b) begin LTR hyperparameter tuning and CV evaluation, or (c) prepare an ablation experiment and results dashboard.
