@@ -564,7 +564,7 @@ def build_healthcare_features(df: pd.DataFrame, kev_df: Optional[pd.DataFrame] =
     else:
         df['is_healthcare'] = df.get('description', '').fillna('').astype(str).apply(_is_healthcare).astype(int)
 
-    # ATT&CK mapping: simple heuristic using technique names and aliases
+    # ATT&CK mapping: simple heuristic using technique names, aliases, and CAPEC IDs
     if attack_df is not None and not attack_df.empty:
         keywords = set()
         for _, row in attack_df.iterrows():
@@ -574,6 +574,12 @@ def build_healthcare_features(df: pd.DataFrame, kev_df: Optional[pd.DataFrame] =
             for a in (row.get('aliases') or []):
                 if a:
                     keywords.add(str(a).lower())
+            # Add CAPEC external_ids
+            for ref in (row.get('external_references') or []):
+                if ref.get('source_name', '').lower() == 'capec':
+                    ext_id = ref.get('external_id')
+                    if ext_id:
+                        keywords.add(str(ext_id).lower())
         # Keep only substantive tokens to avoid noisy short matches
         keywords = {k for k in keywords if len(k) >= 4}
 
