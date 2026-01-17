@@ -9,7 +9,12 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 import logging
 
-logger = logging.getLogger("healthcare_curated")
+# Try to use structured logging, fallback to basic logging
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 # Default path to curated dataset
 DEFAULT_CURATED_PATH = Path("data/healthcare_breaches.json")
@@ -229,27 +234,15 @@ class HealthcareCuratedDataset:
         """Print summary of curated dataset"""
         stats = self.get_statistics()
         
-        print("\n" + "="*70)
-        print("HEALTHCARE CURATED DATASET SUMMARY")
-        print("="*70)
-        print(f"\nTotal CVEs: {stats['total']}")
-        print(f"Exploited in wild: {stats['exploited_count']} ({stats.get('exploited_percentage', 0):.1f}%)")
-        print(f"Unique vendors: {stats['unique_vendors']}")
-        
-        print("\nBy Severity:")
-        for sev, count in sorted(stats['by_severity'].items(), key=lambda x: x[1], reverse=True):
-            print(f"  • {sev}: {count}")
-        
-        print("\nBy Confidence:")
-        for conf, count in sorted(stats['by_confidence'].items(), key=lambda x: x[1], reverse=True):
-            print(f"  • {conf}: {count}")
-        
-        print("\nTop Breach Types:")
-        top_types = sorted(stats['by_breach_type'].items(), key=lambda x: x[1], reverse=True)[:5]
-        for btype, count in top_types:
-            print(f"  • {btype.replace('_', ' ').title()}: {count}")
-        
-        print("="*70 + "\n")
+        logger.info("Healthcare Curated Dataset Summary", extra={
+            'total_cves': stats['total'],
+            'exploited_count': stats['exploited_count'],
+            'exploited_percentage': stats.get('exploited_percentage', 0),
+            'unique_vendors': stats['unique_vendors'],
+            'severity_breakdown': stats['by_severity'],
+            'confidence_breakdown': stats['by_confidence'],
+            'top_breach_types': dict(sorted(stats['by_breach_type'].items(), key=lambda x: x[1], reverse=True)[:5])
+        })
 
 
 def load_curated_dataset(data_path: Path = DEFAULT_CURATED_PATH) -> HealthcareCuratedDataset:
@@ -267,24 +260,26 @@ def load_curated_dataset(data_path: Path = DEFAULT_CURATED_PATH) -> HealthcareCu
 
 if __name__ == "__main__":
     # Test the curated dataset
-    print("Loading healthcare curated dataset...")
+    logger.info("Loading healthcare curated dataset...")
     dataset = load_curated_dataset()
     
     # Print summary
     dataset.print_summary()
     
     # Test specific queries
-    print("\nHigh confidence breaches:")
     high_conf = dataset.get_high_confidence()
-    for breach in high_conf[:5]:
-        print(f"  • {breach['cve_id']}: {breach.get('healthcare_impact', 'N/A')}")
-    
-    print(f"\n... and {len(high_conf) - 5} more")
+    logger.info("High confidence breaches", extra={
+        'total_high_confidence': len(high_conf),
+        'sample_breaches': [
+            {'cve_id': breach['cve_id'], 'impact': breach.get('healthcare_impact', 'N/A')}
+            for breach in high_conf[:5]
+        ]
+    })
     
     # Test label scoring
-    print("\nLabel score examples:")
     test_cves = ['CVE-2021-44228', 'CVE-2023-0669', 'CVE-2020-1472', 'CVE-2999-99999']
-    for cve in test_cves:
-        score = dataset.get_label_score(cve)
-        curated = "✓" if dataset.is_curated(cve) else "✗"
-        print(f"  {cve}: score={score} curated={curated}")
+    label_scores = [
+        {'cve_id': cve, 'score': dataset.get_label_score(cve), 'is_curated': dataset.is_curated(cve)}
+        for cve in test_cves
+    ]
+    logger.info("Label score examples", extra={'label_scores': label_scores})
