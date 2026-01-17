@@ -16,6 +16,14 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import lightgbm as lgb
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 
 def _label_from_signals(df: pd.DataFrame) -> pd.Series:
     """Weak supervision labeling:
@@ -110,7 +118,8 @@ def tune_ltr(df: pd.DataFrame, feature_cols: List[str], param_grid: dict, cv_fol
             best_num_boost = 500  # approximate
     
     best_params['num_boost_round'] = best_num_boost
-    print(f'Best params: {best_params}, NDCG@20: {best_score:.4f}')
+    logger.info(f'Best params: {best_params}, NDCG@20: {best_score:.4f}', 
+               extra={'best_params': best_params, 'best_ndcg': best_score})
     return best_params
 
 
@@ -213,8 +222,8 @@ def run_end_to_end(nvd_df: pd.DataFrame, kev_df: pd.DataFrame = None, chpl_df: p
     with open('models/ltr_model.pkl', 'wb') as f:
         pickle.dump(model, f)
 
-    print('LTR training + eval complete. Summary:')
-    print(summary)
+    logger.info('LTR training + eval complete. Summary:')
+    logger.info(str(summary))
 
 
 def run_tuned_end_to_end(nvd_df: pd.DataFrame, kev_df: pd.DataFrame = None, chpl_df: pd.DataFrame = None, attack_df: pd.DataFrame = None, out_dir: Path = Path('outputs')) -> None:
@@ -254,8 +263,8 @@ def run_tuned_end_to_end(nvd_df: pd.DataFrame, kev_df: pd.DataFrame = None, chpl
         f.write('\n'.join([f'{k}: {v:.4f}' for k, v in summary.items()]))
         f.write(f'\nBest params: {best_params}\n')
 
-    print('LTR tuned training + eval complete. Summary:')
-    print(summary)
+    logger.info('LTR tuned training + eval complete. Summary:')
+    logger.info(str(summary))
 
 
 def run_ablation_study(nvd_df: pd.DataFrame, kev_df: pd.DataFrame = None, chpl_df: pd.DataFrame = None, attack_df: pd.DataFrame = None, out_dir: Path = Path('outputs')) -> None:
@@ -291,6 +300,7 @@ def run_ablation_study(nvd_df: pd.DataFrame, kev_df: pd.DataFrame = None, chpl_d
         for key, val in results.items():
             f.write(f'{key}: {val}\n')
 
-    print('Ablation study complete.')
+    logger.info('Ablation study complete.')
     for key, val in results.items():
-        print(f'{key}: NDCG@20={val.get("ndcg@20", 0):.4f}')
+        logger.info(f'{key}: NDCG@20={val.get("ndcg@20", 0):.4f}', 
+                   extra={'feature_set': key, 'ndcg_20': val.get('ndcg@20', 0)})
