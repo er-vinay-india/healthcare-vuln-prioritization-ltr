@@ -15,16 +15,16 @@ def compute_multi_level_labels(df: pd.DataFrame) -> pd.DataFrame:
     Assign multi-level labels (0-5 scale) based on multiple signals
     
     Label Scale:
-    - 5 (Critical): Curated + KEV + High EPSS (>0.5) + Healthcare
-    - 4 (High): Curated + KEV OR (High EPSS + Healthcare)
-    - 3 (Medium): KEV OR (Curated) OR (EPSS>0.3 + Healthcare) OR (CVSS>=9.0 + Healthcare)
-    - 2 (Low): Healthcare relevant OR EPSS>0.1 OR CVSS>=7.0
+    - 5 (Critical): Curated + KEV + High EPSS (>0.5) + Healthcare + CHPL
+    - 4 (High): Curated + KEV OR (High EPSS + Healthcare + CHPL) OR (ATT&CK + KEV + Healthcare)
+    - 3 (Medium): KEV OR Curated OR (EPSS>0.3 + Healthcare) OR (CVSS>=9.0 + Healthcare) OR (CHPL + Healthcare + ATT&CK)
+    - 2 (Low): Healthcare OR CHPL OR EPSS>0.1 OR CVSS>=7.0
     - 1 (Informational): Some signal present but low priority
     - 0 (Irrelevant): No significant signals
     
     Args:
         df: DataFrame with columns: is_curated, kev_flag, epss_score, 
-            is_healthcare, cvss, curated_exploited
+            is_healthcare, cvss, curated_exploited, chpl_flag, attack_flag
     
     Returns:
         DataFrame with added 'label' column (0-5)
@@ -56,33 +56,54 @@ def compute_multi_level_labels(df: pd.DataFrame) -> pd.DataFrame:
         df['curated_exploited'] = 0
     df['curated_exploited'] = df['curated_exploited'].fillna(0).astype(int)
     
+    if 'chpl_flag' not in df.columns:
+        df['chpl_flag'] = 0
+    df['chpl_flag'] = df['chpl_flag'].fillna(0).astype(int)
+    
+    if 'attack_flag' not in df.columns:
+        df['attack_flag'] = 0
+    df['attack_flag'] = df['attack_flag'].fillna(0).astype(int)
+    
     # Initialize labels to 0
     df['label'] = 0
     
     # Count CVEs in each category for reporting
     counts = {'total': len(df)}
     
-    # Level 5 (Critical): Curated + KEV + High EPSS + Healthcare
-    # These are confirmed healthcare breaches with active exploitation
+    # Level 5 (Critical): Curated + KEV + High EPSS + Healthcare + CHPL
+    # These are confirmed healthcare breaches with active exploitation in certified products
     mask_5 = (
         (df['is_curated'] == 1) & 
         (df['kev_flag'] == 1) & 
         (df['epss_score'] > 0.5) & 
-        (df['is_healthcare'] == 1)
+        (df['is_healthcare'] == 1) &
+        (df['chpl_flag'] == 1)
     )
+    # Also critical: Curated + KEV + Healthcare + ATT&CK (without CHPL requirement)
+    mask_5_alt = (
+        (df['is_curated'] == 1) & 
+        (df['kev_flag'] == 1) & 
+        (df['is_healthcare'] == 1) &
+        (df['attack_flag'] == 1) &
+        (df['epss_score'] > 0.4)
+    )
+    mask_5 = mask_5 | mask_5_alt
     df.loc[mask_5, 'label'] = 5
     counts['critical'] = mask_5.sum()
     
     # Level 4 (High): Multiple strong signals
     # - Curated + KEV (confirmed healthcare breach with active exploitation)
-    # - High EPSS + Healthcare (likely to be exploited in healthcare)
-    # - Curated + High EPSS (confirmed breach with high exploit probability)
+    # - High EPSS + Healthcare + CHPL (likely exploited in certified products)
+    # - ATT&CK + KEV + Healthcare (active exploitation with known techniques)
+    # - Curated + High EPSS + CHPL (confirmed breach in certified product)
     mask_4 = (
         (df['label'] == 0) &  # Not already labeled
         (
             ((df['is_curated'] == 1) & (df['kev_flag'] == 1)) |
-            ((df['epss_score'] > 0.5) & (df['is_healthcare'] == 1)) |
-            ((df['is_curated'] == 1) & (df['epss_score'] > 0.5))
+            ((df['epss_score'] > 0.5) & (df['is_healthcare'] == 1) & (df['chpl_flag'] == 1)) |
+            ((df['attack_flag'] == 1) & (df['kev_flag'] == 1) & (df['is_healthcare'] == 1)) |
+            ((df['is_curated'] == 1) & (df['epss_score'] > 0.5) & (df['chpl_flag'] == 1)) |
+            ((df['epss_score'] > 0.5) & (df['is_healthcare'] == 1))
         )
     )
     df.loc[mask_4, 'label'] = 4
@@ -93,6 +114,7 @@ def compute_multi_level_labels(df: pd.DataFrame) -> pd.DataFrame:
     # - Curated dataset (confirmed healthcare breach)
     # - EPSS>0.3 + Healthcare (moderate exploit risk in healthcare)
     # - CVSS>=9.0 + Healthcare (critical severity + healthcare relevant)
+    # - CHPL + Healthcare + ATT&CK (certified product with known attack patterns)
     # - High EPSS alone (>0.6)
     mask_3 = (
         (df['label'] == 0) &
@@ -101,6 +123,7 @@ def compute_multi_level_labels(df: pd.DataFrame) -> pd.DataFrame:
             (df['is_curated'] == 1) |
             ((df['epss_score'] > 0.3) & (df['is_healthcare'] == 1)) |
             ((df['cvss'] >= 9.0) & (df['is_healthcare'] == 1)) |
+            ((df['chpl_flag'] == 1) & (df['is_healthcare'] == 1) & (df['attack_flag'] == 1)) |
             (df['epss_score'] > 0.6)
         )
     )
@@ -109,6 +132,7 @@ def compute_multi_level_labels(df: pd.DataFrame) -> pd.DataFrame:
     
     # Level 2 (Low): Weak signals indicating some relevance
     # - Healthcare relevant (sector match but no other signals)
+    # - CHPL flag (certified product, even without other signals)
     # - EPSS>0.1 (some exploit activity)
     # - CVSS>=7.0 (high severity but not healthcare-specific)
     # - Moderate EPSS (0.2-0.3)
@@ -116,6 +140,7 @@ def compute_multi_level_labels(df: pd.DataFrame) -> pd.DataFrame:
         (df['label'] == 0) &
         (
             (df['is_healthcare'] == 1) |
+            (df['chpl_flag'] == 1) |
             (df['epss_score'] > 0.1) |
             (df['cvss'] >= 7.0) |
             (df['epss_score'] > 0.2)
