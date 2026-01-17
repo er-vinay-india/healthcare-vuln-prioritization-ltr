@@ -42,7 +42,9 @@ def test_database(temp_dir):
             description TEXT,
             cvss REAL,
             cvss_vector TEXT,
-            cwe TEXT
+            cwe TEXT,
+            raw_json TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     
@@ -51,10 +53,18 @@ def test_database(temp_dir):
             cve_id TEXT PRIMARY KEY,
             kev_flag INTEGER DEFAULT 0,
             epss_score REAL,
+            epss_percentile REAL,
+            epss_date TEXT,
             is_healthcare INTEGER DEFAULT 0,
             is_curated INTEGER DEFAULT 0,
+            curated_severity TEXT,
+            healthcare_score REAL,
+            attack_flag INTEGER DEFAULT 0,
             attack_technique_count INTEGER DEFAULT 0,
-            label INTEGER DEFAULT 0
+            chpl_flag INTEGER DEFAULT 0,
+            label INTEGER DEFAULT 0,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (cve_id) REFERENCES cves(cve_id) ON DELETE CASCADE
         )
     """)
     

@@ -88,17 +88,6 @@ class CVEDatabase:
             )
         """)
         
-        # Add attack_technique_count column if it doesn't exist (migration for existing DBs)
-        try:
-            cursor.execute("""
-                ALTER TABLE enrichments ADD COLUMN attack_technique_count INTEGER DEFAULT 0
-            """)
-            self.conn.commit()
-            logger.info("Migration: Added attack_technique_count column")
-        except sqlite3.OperationalError:
-            # Column already exists
-            logger.debug("attack_technique_count column already exists")
-        
         # Fetch tracking log
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS fetch_log (
