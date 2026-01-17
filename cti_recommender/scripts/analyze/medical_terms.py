@@ -5,7 +5,8 @@ Determines if we need additional datasets beyond CHPL.
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add project root to path (scripts/analyze/ -> scripts/ -> project root)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.core.cve_database import CVEDatabase
 from src.core.chpl_fetcher import CHPLFetcher

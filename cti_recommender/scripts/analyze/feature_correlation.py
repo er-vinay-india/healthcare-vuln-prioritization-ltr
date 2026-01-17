@@ -5,7 +5,8 @@ Identifies redundant features that can be removed.
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add project root to path (scripts/analyze/ -> scripts/ -> project root)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import pandas as pd
 import numpy as np
