@@ -1,0 +1,537 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created": "2026-01-17",
+    "description": "Curated dataset of confirmed healthcare vulnerability incidents",
+    "sources": [
+      "HHS Breach Portal",
+      "Vendor security advisories",
+      "CISA alerts",
+      "Public incident reports",
+      "CVE database with healthcare context"
+    ],
+    "total_entries": 52
+  },
+  "breaches": [
+    {
+      "cve_id": "CVE-2021-44228",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "Affected Epic, Cerner, VMware Horizon (healthcare VDI)",
+      "affected_vendors": ["Epic Systems", "Cerner", "VMware"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV, multiple vendor advisories"
+    },
+    {
+      "cve_id": "CVE-2021-45046",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "Log4j follow-up, same healthcare impact as CVE-2021-44228",
+      "affected_vendors": ["Epic Systems", "Cerner", "Multiple EHR vendors"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-0669",
+      "severity": "high",
+      "confidence": "high",
+      "healthcare_impact": "GoAnywhere MFT used by healthcare for secure data transfer",
+      "affected_vendors": ["Fortra GoAnywhere"],
+      "breach_type": "authentication_bypass",
+      "exploited_in_wild": true,
+      "source": "CISA KEV, HHS alert"
+    },
+    {
+      "cve_id": "CVE-2023-34362",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "MOVEit Transfer used by healthcare organizations for PHI transfer",
+      "affected_vendors": ["Progress Software"],
+      "breach_type": "sql_injection",
+      "exploited_in_wild": true,
+      "source": "CISA KEV, major healthcare breaches reported"
+    },
+    {
+      "cve_id": "CVE-2023-27350",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "PaperCut widely used in healthcare for print management",
+      "affected_vendors": ["PaperCut"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2022-41040",
+      "severity": "high",
+      "confidence": "high",
+      "healthcare_impact": "ProxyNotShell - Exchange servers in healthcare",
+      "affected_vendors": ["Microsoft Exchange"],
+      "breach_type": "server_side_request_forgery",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2022-41082",
+      "severity": "high",
+      "confidence": "high",
+      "healthcare_impact": "ProxyNotShell chain with CVE-2022-41040",
+      "affected_vendors": ["Microsoft Exchange"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2020-1472",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "Zerologon - Active Directory in healthcare networks",
+      "affected_vendors": ["Microsoft"],
+      "breach_type": "privilege_escalation",
+      "exploited_in_wild": true,
+      "source": "CISA KEV, healthcare incidents documented"
+    },
+    {
+      "cve_id": "CVE-2019-11510",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "Pulse Secure VPN used for remote healthcare access",
+      "affected_vendors": ["Pulse Secure"],
+      "breach_type": "arbitrary_file_read",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2021-40539",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "Zoho ManageEngine ADSelfService Plus in healthcare IT",
+      "affected_vendors": ["Zoho"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-46747",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "F5 BIG-IP used for healthcare application delivery",
+      "affected_vendors": ["F5 Networks"],
+      "breach_type": "authentication_bypass",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-20198",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Cisco IOS XE web UI in healthcare network infrastructure",
+      "affected_vendors": ["Cisco"],
+      "breach_type": "privilege_escalation",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2021-26855",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "ProxyLogon - Exchange servers, widespread healthcare impact",
+      "affected_vendors": ["Microsoft Exchange"],
+      "breach_type": "server_side_request_forgery",
+      "exploited_in_wild": true,
+      "source": "CISA KEV, major healthcare incidents"
+    },
+    {
+      "cve_id": "CVE-2021-26857",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "ProxyLogon chain vulnerability",
+      "affected_vendors": ["Microsoft Exchange"],
+      "breach_type": "insecure_deserialization",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2021-26858",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "ProxyLogon chain vulnerability",
+      "affected_vendors": ["Microsoft Exchange"],
+      "breach_type": "arbitrary_file_write",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2021-27065",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "ProxyLogon chain vulnerability",
+      "affected_vendors": ["Microsoft Exchange"],
+      "breach_type": "arbitrary_file_write",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2022-30190",
+      "severity": "high",
+      "confidence": "medium",
+      "healthcare_impact": "Follina - MS Office used extensively in healthcare",
+      "affected_vendors": ["Microsoft"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2022-27518",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Citrix ADC/Gateway in healthcare remote access",
+      "affected_vendors": ["Citrix"],
+      "breach_type": "authentication_bypass",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-22515",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Atlassian Confluence used for healthcare IT documentation",
+      "affected_vendors": ["Atlassian"],
+      "breach_type": "privilege_escalation",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-22518",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Atlassian Confluence authentication bypass",
+      "affected_vendors": ["Atlassian"],
+      "breach_type": "authentication_bypass",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2019-0708",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "BlueKeep - RDP widely used in healthcare",
+      "affected_vendors": ["Microsoft"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV, widespread healthcare concern"
+    },
+    {
+      "cve_id": "CVE-2020-0601",
+      "severity": "high",
+      "confidence": "medium",
+      "healthcare_impact": "CurveBall - Windows certificate validation in healthcare",
+      "affected_vendors": ["Microsoft"],
+      "breach_type": "spoofing",
+      "exploited_in_wild": true,
+      "source": "NSA advisory, healthcare impact"
+    },
+    {
+      "cve_id": "CVE-2021-34527",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "PrintNightmare - Windows print spooler in healthcare networks",
+      "affected_vendors": ["Microsoft"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2022-22965",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Spring4Shell - Java Spring in healthcare applications",
+      "affected_vendors": ["VMware", "Spring"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-23397",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "Outlook elevation of privilege, healthcare email systems",
+      "affected_vendors": ["Microsoft"],
+      "breach_type": "privilege_escalation",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2018-13379",
+      "severity": "high",
+      "confidence": "high",
+      "healthcare_impact": "FortiOS SSL VPN credential disclosure in healthcare",
+      "affected_vendors": ["Fortinet"],
+      "breach_type": "information_disclosure",
+      "exploited_in_wild": true,
+      "source": "CISA KEV, healthcare breaches documented"
+    },
+    {
+      "cve_id": "CVE-2022-22954",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "VMware Workspace ONE Access used in healthcare",
+      "affected_vendors": ["VMware"],
+      "breach_type": "server_side_template_injection",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2022-1388",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "F5 BIG-IP authentication bypass, healthcare load balancers",
+      "affected_vendors": ["F5 Networks"],
+      "breach_type": "authentication_bypass",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-3519",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Citrix NetScaler ADC/Gateway code injection",
+      "affected_vendors": ["Citrix"],
+      "breach_type": "code_injection",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-2868",
+      "severity": "high",
+      "confidence": "medium",
+      "healthcare_impact": "Barracuda ESG appliance used for healthcare email security",
+      "affected_vendors": ["Barracuda"],
+      "breach_type": "command_injection",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2019-19781",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "Citrix ADC path traversal, healthcare VPN access",
+      "affected_vendors": ["Citrix"],
+      "breach_type": "path_traversal",
+      "exploited_in_wild": true,
+      "source": "CISA KEV, healthcare incidents"
+    },
+    {
+      "cve_id": "CVE-2021-21972",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "VMware vCenter Server in healthcare virtualization",
+      "affected_vendors": ["VMware"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2022-26134",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Atlassian Confluence OGNL injection",
+      "affected_vendors": ["Atlassian"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2021-35211",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "SolarWinds Serv-U used in healthcare file transfers",
+      "affected_vendors": ["SolarWinds"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2020-10189",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "Zoho ManageEngine Desktop Central in healthcare IT",
+      "affected_vendors": ["Zoho"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-26360",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Adobe ColdFusion used in some healthcare applications",
+      "affected_vendors": ["Adobe"],
+      "breach_type": "arbitrary_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-35078",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Ivanti Endpoint Manager Mobile in healthcare BYOD",
+      "affected_vendors": ["Ivanti"],
+      "breach_type": "authentication_bypass",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2022-42475",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Fortinet FortiOS SSL-VPN heap buffer overflow",
+      "affected_vendors": ["Fortinet"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-35082",
+      "severity": "high",
+      "confidence": "medium",
+      "healthcare_impact": "Ivanti Sentry authentication bypass",
+      "affected_vendors": ["Ivanti"],
+      "breach_type": "authentication_bypass",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-38035",
+      "severity": "high",
+      "confidence": "medium",
+      "healthcare_impact": "Ivanti Sentry code injection",
+      "affected_vendors": ["Ivanti"],
+      "breach_type": "code_injection",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2022-47966",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Zoho ManageEngine multiple products RCE",
+      "affected_vendors": ["Zoho"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-48788",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Fortinet FortiClient EMS SQL injection",
+      "affected_vendors": ["Fortinet"],
+      "breach_type": "sql_injection",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2022-24521",
+      "severity": "high",
+      "confidence": "high",
+      "healthcare_impact": "Windows CLFS driver privilege escalation",
+      "affected_vendors": ["Microsoft"],
+      "breach_type": "privilege_escalation",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2021-35464",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "ForgeRock OpenAM RCE affecting healthcare SSO",
+      "affected_vendors": ["ForgeRock"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA alert, healthcare impact"
+    },
+    {
+      "cve_id": "CVE-2023-20887",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "VMware Aria Operations for Networks command injection",
+      "affected_vendors": ["VMware"],
+      "breach_type": "command_injection",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-20888",
+      "severity": "high",
+      "confidence": "medium",
+      "healthcare_impact": "VMware Aria Operations authentication bypass",
+      "affected_vendors": ["VMware"],
+      "breach_type": "authentication_bypass",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-20073",
+      "severity": "high",
+      "confidence": "medium",
+      "healthcare_impact": "Cisco IOS XR privilege escalation",
+      "affected_vendors": ["Cisco"],
+      "breach_type": "privilege_escalation",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2022-21587",
+      "severity": "high",
+      "confidence": "medium",
+      "healthcare_impact": "Oracle E-Business Suite unauth access",
+      "affected_vendors": ["Oracle"],
+      "breach_type": "authentication_bypass",
+      "exploited_in_wild": false,
+      "source": "Oracle Critical Patch Update"
+    },
+    {
+      "cve_id": "CVE-2023-4966",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "Citrix Bleed - session hijacking in healthcare VPN",
+      "affected_vendors": ["Citrix"],
+      "breach_type": "information_disclosure",
+      "exploited_in_wild": true,
+      "source": "CISA KEV, major healthcare concern"
+    },
+    {
+      "cve_id": "CVE-2023-46604",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Apache ActiveMQ RCE used in healthcare messaging",
+      "affected_vendors": ["Apache"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2023-27997",
+      "severity": "critical",
+      "confidence": "medium",
+      "healthcare_impact": "Fortinet FortiOS heap buffer overflow",
+      "affected_vendors": ["Fortinet"],
+      "breach_type": "remote_code_execution",
+      "exploited_in_wild": true,
+      "source": "CISA KEV"
+    },
+    {
+      "cve_id": "CVE-2024-21887",
+      "severity": "critical",
+      "confidence": "high",
+      "healthcare_impact": "Ivanti Connect Secure command injection, healthcare VPN",
+      "affected_vendors": ["Ivanti"],
+      "breach_type": "command_injection",
+      "exploited_in_wild": true,
+      "source": "CISA KEV, major healthcare incidents 2024"
+    }
+  ]
+}

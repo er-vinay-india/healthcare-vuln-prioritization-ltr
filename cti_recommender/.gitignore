@@ -20,6 +20,11 @@ wheels/
 .installed.cfg
 *.egg
 
+# Data files (allow curated datasets, ignore database)
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
 # Virtual Environment
 venv/
 ENV/
