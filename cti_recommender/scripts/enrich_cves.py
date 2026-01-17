@@ -23,6 +23,8 @@ from src.core.epss_fetcher import EPSSFetcher
 from src.core.healthcare_curated import HealthcareCuratedDataset
 from src.core.multi_level_labels import compute_multi_level_labels
 from src.analysis.healthcare_mapping import HealthcareMapper
+from src.analysis.attack_mapper import AttackMapper
+from src.analysis.chpl_mapper import CHPLMapper
 
 try:
     from src.utils.logging_config import get_logger
@@ -193,14 +195,17 @@ def validate_enrichment(db: CVEDatabase):
         return True
 
 
-def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = False):
+def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = False,
+                    skip_attack: bool = False, skip_chpl: bool = False):
     """
-    Enrich all CVEs in database with KEV, EPSS, healthcare, curated flags, and labels
+    Enrich all CVEs in database with KEV, EPSS, healthcare, ATT&CK, CHPL, curated flags, and labels
     
     Args:
         batch_size: Number of CVEs to process at once
         limit: Optional limit for testing (None = process all)
         dry_run: If True, show plan without making changes
+        skip_attack: Skip ATT&CK mapping (useful if mapper unavailable)
+        skip_chpl: Skip CHPL mapping (useful if API unavailable)
     """
     
     logger.info("="*70)
@@ -214,6 +219,31 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
     db = CVEDatabase()
     curated_dataset = HealthcareCuratedDataset()
     healthcare_mapper = HealthcareMapper()
+    
+    # Initialize ATT&CK mapper (optional)
+    attack_mapper = None
+    if not skip_attack:
+        try:
+            attack_mapper = AttackMapper()
+            logger.info("✓ ATT&CK mapper initialized")
+        except Exception as e:
+            logger.warning(f"ATT&CK mapper unavailable: {e}")
+            skip_attack = True
+    
+    # Initialize CHPL mapper (optional)
+    chpl_mapper = None
+    if not skip_chpl:
+        try:
+            chpl_mapper = CHPLMapper()
+            if chpl_mapper.products_df is None or len(chpl_mapper.products_df) == 0:
+                logger.warning("CHPL data unavailable - skipping CHPL mapping")
+                skip_chpl = True
+                chpl_mapper = None
+            else:
+                logger.info(f"✓ CHPL mapper initialized with {len(chpl_mapper.products_df):,} products")
+        except Exception as e:
+            logger.warning(f"CHPL mapper unavailable: {e}")
+            skip_chpl = True
     
     # Get database stats
     stats = db.get_statistics()
@@ -294,6 +324,29 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
             axis=1
         )
         
+        # Add ATT&CK mappings
+        if attack_mapper:
+            batch_df['attack_flag'] = 0
+            batch_df['attack_technique_count'] = 0
+            
+            for idx, row in batch_df.iterrows():
+                result = attack_mapper.map_cve_to_techniques(row['description'])
+                batch_df.at[idx, 'attack_flag'] = result['attack_flag']
+                batch_df.at[idx, 'attack_technique_count'] = result['technique_count']
+        else:
+            batch_df['attack_flag'] = 0
+            batch_df['attack_technique_count'] = 0
+        
+        # Add CHPL mappings
+        if chpl_mapper:
+            batch_df['chpl_flag'] = 0
+            
+            for idx, row in batch_df.iterrows():
+                is_match, _ = chpl_mapper.map_cve_to_chpl(row['description'] or '')
+                batch_df.at[idx, 'chpl_flag'] = 1 if is_match else 0
+        else:
+            batch_df['chpl_flag'] = 0
+        
         # Add curated flags
         batch_df['is_curated'] = batch_df['cve_id'].apply(
             lambda cve_id: int(curated_dataset.is_curated(cve_id))
@@ -317,12 +370,16 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
                 'epss_percentile': row.get('epss_percentile', 0.0),
                 'is_healthcare': row['is_healthcare'],
                 'is_curated': row['is_curated'],
+                'attack_flag': row.get('attack_flag', 0),
+                'attack_technique_count': row.get('attack_technique_count', 0),
+                'chpl_flag': row.get('chpl_flag', 0),
                 'label': row['label']
             })
         
         logger.info(f"  Batch {batch_num}/{total_batches} - Processed {len(batch_df):,} CVEs " +
                    f"(KEV: {batch_df['kev_flag'].sum()}, Healthcare: {batch_df['is_healthcare'].sum()}, " +
-                   f"Curated: {batch_df['is_curated'].sum()})")
+                   f"Curated: {batch_df['is_curated'].sum()}, ATT&CK: {batch_df.get('attack_flag', pd.Series([0])).sum()}, " +
+                   f"CHPL: {batch_df.get('chpl_flag', pd.Series([0])).sum()})")
     
     # =================================================================
     # PHASE 3: SAVE TO DATABASE (TRANSACTIONAL)
@@ -396,6 +453,8 @@ if __name__ == "__main__":
     parser.add_argument('--limit', type=int, help='Limit number of CVEs to process (for testing)')
     parser.add_argument('--dry-run', action='store_true', help='Show plan without making changes')
     parser.add_argument('--validate-only', action='store_true', help='Only validate existing enrichment')
+    parser.add_argument('--skip-attack', action='store_true', help='Skip ATT&CK mapping')
+    parser.add_argument('--skip-chpl', action='store_true', help='Skip CHPL mapping')
     
     args = parser.parse_args()
     
@@ -404,4 +463,10 @@ if __name__ == "__main__":
         validate_enrichment(db)
         db.close()
     else:
-        enrich_database(batch_size=args.batch_size, limit=args.limit, dry_run=args.dry_run)
+        enrich_database(
+            batch_size=args.batch_size, 
+            limit=args.limit, 
+            dry_run=args.dry_run,
+            skip_attack=args.skip_attack,
+            skip_chpl=args.skip_chpl
+        )
