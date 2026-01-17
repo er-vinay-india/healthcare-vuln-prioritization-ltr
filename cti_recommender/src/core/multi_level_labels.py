@@ -5,9 +5,13 @@ Implements 0-5 scale using curated dataset, EPSS, KEV, and healthcare signals
 
 import pandas as pd
 from typing import Optional
-import logging
 
-logger = logging.getLogger("multi_level_labels")
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logger = logging.getLogger("multi_level_labels")
 
 
 def compute_multi_level_labels(df: pd.DataFrame) -> pd.DataFrame:
@@ -229,26 +233,26 @@ def print_label_summary(df: pd.DataFrame):
     """Print summary of label distribution"""
     stats = get_label_stats(df)
     
-    print("\n" + "="*70)
-    print("MULTI-LEVEL LABEL DISTRIBUTION")
-    print("="*70)
-    print(f"\nTotal CVEs: {len(df):,}\n")
+    logger.info("="*70)
+    logger.info("MULTI-LEVEL LABEL DISTRIBUTION")
+    logger.info("="*70)
+    logger.info(f"Total CVEs: {len(df):,}", extra={'total_cves': len(df)})
     
     for label in sorted(stats.keys(), reverse=True):
         info = stats[label]
         bar_length = int(info['percentage'] / 2)
         bar = "█" * bar_length
-        print(f"Level {label} ({info['count']:>6,} | {info['percentage']:>5.1f}%) {bar}")
-        print(f"        {info['description']}\n")
+        logger.info(f"Level {label} ({info['count']:>6,} | {info['percentage']:>5.1f}%) {bar}")
+        logger.info(f"        {info['description']}")
     
-    print("="*70 + "\n")
+    logger.info("="*70)
 
 
 if __name__ == "__main__":
     # Test with sample data
     import numpy as np
     
-    print("Testing Multi-Level Labeling System...")
+    logger.info("Testing Multi-Level Labeling System...")
     
     # Create test data with various signal combinations
     test_data = pd.DataFrame({
@@ -267,8 +271,8 @@ if __name__ == "__main__":
     # Print results
     print_label_summary(labeled)
     
-    print("Sample CVEs by label:")
+    logger.info("Sample CVEs by label:")
     for label in sorted(labeled['label'].unique(), reverse=True):
         samples = labeled[labeled['label'] == label][['cve_id', 'is_curated', 'kev_flag', 'epss_score', 'is_healthcare', 'cvss']].head(2)
-        print(f"\nLabel {label}: {get_label_description(label)}")
-        print(samples.to_string(index=False))
+        logger.info(f"Label {label}: {get_label_description(label)}")
+        logger.info(f"\n{samples.to_string(index=False)}")

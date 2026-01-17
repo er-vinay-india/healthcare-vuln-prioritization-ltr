@@ -8,35 +8,47 @@ import json
 import pandas as pd
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Tuple
-import logging
+from typing import Optional, List, Dict, Tuple, Any
 
-logger = logging.getLogger("cve_database")
-
-# Default database path
-DEFAULT_DB_PATH = Path("data/cve_database.db")
+# Import centralized configuration and logging
+try:
+    from config.settings import settings
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    # Fallback for standalone usage
+    import logging
+    logger = logging.getLogger(__name__)
+    settings = None
 
 
 class CVEDatabase:
     """SQLite database manager for CVE data with incremental updates"""
     
-    def __init__(self, db_path: Path = DEFAULT_DB_PATH):
-        self.db_path = Path(db_path)
+    def __init__(self, db_path: Optional[Path] = None):
+        # Use centralized settings if available
+        if db_path is None and settings:
+            self.db_path = settings.get_database_path()
+        elif db_path is None:
+            self.db_path = Path("data/cve_database.db")
+        else:
+            self.db_path = Path(db_path)
+        
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn = None
+        self.conn: Optional[sqlite3.Connection] = None
         self._connect()
         self._create_tables()
     
-    def _connect(self):
+    def _connect(self) -> None:
         """Connect to SQLite database"""
         self.conn = sqlite3.connect(
             self.db_path,
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
         )
         self.conn.row_factory = sqlite3.Row  # Enable column access by name
-        logger.info(f"Connected to database: {self.db_path}")
+        logger.info("Connected to database", extra={"db_path": str(self.db_path)})
     
-    def _create_tables(self):
+    def _create_tables(self) -> None:
         """Create database schema if not exists"""
         cursor = self.conn.cursor()
         
@@ -82,10 +94,10 @@ class CVEDatabase:
                 ALTER TABLE enrichments ADD COLUMN attack_technique_count INTEGER DEFAULT 0
             """)
             self.conn.commit()
-            logger.info("Added attack_technique_count column to enrichments table")
+            logger.info("Migration: Added attack_technique_count column")
         except sqlite3.OperationalError:
             # Column already exists
-            pass
+            logger.debug("attack_technique_count column already exists")
         
         # Fetch tracking log
         cursor.execute("""
@@ -165,14 +177,14 @@ class CVEDatabase:
                 """, (cve_id, published, modified, description, cvss, cvss_vector, cwe, raw_json))
                 count += 1
             except sqlite3.IntegrityError as e:
-                logger.error(f"Integrity error for CVE {cve_id}: {e}")
+                logger.error("Integrity error for CVE", extra={"cve_id": cve_id, "error": str(e)})
                 continue
         
         try:
             self.conn.commit()
-            logger.info(f"Upserted {count} CVEs to database")
+            logger.info("Upserted CVEs to database", extra={"count": count})
         except Exception as e:
-            logger.error(f"Commit failed: {e}")
+            logger.error("Commit failed", extra={"error": str(e)}, exc_info=True)
             self.conn.rollback()
             raise
         
@@ -235,7 +247,7 @@ class CVEDatabase:
             count += 1
         
         self.conn.commit()
-        logger.info(f"Upserted {count} enrichment records")
+        logger.info("Upserted enrichment records", extra={"count": count})
         return count
     
     def log_fetch(self, start_date: str, end_date: str, cve_count: int, 
@@ -333,10 +345,10 @@ class CVEDatabase:
             params.append(limit)
         
         df = pd.read_sql_query(query, self.conn, params=params)
-        logger.info(f"Queried {len(df)} CVEs from database")
+        logger.info("Queried CVEs from database", extra={"count": len(df)})
         return df
     
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> Dict[str, Any]:
         """Get database statistics"""
         cursor = self.conn.cursor()
         
@@ -371,24 +383,24 @@ class CVEDatabase:
         
         return stats
     
-    def print_summary(self):
+    def print_summary(self) -> None:
         """Print database summary"""
         stats = self.get_statistics()
         
-        print("\n" + "="*70)
-        print("CVE DATABASE SUMMARY")
-        print("="*70)
-        print(f"\nTotal CVEs: {stats['total_cves']:,}")
-        print(f"Date Range: {stats['date_range'][0]} to {stats['date_range'][1]}")
-        print(f"CVEs with CVSS: {stats['cves_with_cvss']:,} ({stats['cves_with_cvss']/max(stats['total_cves'],1)*100:.1f}%)")
-        print(f"\nEnrichments:")
-        print(f"  • KEV-flagged: {stats['kev_count']:,}")
-        print(f"  • Healthcare-relevant: {stats['healthcare_count']:,}")
-        print(f"  • Curated breaches: {stats['curated_count']:,}")
-        print(f"\nFetch History: {stats['successful_fetches']} successful fetches")
-        print("="*70 + "\n")
+        logger.info("\n" + "="*70)
+        logger.info("CVE DATABASE SUMMARY")
+        logger.info("="*70)
+        logger.info(f"\nTotal CVEs: {stats['total_cves']:,}")
+        logger.info(f"Date Range: {stats['date_range'][0]} to {stats['date_range'][1]}")
+        logger.info(f"CVEs with CVSS: {stats['cves_with_cvss']:,} ({stats['cves_with_cvss']/max(stats['total_cves'],1)*100:.1f}%)")
+        logger.info(f"\nEnrichments:")
+        logger.info(f"  • KEV-flagged: {stats['kev_count']:,}")
+        logger.info(f"  • Healthcare-relevant: {stats['healthcare_count']:,}")
+        logger.info(f"  • Curated breaches: {stats['curated_count']:,}")
+        logger.info(f"\nFetch History: {stats['successful_fetches']} successful fetches")
+        logger.info("="*70 + "\n")
     
-    def close(self):
+    def close(self) -> None:
         """Close database connection"""
         if self.conn:
             self.conn.close()
@@ -403,15 +415,15 @@ class CVEDatabase:
 
 if __name__ == "__main__":
     # Test database
-    print("Testing CVE Database...")
+    logger.info("Testing CVE Database...")
     
     with CVEDatabase() as db:
         db.print_summary()
         
         # Test query
-        print("\nTesting query (last 7 days):")
+        logger.info("\nTesting query (last 7 days):")
         df = db.query_cves(days_back=7, limit=5)
         if not df.empty:
-            print(df[['cve_id', 'published', 'cvss']].head())
+            logger.info(f"Results:\n{df[['cve_id', 'published', 'cvss']].head()}")
         else:
-            print("No CVEs found (database empty)")
+            logger.warning("No CVEs found (database empty)")

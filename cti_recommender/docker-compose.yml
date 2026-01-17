@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # CTI Recommender API
+  # ===========================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cti-recommender-api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist database
+      - ./data:/app/data
+      # Persist models
+      - ./models:/app/models
+      # Persist logs
+      - ./logs:/app/logs
+      # Cache directory
+      - ./data_cache:/app/data_cache
+    environment:
+      - LOG_LEVEL=INFO
+      - DATABASE_PATH=/app/data/cve_database.db
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - STRUCTURED_LOGGING=true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - cti-network
+
+  # ===========================================================================
+  # Optional: Nginx Reverse Proxy (Uncomment to enable)
+  # ===========================================================================
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: cti-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - api
+  #   restart: unless-stopped
+  #   networks:
+  #     - cti-network
+
+networks:
+  cti-network:
+    driver: bridge
+
+volumes:
+  data:
+  models:
+  logs:
+  data_cache:

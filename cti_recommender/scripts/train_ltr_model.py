@@ -105,22 +105,40 @@ def prepare_features(df):
     
     return features, df['label'], scaler
 
-def train_model(X_train, y_train, X_test, y_test):
-    """Train XGBoost ranker model."""
-    print("\nTraining XGBoost Ranker...")
+def compute_class_weights(y):
+    """Compute sample weights for class imbalance."""
+    unique, counts = np.unique(y, return_counts=True)
+    class_weights = {label: len(y) / (len(unique) * count) for label, count in zip(unique, counts)}
+    sample_weights = np.array([class_weights[label] for label in y])
     
+    print("\nClass weights (handling imbalance):")
+    for label, weight in sorted(class_weights.items(), reverse=True):
+        label_name = ['L0', 'L1', 'L2', 'L3', 'L4'][label] if label < 5 else f'L{label}'
+        print(f"  {label_name}: {weight:.4f}")
+    
+    return sample_weights
+
+def train_model(X_train, y_train, X_test, y_test):
+    """Train XGBoost ranker model with adjustments for class imbalance."""
+    print("\nTraining XGBoost Ranker (with class imbalance handling)...")
+    
+    # Compute class weights for information only
+    compute_class_weights(y_train)
+    
+    # For ranking objectives, adjust hyperparameters instead of using sample weights
     # Create DMatrix for XGBoost
     dtrain = xgb.DMatrix(X_train, label=y_train)
     dtest = xgb.DMatrix(X_test, label=y_test)
     
-    # Model parameters
+    # Model parameters (adjusted for class imbalance)
     params = {
         'objective': 'rank:ndcg',
         'eval_metric': 'ndcg',
-        'eta': 0.1,
+        'eta': 0.05,  # Lower learning rate
         'max_depth': 6,
         'subsample': 0.8,
         'colsample_bytree': 0.8,
+        'min_child_weight': 1,  # Allow splits with fewer samples (helps rare classes)
         'seed': 42
     }
     

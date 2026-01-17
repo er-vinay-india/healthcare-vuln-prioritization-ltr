@@ -11,7 +11,6 @@ import requests
 import time
 from datetime import datetime
 from dotenv import load_dotenv
-import logging
 
 # Load environment variables
 load_dotenv()
@@ -25,11 +24,13 @@ from src.core.healthcare_curated import HealthcareCuratedDataset
 from src.core.multi_level_labels import compute_multi_level_labels
 from src.analysis.healthcare_mapping import HealthcareMapper
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__)
 
 
 def fetch_kev_catalog() -> set:
@@ -133,18 +134,81 @@ def detect_healthcare_relevance(cve_data: dict, healthcare_mapper: HealthcareMap
     return False
 
 
-def enrich_database(batch_size: int = 5000, limit: int = None):
+def validate_enrichment(db: CVEDatabase):
+    """
+    Validate enrichment results - CHECK FOR ALL-ZERO FEATURES!
+    
+    Args:
+        db: CVEDatabase instance
+    """
+    logger.info("="*70)
+    logger.info("🔍 ENRICHMENT VALIDATION")
+    logger.info("="*70)
+    
+    query = '''
+    SELECT 
+        COUNT(*) as total,
+        SUM(kev_flag) as kev_count,
+        SUM(CASE WHEN epss_score > 0 THEN 1 ELSE 0 END) as epss_count,
+        SUM(is_healthcare) as healthcare_count,
+        SUM(is_curated) as curated_count,
+        SUM(chpl_flag) as chpl_count,
+        SUM(attack_flag) as attack_count,
+        AVG(epss_score) as avg_epss,
+        MAX(epss_score) as max_epss
+    FROM enrichments
+    '''
+    
+    result = db.conn.execute(query).fetchone()
+    
+    logger.info("Enrichment Coverage:")
+    logger.info(f"  Total CVEs: {result[0]:,}")
+    logger.info(f"  KEV: {result[1]:,} ({result[1]/result[0]*100:.1f}%)")
+    logger.info(f"  EPSS: {result[2]:,} ({result[2]/result[0]*100:.1f}%)")
+    logger.info(f"  Healthcare: {result[3]:,} ({result[3]/result[0]*100:.1f}%)")
+    logger.info(f"  Curated: {result[4]:,} ({result[4]/result[0]*100:.1f}%)")
+    logger.info(f"  CHPL: {result[5]:,} ({result[5]/result[0]*100:.1f}%)")
+    logger.info(f"  ATT&CK: {result[6]:,} ({result[6]/result[0]*100:.1f}%)")
+    logger.info("EPSS Statistics:")
+    logger.info(f"  Average: {result[7]:.4f}")
+    logger.info(f"  Maximum: {result[8]:.4f}")
+    
+    # Critical checks
+    issues = []
+    if result[2] == 0:
+        issues.append("🔴 CRITICAL: EPSS has 0 CVEs! Feature is useless!")
+    elif result[2] < result[0] * 0.5:
+        issues.append(f"⚠️  WARNING: EPSS coverage is low ({result[2]/result[0]*100:.1f}%)")
+    
+    if result[3] > result[0] * 0.7:
+        issues.append(f"⚠️  WARNING: Healthcare coverage seems high ({result[3]/result[0]*100:.1f}%) - check for false positives")
+    
+    if issues:
+        logger.warning("⚠️  Issues Found:")
+        for issue in issues:
+            logger.warning(f"  {issue}")
+        return False
+    else:
+        logger.info("✅ Validation passed!")
+        return True
+
+
+def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = False):
     """
     Enrich all CVEs in database with KEV, EPSS, healthcare, curated flags, and labels
     
     Args:
         batch_size: Number of CVEs to process at once
         limit: Optional limit for testing (None = process all)
+        dry_run: If True, show plan without making changes
     """
     
-    print("\n" + "="*70)
-    print("CVE DATABASE ENRICHMENT PIPELINE")
-    print("="*70 + "\n")
+    logger.info("="*70)
+    if dry_run:
+        logger.info("🔍 CVE DATABASE ENRICHMENT - DRY RUN MODE")
+    else:
+        logger.info("CVE DATABASE ENRICHMENT PIPELINE")
+    logger.info("="*70)
     
     # Initialize components
     db = CVEDatabase()
@@ -173,8 +237,35 @@ def enrich_database(batch_size: int = 5000, limit: int = None):
     cves_df = pd.read_sql_query(query, db.conn)
     logger.info(f"✓ Loaded {len(cves_df):,} CVEs")
     
-    # Step 3: Fetch EPSS scores in bulk
+    # =================================================================
+    # PHASE 1: FETCH ALL EPSS DATA (SEPARATE FROM PROCESSING)
+    # =================================================================
+    logger.info("="*70)
+    logger.info("PHASE 1: FETCHING EPSS SCORES")
+    logger.info("="*70)
+    
+    if dry_run:
+        logger.info(f"[DRY RUN] Would fetch EPSS for {len(cves_df):,} CVEs")
+        logger.info(f"  Estimated time: {len(cves_df)/100*1.5/60:.1f} minutes")
+        logger.info(f"  Storage: ~{len(cves_df)*0.2:.1f} KB in persistent cache")
+        db.close()
+        return
+    
     epss_scores = fetch_epss_bulk(cves_df['cve_id'].tolist())
+    
+    # Verify EPSS fetch completeness
+    epss_coverage = len(epss_scores) / len(cves_df) * 100
+    logger.info(f"\n✓ EPSS Fetch Complete: {len(epss_scores):,}/{len(cves_df):,} CVEs ({epss_coverage:.1f}%)")
+    
+    if epss_coverage < 50:
+        logger.warning(f"⚠️  Low EPSS coverage ({epss_coverage:.1f}%) - many CVEs may not be in EPSS database")
+    
+    # =================================================================
+    # PHASE 2: PROCESS CVEs AND PREPARE ENRICHMENT DATA
+    # =================================================================
+    logger.info("="*70)
+    logger.info("PHASE 2: PROCESSING CVEs")
+    logger.info("="*70)
     
     # Step 4: Process CVEs in batches
     logger.info(f"\nProcessing CVEs in batches of {batch_size:,}...")
@@ -189,11 +280,12 @@ def enrich_database(batch_size: int = 5000, limit: int = None):
         # Add KEV flags
         batch_df['kev_flag'] = batch_df['cve_id'].isin(kev_cves).astype(int)
         
-        # Add EPSS scores
-        batch_df['epss_score'] = batch_df['cve_id'].map(epss_scores)
-        # Convert dict to float if needed, fillna with 0.0
-        batch_df['epss_score'] = batch_df['epss_score'].apply(
-            lambda x: float(x) if x is not None and not isinstance(x, dict) else 0.0
+        # Add EPSS scores - extract from dict properly
+        batch_df['epss_score'] = batch_df['cve_id'].apply(
+            lambda cve: epss_scores.get(cve, {}).get('epss_score', 0.0)
+        )
+        batch_df['epss_percentile'] = batch_df['cve_id'].apply(
+            lambda cve: epss_scores.get(cve, {}).get('percentile', 0.0)
         )
         
         # Add healthcare flags
@@ -222,8 +314,9 @@ def enrich_database(batch_size: int = 5000, limit: int = None):
                 'cve_id': row['cve_id'],
                 'kev_flag': row['kev_flag'],
                 'epss_score': row['epss_score'],
-                'is_healthcare': row['is_healthcare'],  # Fixed: was 'healthcare_flag'
-                'is_curated': row['is_curated'],        # Fixed: was 'curated_flag'
+                'epss_percentile': row.get('epss_percentile', 0.0),
+                'is_healthcare': row['is_healthcare'],
+                'is_curated': row['is_curated'],
                 'label': row['label']
             })
         
@@ -231,28 +324,49 @@ def enrich_database(batch_size: int = 5000, limit: int = None):
                    f"(KEV: {batch_df['kev_flag'].sum()}, Healthcare: {batch_df['is_healthcare'].sum()}, " +
                    f"Curated: {batch_df['is_curated'].sum()})")
     
-    # Step 5: Upsert enrichments to database
-    logger.info(f"\nUpserting {len(enrichment_records):,} enrichment records to database...")
+    # =================================================================
+    # PHASE 3: SAVE TO DATABASE (TRANSACTIONAL)
+    # =================================================================
+    logger.info("="*70)
+    logger.info("PHASE 3: SAVING TO DATABASE")
+    logger.info("="*70)
+    
+    logger.info(f"\nPreparing to upsert {len(enrichment_records):,} enrichment records...")
     enrichments_df = pd.DataFrame(enrichment_records)
-    db.upsert_enrichments(enrichments_df)
-    logger.info("✓ Enrichments saved to database")
+    
+    # Validate data before saving
+    epss_in_records = (enrichments_df['epss_score'] > 0).sum()
+    logger.info(f"  Records with EPSS scores: {epss_in_records:,} ({epss_in_records/len(enrichments_df)*100:.1f}%)")
+    logger.info(f"  Records with KEV flag: {enrichments_df['kev_flag'].sum():,}")
+    logger.info(f"  Records with Healthcare flag: {enrichments_df['is_healthcare'].sum():,}")
+    
+    # Save with transaction safety
+    try:
+        db.conn.execute("BEGIN TRANSACTION")
+        db.upsert_enrichments(enrichments_df)
+        db.conn.commit()
+        logger.info("✓ Database transaction committed successfully")
+    except Exception as e:
+        db.conn.rollback()
+        logger.error(f"❌ Database transaction failed, rolled back: {e}")
+        raise
     
     # Step 6: Print final statistics
-    print("\n" + "="*70)
-    print("ENRICHMENT SUMMARY")
-    print("="*70 + "\n")
+    logger.info("="*70)
+    logger.info("ENRICHMENT SUMMARY")
+    logger.info("="*70)
     
     final_stats = db.get_statistics()
-    print(f"Total CVEs enriched: {len(enrichment_records):,}")
-    print(f"KEV-flagged CVEs: {final_stats['kev_count']:,} ({final_stats['kev_count']/len(enrichment_records)*100:.1f}%)")
-    print(f"Healthcare-relevant CVEs: {final_stats['healthcare_count']:,} ({final_stats['healthcare_count']/len(enrichment_records)*100:.1f}%)")
-    print(f"Curated breach CVEs: {final_stats['curated_count']:,} ({final_stats['curated_count']/len(enrichment_records)*100:.1f}%)")
+    logger.info(f"Total CVEs enriched: {len(enrichment_records):,}", extra={'total_enriched': len(enrichment_records)})
+    logger.info(f"KEV-flagged CVEs: {final_stats['kev_count']:,} ({final_stats['kev_count']/len(enrichment_records)*100:.1f}%)", extra={'kev_count': final_stats['kev_count']})
+    logger.info(f"Healthcare-relevant CVEs: {final_stats['healthcare_count']:,} ({final_stats['healthcare_count']/len(enrichment_records)*100:.1f}%)", extra={'healthcare_count': final_stats['healthcare_count']})
+    logger.info(f"Curated breach CVEs: {final_stats['curated_count']:,} ({final_stats['curated_count']/len(enrichment_records)*100:.1f}%)", extra={'curated_count': final_stats['curated_count']})
     
     # Label distribution
     enriched_df = pd.DataFrame(enrichment_records)
     label_counts = enriched_df['label'].value_counts().sort_index(ascending=False)
     
-    print("\nLabel Distribution:")
+    logger.info("Label Distribution:")
     label_names = {
         5: "Critical",
         4: "High", 
@@ -266,9 +380,9 @@ def enrich_database(batch_size: int = 5000, limit: int = None):
         count = label_counts.get(label, 0)
         pct = count / len(enrichment_records) * 100 if len(enrichment_records) > 0 else 0
         bar = "█" * int(pct / 2)
-        print(f"  L{label} ({label_names[label]:>13}): {count:>6,} ({pct:>5.1f}%) {bar}")
+        logger.info(f"  L{label} ({label_names[label]:>13}): {count:>6,} ({pct:>5.1f}%) {bar}")
     
-    print("\n" + "="*70 + "\n")
+    logger.info("="*70)
     
     db.close()
     logger.info("Enrichment pipeline complete!")
@@ -280,7 +394,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Enrich CVE database with KEV, EPSS, healthcare flags, and labels")
     parser.add_argument('--batch-size', type=int, default=5000, help='Batch size for processing (default: 5000)')
     parser.add_argument('--limit', type=int, help='Limit number of CVEs to process (for testing)')
+    parser.add_argument('--dry-run', action='store_true', help='Show plan without making changes')
+    parser.add_argument('--validate-only', action='store_true', help='Only validate existing enrichment')
     
     args = parser.parse_args()
     
-    enrich_database(batch_size=args.batch_size, limit=args.limit)
+    if args.validate_only:
+        db = CVEDatabase()
+        validate_enrichment(db)
+        db.close()
+    else:
+        enrich_database(batch_size=args.batch_size, limit=args.limit, dry_run=args.dry_run)

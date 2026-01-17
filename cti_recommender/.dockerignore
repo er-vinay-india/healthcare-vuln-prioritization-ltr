@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs (will be mounted as volume)
+logs/*.log
+
+# Environment variables
+.env
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Archives
+archive/
+
+# Notebooks (development only)
+notebooks/
+*.ipynb
+
+# Large data files (use volumes instead)
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# Cache (will be mounted as volume)
+data_cache/*.pkl.gz
+data_cache/*.json
+data_cache/*.parquet
+
+# Outputs (will be mounted as volume)
+outputs/
+
+# Docker
+.dockerignore
+docker-compose.yml
+Dockerfile
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Development tools
+Makefile
+setup.py
+setup.cfg
+pyproject.toml

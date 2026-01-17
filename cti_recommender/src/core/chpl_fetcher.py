@@ -20,6 +20,14 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 class CHPLFetcher:
     """Fetches CHPL data with intelligent caching."""
     
@@ -43,17 +51,17 @@ class CHPLFetcher:
         """
         # Step 1: Check cache
         if not force_refresh and self._cache_exists() and self._cache_valid():
-            print("✓ Loading CHPL data from cache (no API call)")
+            logger.info("✓ Loading CHPL data from cache (no API call)")
             return self._load_cache()
         
         # Step 2: Cache empty/invalid - fetch from API
-        print("⚠ Cache empty/invalid - fetching from CHPL API (ONE TIME)")
+        logger.info("⚠ Cache empty/invalid - fetching from CHPL API (ONE TIME)")
         df = self._fetch_from_api()
         
         # Step 3: Save to cache immediately
         if df is not None and len(df) > 0:
             self._save_cache(df)
-            print(f"✓ Cached {len(df)} products for future use")
+            logger.info(f"✓ Cached {len(df)} products for future use", extra={'product_count': len(df)})
         
         return df
     
@@ -82,17 +90,17 @@ class CHPLFetcher:
         try:
             with gzip.open(self.cache_file, 'rb') as f:
                 df = pickle.load(f)
-            print(f"  Loaded {len(df)} products from cache")
+            logger.info(f"  Loaded {len(df)} products from cache", extra={'product_count': len(df)})
             return df
         except Exception as e:
-            print(f"  Error loading cache: {e}")
+            logger.error(f"  Error loading cache: {e}")
             return None
     
     def _fetch_from_api(self):
         """Fetch CHPL data from API."""
         if not self.api_key:
-            print("  ❌ No CHPL API key found (set CHPL_API_KEY env var)")
-            print("  Using mock data for testing...")
+            logger.warning("  ❌ No CHPL API key found (set CHPL_API_KEY env var)")
+            logger.info("  Using mock data for testing...")
             return self._create_mock_data()
         
         try:
@@ -108,14 +116,14 @@ class CHPLFetcher:
             all_products = []
             page = 0
             
-            print(f"  Fetching from CHPL API...")
+            logger.info("  Fetching from CHPL API...")
             
             while True:
                 params['pageNumber'] = page
                 response = requests.get(url, headers=headers, params=params, timeout=30)
                 
                 if response.status_code != 200:
-                    print(f"  API error: {response.status_code}")
+                    logger.error(f"  API error: {response.status_code}")
                     break
                 
                 data = response.json()
@@ -125,7 +133,8 @@ class CHPLFetcher:
                     break
                 
                 all_products.extend(results)
-                print(f"  Page {page+1}: {len(results)} products (total: {len(all_products)})")
+                logger.info(f"  Page {page+1}: {len(results)} products (total: {len(all_products)})", 
+                           extra={'page': page+1, 'page_results': len(results), 'total': len(all_products)})
                 
                 # Check if more pages
                 if len(results) < params['pageSize']:
@@ -135,19 +144,19 @@ class CHPLFetcher:
                 
                 # Safety limit
                 if page >= 100:
-                    print(f"  Reached page limit, stopping")
+                    logger.warning("  Reached page limit, stopping")
                     break
             
             if all_products:
                 df = pd.DataFrame(all_products)
                 return df
             else:
-                print("  No products fetched, using mock data")
+                logger.info("  No products fetched, using mock data")
                 return self._create_mock_data()
         
         except Exception as e:
-            print(f"  API fetch error: {e}")
-            print("  Using mock data...")
+            logger.error(f"  API fetch error: {e}")
+            logger.info("  Using mock data...")
             return self._create_mock_data()
     
     def _create_mock_data(self):
@@ -162,7 +171,7 @@ class CHPLFetcher:
             {'developer': {'name': 'GE Healthcare'}, 'product': {'name': 'Centricity'}, 'version': '12.0'},
             {'developer': {'name': 'Philips'}, 'product': {'name': 'IntelliSpace'}, 'version': '8.0'},
         ]
-        print(f"  Created mock data: {len(mock_products)} products")
+        logger.info(f"  Created mock data: {len(mock_products)} products", extra={'product_count': len(mock_products)})
         return pd.DataFrame(mock_products)
     
     def _save_cache(self, df):
@@ -175,25 +184,25 @@ class CHPLFetcher:
             # Also save as JSON for inspection
             df.to_json(self.json_cache, orient='records', indent=2)
             
-            print(f"  ✓ Saved to cache: {self.cache_file}")
+            logger.info(f"  ✓ Saved to cache: {self.cache_file}")
         except Exception as e:
-            print(f"  ⚠ Cache save error: {e}")
+            logger.warning(f"  ⚠ Cache save error: {e}")
 
 if __name__ == "__main__":
-    print("="*70)
-    print("CHPL FETCHER - SMART CACHING")
-    print("="*70)
+    logger.info("="*70)
+    logger.info("CHPL FETCHER - SMART CACHING")
+    logger.info("="*70)
     
     fetcher = CHPLFetcher()
     
     # First call - will fetch if cache empty
-    print("\n1st call - checking cache...")
+    logger.info("1st call - checking cache...")
     df1 = fetcher.get_chpl_data()
-    print(f"Result: {len(df1) if df1 is not None else 0} products")
+    logger.info(f"Result: {len(df1) if df1 is not None else 0} products", extra={'product_count': len(df1) if df1 is not None else 0})
     
     # Second call - should use cache (no API call)
-    print("\n2nd call - should use cache...")
+    logger.info("2nd call - should use cache...")
     df2 = fetcher.get_chpl_data()
-    print(f"Result: {len(df2) if df2 is not None else 0} products")
+    logger.info(f"Result: {len(df2) if df2 is not None else 0} products", extra={'product_count': len(df2) if df2 is not None else 0})
     
-    print("\n✓ Demonstrated: Check cache first → Fetch once → Use cached data")
+    logger.info("✓ Demonstrated: Check cache first → Fetch once → Use cached data")
