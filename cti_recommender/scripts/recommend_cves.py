@@ -45,6 +45,9 @@ class HealthcareCVERecommender:
             'epss_percentile': df['epss_percentile'].fillna(0.0),
             'is_healthcare': df['is_healthcare'],
             'is_curated': df['is_curated'],
+            'chpl_flag': df['chpl_flag'].fillna(0).astype(int),
+            'attack_flag': df['attack_flag'].fillna(0).astype(int),
+            'attack_technique_count': df['attack_technique_count'].fillna(0).astype(int),
             'cvss': df['cvss'].fillna(0.0),
         })
         
@@ -54,8 +57,13 @@ class HealthcareCVERecommender:
         features['epss_high'] = (features['epss_score'] >= 0.1).astype(int)
         features['healthcare_critical'] = (features['is_healthcare'] & features['cvss_critical']).astype(int)
         features['kev_healthcare'] = (features['kev_flag'] & features['is_healthcare']).astype(int)
+        features['chpl_healthcare'] = (features['chpl_flag'] & features['is_healthcare']).astype(int)
+        features['attack_healthcare'] = (features['attack_flag'] & features['is_healthcare']).astype(int)
+        features['attack_multi'] = (features['attack_technique_count'] > 1).astype(int)
         features['healthcare_x_cvss'] = features['is_healthcare'] * features['cvss']
         features['kev_x_epss'] = features['kev_flag'] * features['epss_score']
+        features['chpl_x_attack'] = features['chpl_flag'] * features['attack_flag']
+        features['attack_count_x_healthcare'] = features['attack_technique_count'] * features['is_healthcare']
         
         # Recency
         if 'published_str' in df.columns:
@@ -101,8 +109,9 @@ class HealthcareCVERecommender:
             e.epss_score,
             e.epss_percentile,
             e.is_healthcare,
-            e.is_curated,
-            e.label,
+            e.is_curated,            e.chpl_flag,
+            e.attack_flag,
+            e.attack_technique_count,            e.label,
             c.cvss,
             CAST(c.published AS TEXT) as published_str,
             c.description
