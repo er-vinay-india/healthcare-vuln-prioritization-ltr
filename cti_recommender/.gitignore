@@ -50,6 +50,9 @@ data_cache/*.parquet
 # Outputs (optional - keep latest results)
 outputs/merged.csv.gz
 
+# Logs
+logs/*.log
+
 # Testing
 .pytest_cache/
 .coverage
