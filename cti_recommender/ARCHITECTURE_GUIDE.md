@@ -1,6 +1,8 @@
 # 🏗️ Architecture Improvements Implementation Guide
 
-## ✅ Completed Implementations (Phase 1)
+## ✅ Completed Implementations
+
+### Phase 1: Infrastructure Modernization ✓
 
 ### 1. Configuration Management System ✓
 **Location**: `config/settings.py`
@@ -232,7 +234,60 @@ docker-compose exec api pytest
 
 ---
 
-## 🔄 Next Steps (Phase 2)
+### Phase 2: Code Consolidation & Cleanup ✓
+
+**Objective:** Eliminate technical debt, consolidate adhoc scripts, streamline workflow
+
+**Accomplishments:**
+
+1. **Database Schema Standardization** ✓
+   - Removed runtime ALTER TABLE migrations
+   - All columns defined in CREATE TABLE upfront
+   - Test fixtures updated to match production schema
+   - Location: `src/core/cve_database.py`
+
+2. **Enrichment Pipeline Consolidation** ✓
+   - Merged 6 adhoc scripts into single `scripts/enrich_cves.py`
+   - Single-pass enrichment: ATT&CK, CHPL, KEV, EPSS, healthcare, labels
+   - Added `--skip-attack` and `--skip-chpl` flags for flexibility
+   - Archived: `fix_healthcare_flags.py`, `fix_epss_scores.py`, `recalculate_labels.py`, `link_curated_dataset.py`, `apply_attack_mappings.py`, `apply_chpl_mappings.py`
+   - Workflow reduced: 9 steps → 4 steps (56% reduction)
+
+3. **Training Script Cleanup** ✓
+   - Renamed `train_ltr_pruned.py` → `train_ltr.py` (main training script)
+   - Renamed `temporal_validation_pruned.py` → `temporal_validation.py`
+   - Archived: `train_ltr_model.py` (old version), `temporal_validation_old.py`
+
+4. **Analysis Scripts Organization** ✓
+   - Created `scripts/analyze/` subdirectory
+   - Moved 5 analysis scripts with cleaned names:
+     - `enrichment_stats.py` (formerly `show_enrichment_stats.py`)
+     - `coverage_analysis.py` (formerly `analyze_coverage.py`)
+     - `medical_terms.py` (formerly `analyze_cve_medical_terms.py`)
+     - `ablation_study.py`
+     - `feature_correlation.py`
+   - Fixed imports for 3-level parent directory access
+   - Created `scripts/analyze/README.md` usage guide
+   - Archived: `audit_phase1.py`
+
+5. **Documentation** ✓
+   - Created `archive/adhoc_scripts/README.md` - explains why scripts archived
+   - Created `REFACTORING_PLAN.md` - comprehensive technical debt analysis
+   - Updated `README.md` - new workflow, updated structure
+   - Created `MIGRATION_GUIDE.md` - user migration guide
+
+**Impact:**
+- Scripts reduced: 24 → 10 in main directory (58% reduction)
+- Workflow simplified: 9 steps → 4 steps (56% reduction)
+- Code maintainability: Significantly improved
+- Testing: All changes validated and committed incrementally
+- Git commits: 4 clean commits (f962310, 9739c20, 6dcd094, c647db6)
+
+**Time Investment:** ~4 hours (mini-phase approach with testing)
+
+---
+
+## 🔄 Next Steps (Phase 3)
 
 ### Priority Items (Recommended Implementation Order):
 
@@ -281,11 +336,10 @@ class CVEDatabase:
 ```
 
 **c. Replace `print()` statements with `logger` calls** in:
-- `scripts/temporal_validation.py` (31 print statements)
-- `scripts/cross_validation.py` (29 print statements)
-- `scripts/feature_correlation.py` (20 print statements)
-- `scripts/train_ltr_pruned.py` (15 print statements)
+- `scripts/temporal_validation.py` (29 print statements)
+- `scripts/train_ltr.py` (15 print statements)
 - `scripts/enrich_cves.py` (25 print statements)
+- `scripts/analyze/*.py` (various analysis scripts)
 
 **Example Migration:**
 ```python

@@ -37,9 +37,16 @@ cti_recommender/
 │   └── utils/                    # Utility modules (future)
 │
 ├── scripts/                      # Executable scripts
-│   ├── audit_phase1.py          # Data quality audit
-│   ├── rescore_weights.py       # Weight calibration tool
-│   └── generate_report.py       # DOCX report generator
+│   ├── enrich_cves.py           # Consolidated enrichment pipeline
+│   ├── train_ltr.py             # LTR model training
+│   ├── temporal_validation.py   # Temporal validation
+│   ├── generate_report.py       # DOCX report generator
+│   └── analyze/                 # Analysis scripts
+│       ├── enrichment_stats.py  # Show enrichment statistics
+│       ├── coverage_analysis.py # CHPL/KEV coverage analysis
+│       ├── medical_terms.py     # Medical vendor analysis
+│       ├── ablation_study.py    # Feature ablation study
+│       └── feature_correlation.py # Feature correlation matrix
 │
 ├── notebooks/                    # Jupyter notebooks
 │   └── simple_cti_recommender.ipynb  # Main analysis notebook
@@ -66,6 +73,7 @@ cti_recommender/
 │   └── reports/                 # Generated reports & plots
 │
 ├── archive/                      # Archived/unused files
+│   ├── adhoc_scripts/           # Consolidated/deprecated scripts (Phase 2)
 │   ├── notebooks/               # Old experiment notebooks
 │   ├── experiments/             # Experimental scripts
 │   └── titanic_data/            # Unrelated Kaggle data
@@ -93,29 +101,66 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Run Data Quality Audit
+### 2. Enrich CVE Data
 
 ```bash
-python scripts/audit_phase1.py
+python scripts/enrich_cves.py --years 1 --workers 4
+```
+
+**Features:**
+- Downloads CVEs from NVD (last N years)
+- Enriches with KEV, EPSS, CHPL, ATT&CK, healthcare flags
+- Calculates multi-level labels (0-5 scale)
+- Single consolidated pipeline (no manual steps)
+
+**Optional flags:**
+- `--skip-attack` - Skip ATT&CK technique mapping
+- `--skip-chpl` - Skip CHPL product matching
+
+### 3. Train LTR Model
+
+```bash
+python scripts/train_ltr.py
 ```
 
 **Outputs:**
-- `outputs/phase1_quality_report.txt` - Comprehensive quality report
-- `outputs/top20_enriched.csv` - Top-20 with healthcare features
-- `data/config/healthcare_mapping.csv` - Healthcare patterns
+- `models/ltr_model.pkl` - Trained LightGBM model
+- `models/ltr_model_pruned.pkl` - Optimized model (fewer features)
+- Console: Training metrics, NDCG@10, P@100
 
-### 3. Generate Recommendations
+### 4. Run Temporal Validation
 
 ```bash
-python scripts/rescore_weights.py
+python scripts/temporal_validation.py
 ```
 
 **Outputs:**
-- `outputs/top20_recalibrated.csv` - Current top-20 CVEs
-- `outputs/top_scored.csv` - Full dataset with scores
-- Console: Comparison of old vs new weights
+- Temporal split evaluation (3-month windows)
+- Per-window NDCG@5/10/20 metrics
+- Overall performance summary
 
-### 4. Explore with Jupyter
+### 5. Run Analysis Scripts
+
+```bash
+# View enrichment statistics
+python scripts/analyze/enrichment_stats.py
+
+# Analyze CHPL/KEV coverage
+python scripts/analyze/coverage_analysis.py
+
+# Medical vendor analysis
+python scripts/analyze/medical_terms.py
+
+# Feature ablation study
+python scripts/analyze/ablation_study.py
+
+# Feature correlation matrix
+python scripts/analyze/feature_correlation.py
+```
+
+**Outputs:** Console summaries, plots in `outputs/plots/`
+
+### 6. Explore with Jupyter
 
 ```bash
 jupyter notebook notebooks/simple_cti_recommender.ipynb
@@ -206,37 +251,47 @@ python -m pytest tests/test_attack_mapping.py -v
 - ✅ Bug fixes & weight calibration
 - ✅ Automated audit pipeline
 
-### 🔄 Phase 2: Improved Labeling Strategy (NEXT)
-- [ ] Integrate EPSS scores
-- [ ] Add ExploitDB references
-- [ ] Create curated healthcare CVE dataset
-- [ ] Multi-level labels (0-5 scale)
+### ✅ Phase 2: Refactoring & Consolidation (COMPLETE)
+- ✅ Consolidated enrichment pipeline (9 steps → 4 steps)
+- ✅ Database schema standardization
+- ✅ Script cleanup (24 scripts → 10 main scripts)
+- ✅ Analysis scripts organization
+- ✅ EPSS integration
+- ✅ Multi-level labels (0-5 scale)
 
-### ⏳ Phase 3: LTR Model Optimization
-- [ ] Hyperparameter tuning
-- [ ] Cross-validation
-- [ ] Model comparison (LightGBM vs XGBoost vs CatBoost)
-- [ ] Feature importance analysis
+### 🔄 Phase 3: Advanced Features (NEXT)
+- [ ] Enhanced ATT&CK technique weighting
+- [ ] Temporal trend analysis
+- [ ] Vendor risk scoring
+- [ ] Scanner integration (Nessus, Qualys)
 
-### ⏳ Phase 4: Evaluation & Ablation
-- [ ] Precision@5/10/20/50
-- [ ] NDCG@K metrics
-- [ ] Ablation studies
-- [ ] Temporal validation
+### ⏳ Phase 4: LTR Model Optimization
+- [x] Hyperparameter tuning (Phase 2 complete)
+- [x] Model comparison (LightGBM selected)
+- [x] Feature importance analysis (Phase 2 complete)
+- [ ] Advanced feature engineering
+- [ ] Ensemble models
 
-### ⏳ Phase 5: Production Interface
+### ⏳ Phase 5: Evaluation & Ablation
+- [x] Precision@K metrics (Phase 2 complete)
+- [x] NDCG@K metrics (Phase 2 complete)
+- [x] Ablation studies (Phase 2 complete)
+- [x] Temporal validation (Phase 2 complete)
+- [ ] Cross-dataset validation
+
+### ⏳ Phase 6: Production Interface
 - [ ] CLI tool
 - [ ] REST API (FastAPI)
 - [ ] Automated refresh pipeline
 - [ ] Docker containerization
 
-### ⏳ Phase 6: Advanced Analytics
+### ⏳ Phase 7: Advanced Analytics
 - [ ] Vendor dashboards
 - [ ] Trend analysis
-- [ ] Scanner integration
 - [ ] What-if scenarios
+- [ ] Real-time alerting
 
-### ⏳ Phase 7: Research Publication
+### ⏳ Phase 8: Research Publication
 - [ ] Methodology paper
 - [ ] Benchmark dataset
 - [ ] Baseline comparisons
