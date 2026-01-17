@@ -9,6 +9,7 @@ pickles to remain compatible with the existing workspace cache files.
 from __future__ import annotations
 
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Optional, List, Dict
@@ -20,6 +21,13 @@ from datetime import datetime, timezone
 
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+# Import EPSS fetcher for exploit prediction scores
+try:
+    from .epss_fetcher import EPSSFetcher
+    HAS_EPSS = True
+except ImportError:
+    HAS_EPSS = False
 
 # Basic logger for the module
 logger = logging.getLogger("cti_recommender")
@@ -71,11 +79,28 @@ def load_cache(key: str) -> Optional[pd.DataFrame]:
         return None
 
 
-def fetch_nvd_recent_cves(days_back: int = 7, api_url: str = NVD_API_URL, session: Optional[requests.Session] = None) -> pd.DataFrame:
-    """Fetch recent CVEs from NVD (best-effort, single-page)."""
+def fetch_nvd_recent_cves(days_back: int = 7, api_url: str = NVD_API_URL, api_key: Optional[str] = None, session: Optional[requests.Session] = None) -> pd.DataFrame:
+    """Fetch recent CVEs from NVD (best-effort, single-page).
+    
+    Args:
+        days_back: Number of days to look back
+        api_url: NVD API URL
+        api_key: NVD API key (optional, reads from NVD_API_KEY env var if not provided)
+        session: Requests session
+    """
     logger.info("Fetching NVD CVEs for last %sd", days_back)
     if session is None:
         session = _requests_session()
+    
+    # Get API key from environment if not provided
+    if api_key is None:
+        api_key = os.environ.get("NVD_API_KEY")
+    
+    # Add API key header if available (increases rate limit from 5 to 50 requests/30s)
+    if api_key:
+        session.headers.update({"apiKey": api_key})
+        logger.info("Using NVD API key (enhanced rate limits)")
+    
     now = datetime.now(timezone.utc)
     start = now.replace(hour=0, minute=0, second=0, microsecond=0) - pd.Timedelta(days=days_back)
     pub_start = start.isoformat(timespec="seconds").replace("+00:00", "Z")
@@ -103,6 +128,126 @@ def fetch_nvd_recent_cves(days_back: int = 7, api_url: str = NVD_API_URL, sessio
         records.append({"cve_id": cve_id, "published": published, "description": desc, "cvss": cvss_score})
     df = pd.DataFrame(records)
     logger.info("Fetched %d CVEs from NVD", len(df))
+    return df
+
+
+def fetch_nvd_date_range(start_date: str, end_date: str, api_url: str = NVD_API_URL, api_key: Optional[str] = None, session: Optional[requests.Session] = None) -> pd.DataFrame:
+    """Fetch CVEs from NVD for a specific date range.
+    
+    Args:
+        start_date: Start date in ISO format (YYYY-MM-DD or ISO 8601)
+        end_date: End date in ISO format (YYYY-MM-DD or ISO 8601)
+        api_url: NVD API URL
+        api_key: NVD API key (optional, reads from NVD_API_KEY env var)
+        session: Requests session
+    
+    Returns:
+        DataFrame with CVE data
+    """
+    logger.info(f"Fetching NVD CVEs from {start_date} to {end_date}")
+    if session is None:
+        session = _requests_session()
+    
+    # Get API key from environment if not provided
+    if api_key is None:
+        api_key = os.environ.get("NVD_API_KEY")
+    
+    # Add API key header if available
+    if api_key:
+        session.headers.update({"apiKey": api_key})
+    
+    # Format dates for NVD API
+    if 'T' not in start_date:
+        start_date = f"{start_date}T00:00:00.000Z"
+    elif not start_date.endswith('Z'):
+        start_date = start_date.replace("+00:00", "Z")
+    
+    if 'T' not in end_date:
+        end_date = f"{end_date}T23:59:59.999Z"
+    elif not end_date.endswith('Z'):
+        end_date = end_date.replace("+00:00", "Z")
+    
+    params = {
+        "pubStartDate": start_date,
+        "pubEndDate": end_date,
+        "resultsPerPage": 2000
+    }
+    
+    all_records = []
+    start_index = 0
+    
+    while True:
+        params["startIndex"] = start_index
+        
+        try:
+            resp = session.get(api_url, params=params, timeout=60)
+            resp.raise_for_status()
+            data = resp.json()
+        except requests.exceptions.RequestException as e:
+            logger.error(f"NVD API error: {e}")
+            break
+        
+        vulnerabilities = data.get("vulnerabilities", [])
+        if not vulnerabilities:
+            break
+        
+        # Parse CVE data
+        for item in vulnerabilities:
+            cve = item.get("cve", {})
+            cve_id = cve.get("id")
+            published = cve.get("published")
+            modified = cve.get("lastModified")
+            
+            descriptions = cve.get("descriptions", [])
+            desc = descriptions[0].get("value", "") if descriptions else ""
+            
+            # Extract CVSS score and vector
+            metrics = cve.get("metrics", {})
+            cvss_score = None
+            cvss_vector = None
+            
+            cvss_v31 = metrics.get("cvssMetricV31", [])
+            if cvss_v31:
+                cvss_score = cvss_v31[0]["cvssData"].get("baseScore")
+                cvss_vector = cvss_v31[0]["cvssData"].get("vectorString")
+            else:
+                cvss_v3 = metrics.get("cvssMetricV30", [])
+                if cvss_v3:
+                    cvss_score = cvss_v3[0]["cvssData"].get("baseScore")
+                    cvss_vector = cvss_v3[0]["cvssData"].get("vectorString")
+            
+            # Extract CWE
+            weaknesses = cve.get("weaknesses", [])
+            cwe = None
+            if weaknesses and weaknesses[0].get("description"):
+                cwe = weaknesses[0]["description"][0].get("value")
+            
+            all_records.append({
+                "cve_id": cve_id,
+                "published": published,
+                "modified": modified,
+                "description": desc,
+                "cvss": cvss_score,
+                "cvss_vector": cvss_vector,
+                "cwe": cwe
+            })
+        
+        # Check if there are more results
+        total_results = data.get("totalResults", 0)
+        start_index += len(vulnerabilities)
+        
+        logger.info(f"Fetched {start_index}/{total_results} CVEs...")
+        
+        if start_index >= total_results:
+            break
+        
+        # Rate limiting: wait between requests
+        # With API key: 50 requests/30s = 0.6s between requests
+        # Without API key: 5 requests/30s = 6s between requests
+        time.sleep(0.7 if api_key else 6.5)
+    
+    df = pd.DataFrame(all_records)
+    logger.info(f"Fetched {len(df)} total CVEs from NVD")
     return df
 
 
@@ -259,6 +404,33 @@ def fetch_chpl_products(api_base: str = "https://chpl.healthit.gov/rest", api_ke
         found_any = False
         page = 0
         last_exc = None
+        
+        # Define fallback endpoint variants to try
+        endpoints = [
+            "/search",
+            "/products",
+            "/certified_products",
+            "/collections/certified_products",
+        ]
+        
+        # Define header variants
+        header_variants = [
+            {"Accept": "application/json"},
+        ]
+        if api_key:
+            header_variants.extend([
+                {"Accept": "application/json", "API-Key": api_key},
+                {"Accept": "application/json", "api_key": api_key},
+                {"Accept": "application/json", "apiKey": api_key},
+            ])
+        
+        # Define parameter variants
+        param_variants = [
+            lambda p: {"page": p, "pageSize": page_size},
+            lambda p: {"pageNumber": p, "pageSize": page_size},
+            lambda p: {"offset": p * page_size, "limit": page_size},
+        ]
+        
         # param_key_variants will add the API key as a query parameter in different forms if provided
         param_key_variants = [
             lambda p, params: params,
@@ -487,13 +659,14 @@ def load_healthcare_patterns(path: Optional[Path] = None) -> List[str]:
         return defaults
 
 
-def build_healthcare_features(df: pd.DataFrame, kev_df: Optional[pd.DataFrame] = None, patterns: Optional[List[str]] = None, chpl_df: Optional[pd.DataFrame] = None, attack_df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+def build_healthcare_features(df: pd.DataFrame, kev_df: Optional[pd.DataFrame] = None, patterns: Optional[List[str]] = None, chpl_df: Optional[pd.DataFrame] = None, attack_df: Optional[pd.DataFrame] = None, add_epss: bool = True) -> pd.DataFrame:
     """Add features useful for healthcare-focused scoring.
 
     Features added:
     - recency_score (0..1)
     - cvss_norm (0..1)
     - kev_flag (0/1)
+    - epss_score (0..1) - exploit prediction if add_epss=True
     - is_healthcare (0/1) based on substring matching against descriptions or patterns
     - chpl_flag (0/1) exact-match signal derived from CHPL product/developer names
     - attack_flag (0/1) based on ATT&CK technique name/alias presence in description
@@ -602,18 +775,39 @@ def build_healthcare_features(df: pd.DataFrame, kev_df: Optional[pd.DataFrame] =
         else:
             df['attack_flag'] = 0
 
+    # EPSS (Exploit Prediction Scoring System) scores
+    if add_epss and HAS_EPSS:
+        try:
+            epss_fetcher = EPSSFetcher()
+            df = epss_fetcher.enrich_dataframe(df, cve_column='cve_id')
+            # Normalize EPSS score (already 0-1, but ensure column exists)
+            if 'epss_score' not in df.columns:
+                df['epss_score'] = 0.0
+        except Exception as e:
+            logger.warning(f"Failed to fetch EPSS scores: {e}")
+            df['epss_score'] = 0.0
+    else:
+        df['epss_score'] = 0.0
+
     return df
 
 
-def build_weighted_score(df: pd.DataFrame, w_recency: float = 0.35, w_kev: float = 0.35, w_cvss: float = 0.2, w_attack: float = 0.05, w_health: float = 0.05, w_chpl: float = 0.05) -> pd.DataFrame:
+def build_weighted_score(df: pd.DataFrame, w_recency: float = 0.20, w_kev: float = 0.25, w_cvss: float = 0.10, w_epss: float = 0.15, w_attack: float = 0.05, w_health: float = 0.10, w_chpl: float = 0.15) -> pd.DataFrame:
     """Compute a weighted final_score using the provided weights. Returns a new DataFrame.
 
-    Default weights give emphasis to recency and KEV membership, with small boosts for
-    ATT&CK presence, healthcare relevance, and CHPL exact-match signals.
+    Phase 2 weights with EPSS integration:
+    - Recency: 0.20 (reduced to accommodate EPSS)
+    - KEV: 0.25 (proven high-value signal)
+    - CVSS: 0.10 (static severity, less predictive than EPSS)
+    - EPSS: 0.15 (NEW - exploit probability, fills gaps for missing CVSS)
+    - Attack: 0.05 (technique mapping)
+    - Healthcare: 0.10 (sector relevance)
+    - CHPL: 0.15 (healthcare product database)
     """
     df = df.copy()
     df['recency_score'] = df.get('recency_score', 0.0).fillna(0.0)
     df['cvss_norm'] = df.get('cvss_norm', 0.0).fillna(0.0)
+    df['epss_score'] = df.get('epss_score', 0.0).fillna(0.0)
     df['kev_flag'] = df.get('kev_flag', 0).fillna(0).astype(int)
     df['attack_flag'] = df.get('attack_flag', 0).fillna(0).astype(int)
     df['is_healthcare'] = df.get('is_healthcare', 0).fillna(0).astype(int)
@@ -623,6 +817,7 @@ def build_weighted_score(df: pd.DataFrame, w_recency: float = 0.35, w_kev: float
         w_recency * df['recency_score'] +
         w_kev * df['kev_flag'] +
         w_cvss * df['cvss_norm'] +
+        w_epss * df['epss_score'] +
         w_attack * df['attack_flag'] +
         w_health * df['is_healthcare'] +
         w_chpl * df['chpl_flag']
@@ -643,7 +838,8 @@ def score_and_save(nvd_df: pd.DataFrame, kev_df: Optional[pd.DataFrame] = None, 
     df = build_healthcare_features(nvd_df, kev_df=kev_df, patterns=patterns, chpl_df=chpl_df, attack_df=attack_df)
 
     if weights is None:
-        weights = dict(w_recency=0.35, w_kev=0.35, w_cvss=0.2, w_attack=0.05, w_health=0.05, w_chpl=0.05)
+        # Phase 2 weights with EPSS integration for exploit prediction
+        weights = dict(w_recency=0.20, w_kev=0.25, w_cvss=0.10, w_epss=0.15, w_attack=0.05, w_health=0.10, w_chpl=0.15)
 
     scored = build_weighted_score(df, **weights)
     scored_sorted = scored.sort_values(by='final_score', ascending=False).reset_index(drop=True)

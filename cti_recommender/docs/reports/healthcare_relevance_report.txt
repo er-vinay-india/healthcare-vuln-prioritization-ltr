@@ -1,0 +1,13 @@
+
+=== HEALTHCARE RELEVANCE ANALYSIS ===
+
+Total CVEs analyzed: 2000
+Healthcare-relevant CVEs: 1381 (69.0%)
+
+Healthcare Score Distribution:
+  Score >= 0.7 (High): 0
+  Score 0.3-0.7 (Medium): 1381
+  Score < 0.3 (Low): 619
+
+Top Healthcare Keywords Found:
+  emr: 1

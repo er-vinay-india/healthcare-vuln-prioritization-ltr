@@ -1,0 +1,37 @@
+=== DATA QUALITY REPORT ===
+
+Generated: 2026-01-17 09:30:19
+
+Total records: 2000
+
+
+Missing Data:
+
+Data Types:
+  cve_id: object
+  published: datetime64[ns]
+  description: object
+  cvss: float64
+  kev_flag: int64
+  cvss_imputed: int64
+  healthcare_score: float64
+  is_healthcare: int64
+  attack_flag: int64
+  attack_techniques: object
+  attack_confidence: object
+
+CVSS Statistics:
+  cvss:
+    Mean: 6.63
+    Median: 6.50
+    Min: 2.40
+    Max: 10.00
+  cvss_imputed:
+    Mean: 0.19
+    Median: 0.00
+    Min: 0.00
+    Max: 1.00
+
+Duplicate CVE IDs: 0
+
+CVSS Imputation: 374 records (18.7%)

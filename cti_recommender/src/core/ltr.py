@@ -36,7 +36,7 @@ def build_ltr_features(nvd_df: pd.DataFrame, kev_df: pd.DataFrame = None, chpl_d
 
     Columns include: cve_id, label, group (e.g., day or week bucket), features [...]
     """
-    from cti_recommender import cti_recommender as cr
+    from . import cti_recommender as cr
 
     df = cr.build_healthcare_features(nvd_df.copy(), kev_df=kev_df, chpl_df=chpl_df, patterns=patterns, attack_df=attack_df)
 
