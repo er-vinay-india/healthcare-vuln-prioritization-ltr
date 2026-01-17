@@ -15,6 +15,14 @@ from datetime import datetime, timedelta
 
 from src.core.cve_database import CVEDatabase
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 class HealthcareCVERecommender:
     """Recommender system for healthcare CVEs using trained LTR model."""
     
@@ -36,12 +44,13 @@ class HealthcareCVERecommender:
         self.feature_names = self.metadata['feature_names']
         self.scaler = self.metadata.get('scaler', None)
         
-        print(f"Loaded model trained on {self.metadata['training_date'][:10]}")
-        print(f"Model performance: NDCG@10 = {self.metadata['metrics']['ndcg_10']:.4f}")
+        logger.info(f"Loaded model trained on {self.metadata['training_date'][:10]}")
+        logger.info(f"Model performance: NDCG@10 = {self.metadata['metrics']['ndcg_10']:.4f}", 
+                   extra={'ndcg_10': self.metadata['metrics']['ndcg_10']})
         if self.scaler is not None:
-            print(f"Feature scaler loaded for inference")
+            logger.info("Feature scaler loaded for inference")
         else:
-            print(f"⚠️  Warning: No scaler found in metadata (old model?)")
+            logger.warning("⚠️  Warning: No scaler found in metadata (old model?)")
     
     def prepare_features(self, df):
         """Extract features from CVE dataframe (same as training)."""
@@ -140,10 +149,12 @@ class HealthcareCVERecommender:
         db.close()
         
         if len(df) == 0:
-            print(f"No CVEs found in last {days_back} days with CVSS >= {min_cvss}")
+            logger.warning(f"No CVEs found in last {days_back} days with CVSS >= {min_cvss}", 
+                         extra={'days_back': days_back, 'min_cvss': min_cvss})
             return pd.DataFrame()
         
-        print(f"Analyzing {len(df):,} CVEs from last {days_back} days...")
+        logger.info(f"Analyzing {len(df):,} CVEs from last {days_back} days...", 
+                   extra={'cve_count': len(df), 'days_back': days_back})
         
         # Get recommendations
         recommendations = self.recommend(df, top_k=top_k)
@@ -152,34 +163,34 @@ class HealthcareCVERecommender:
 
 def main():
     """Demo: Recommend recent healthcare CVEs."""
-    print("="*70)
-    print("HEALTHCARE CVE RECOMMENDER")
-    print("="*70)
+    logger.info("="*70)
+    logger.info("HEALTHCARE CVE RECOMMENDER")
+    logger.info("="*70)
     
     # Initialize recommender
     recommender = HealthcareCVERecommender()
     
     # Get recommendations for last 30 days
-    print("\nTop 20 healthcare CVEs from last 30 days:")
-    print("="*70)
+    logger.info("Top 20 healthcare CVEs from last 30 days:")
+    logger.info("="*70)
     
     recommendations = recommender.recommend_from_db(days_back=30, top_k=20, min_cvss=7.0)
     
     if len(recommendations) > 0:
         # Display recommendations
         display_cols = ['cve_id', 'cvss', 'model_score', 'kev_flag', 'is_healthcare', 'label', 'published_str']
-        print(recommendations[display_cols].to_string(index=False))
+        logger.info(f"\n{recommendations[display_cols].to_string(index=False)}")
         
         # Summary statistics
-        print(f"\n" + "="*70)
-        print(f"Summary:")
-        print(f"  Total analyzed: {len(recommendations):,}")
-        print(f"  Healthcare CVEs: {recommendations['is_healthcare'].sum()}")
-        print(f"  KEV-flagged: {recommendations['kev_flag'].sum()}")
-        print(f"  Avg CVSS: {recommendations['cvss'].mean():.1f}")
-        print(f"  Avg Model Score: {recommendations['model_score'].mean():.2f}")
+        logger.info("="*70)
+        logger.info("Summary:")
+        logger.info(f"  Total analyzed: {len(recommendations):,}", extra={'total': len(recommendations)})
+        logger.info(f"  Healthcare CVEs: {recommendations['is_healthcare'].sum()}", extra={'healthcare_count': int(recommendations['is_healthcare'].sum())})
+        logger.info(f"  KEV-flagged: {recommendations['kev_flag'].sum()}", extra={'kev_count': int(recommendations['kev_flag'].sum())})
+        logger.info(f"  Avg CVSS: {recommendations['cvss'].mean():.1f}", extra={'avg_cvss': recommendations['cvss'].mean()})
+        logger.info(f"  Avg Model Score: {recommendations['model_score'].mean():.2f}", extra={'avg_score': recommendations['model_score'].mean()})
     
-    print("="*70)
+    logger.info("="*70)
 
 if __name__ == "__main__":
     main()
