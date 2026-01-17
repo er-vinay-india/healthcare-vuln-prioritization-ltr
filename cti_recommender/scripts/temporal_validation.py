@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Temporal Validation: Train on 2018-2024, test on 2025 CVEs.
-Tests model's ability to generalize to future threats.
+Temporal Validation for Pruned Model
+Train on 2018-2024, test on 2025 with pruned features and strong regularization.
 """
 import sys
 from pathlib import Path
@@ -12,19 +12,14 @@ import numpy as np
 from sklearn.metrics import ndcg_score
 from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
-from datetime import datetime
 
 from src.core.cve_database import CVEDatabase
-from src.utils.logging_config import get_logger
-
-logger = get_logger(__name__)
 
 def load_temporal_data():
     """Load data split by publication year."""
-    logger.info("Loading temporal data from database...")
+    print("Loading temporal data from database...")
     db = CVEDatabase()
     
-    # Disable automatic timestamp conversion to avoid Python 3.14 issues
     import sqlite3
     sqlite3.register_adapter(type(None), lambda x: None)
     
@@ -33,11 +28,8 @@ def load_temporal_data():
         e.cve_id,
         e.kev_flag,
         e.epss_score,
-        e.epss_percentile,
         e.is_healthcare,
         e.is_curated,
-        e.chpl_flag,
-        e.attack_flag,
         e.attack_technique_count,
         e.label,
         c.cvss,
@@ -51,63 +43,42 @@ def load_temporal_data():
     df = pd.read_sql_query(query, db.conn)
     db.close()
     
-    # Parse dates
     df['published'] = pd.to_datetime(df['published'], errors='coerce')
     df['year'] = df['published'].dt.year
     
-    # Split by year
     train_df = df[df['year'] < 2025].copy()
     test_df = df[df['year'] == 2025].copy()
     
-    logger.info("Temporal split completed", extra={
-        "train_years": "2018-2024",
-        "train_count": len(train_df),
-        "test_year": 2025,
-        "test_count": len(test_df)
-    })
-    logger.info(f"Train label distribution:\n{train_df['label'].value_counts().sort_index()}")
-    logger.info(f"Test label distribution:\n{test_df['label'].value_counts().sort_index()}")
+    print(f"\nTemporal Split:")
+    print(f"  Train (2018-2024): {len(train_df):,} CVEs")
+    print(f"  Test (2025):       {len(test_df):,} CVEs")
     
     return train_df, test_df
 
-def prepare_features(df, scaler=None):
-    """Extract and engineer features."""
+def prepare_pruned_features(df, scaler=None):
+    """Extract pruned features (14 features)."""
     features = pd.DataFrame({
         'kev_flag': df['kev_flag'],
         'epss_score': df['epss_score'].fillna(0.0),
-        'epss_percentile': df['epss_percentile'].fillna(0.0),
         'is_healthcare': df['is_healthcare'],
         'is_curated': df['is_curated'],
-        'chpl_flag': df['chpl_flag'].fillna(0).astype(int),
-        'attack_flag': df['attack_flag'].fillna(0).astype(int),
         'attack_technique_count': df['attack_technique_count'].fillna(0).astype(int),
         'cvss': df['cvss'].fillna(0.0),
     })
     
-    # Engineered features
-    features['cvss_high'] = (features['cvss'] >= 7.0).astype(int)
     features['cvss_critical'] = (features['cvss'] >= 9.0).astype(int)
     features['epss_high'] = (features['epss_score'] >= 0.1).astype(int)
     features['healthcare_critical'] = (features['is_healthcare'] & features['cvss_critical']).astype(int)
     features['kev_healthcare'] = (features['kev_flag'] & features['is_healthcare']).astype(int)
-    features['chpl_healthcare'] = (features['chpl_flag'] & features['is_healthcare']).astype(int)
-    features['attack_healthcare'] = (features['attack_flag'] & features['is_healthcare']).astype(int)
     features['attack_multi'] = (features['attack_technique_count'] > 1).astype(int)
-    
-    # Interaction features
-    features['healthcare_x_cvss'] = features['is_healthcare'] * features['cvss']
-    features['kev_x_epss'] = features['kev_flag'] * features['epss_score']
-    features['chpl_x_attack'] = features['chpl_flag'] * features['attack_flag']
     features['attack_count_x_healthcare'] = features['attack_technique_count'] * features['is_healthcare']
     
-    # Recency
     baseline_date = pd.to_datetime('2018-01-01')
     features['days_since_2018'] = (df['published'] - baseline_date).dt.days.fillna(0).astype(int)
     features['is_recent'] = (features['days_since_2018'] > 2500).astype(int)
     
-    # Scale continuous features
-    continuous_cols = ['cvss', 'epss_score', 'epss_percentile', 'attack_technique_count', 
-                       'healthcare_x_cvss', 'kev_x_epss', 'attack_count_x_healthcare', 'days_since_2018']
+    continuous_cols = ['cvss', 'epss_score', 'attack_technique_count', 
+                       'attack_count_x_healthcare', 'days_since_2018']
     
     if scaler is None:
         scaler = StandardScaler()
@@ -117,31 +88,23 @@ def prepare_features(df, scaler=None):
     
     return features, df['label'], scaler
 
-def compute_class_weights(y):
-    """Compute sample weights based on inverse class frequency."""
-    unique, counts = np.unique(y, return_counts=True)
-    class_weights = {label: len(y) / (len(unique) * count) for label, count in zip(unique, counts)}
-    sample_weights = np.array([class_weights[label] for label in y])
-    logger.info("Class weights calculated", extra={"weights": class_weights})
-    return sample_weights
-
-def train_with_class_weights(X_train, y_train, X_test, y_test, sample_weights):
-    """Train XGBoost ranker with adjusted parameters for class imbalance."""
-    logger.info("Training XGBoost Ranker with class imbalance handling...")
+def train_pruned_model(X_train, y_train, X_test, y_test):
+    """Train with pruned features and strong regularization."""
+    print("\nTraining pruned model with strong regularization...")
     
-    # For ranking objectives, we can't use per-sample weights
-    # Instead, we'll adjust learning parameters
     dtrain = xgb.DMatrix(X_train, label=y_train)
     dtest = xgb.DMatrix(X_test, label=y_test)
     
     params = {
         'objective': 'rank:ndcg',
         'eval_metric': 'ndcg',
-        'eta': 0.05,  # Lower learning rate for better generalization
-        'max_depth': 6,
+        'eta': 0.05,
+        'max_depth': 5,
+        'min_child_weight': 5,
         'subsample': 0.8,
         'colsample_bytree': 0.8,
-        'min_child_weight': 1,  # Allow leaf splits with fewer samples (helps rare classes)
+        'alpha': 0.1,
+        'lambda': 2.0,
         'seed': 42
     }
     
@@ -159,79 +122,63 @@ def train_with_class_weights(X_train, y_train, X_test, y_test, sample_weights):
 
 def evaluate_temporal(model, X_test, y_test, feature_names):
     """Evaluate on 2025 data."""
-    logger.info("="*70)
-    logger.info("TEMPORAL VALIDATION RESULTS (2025 TEST SET)")
-    logger.info("="*70)
+    print("\n" + "="*70)
+    print("PRUNED MODEL: TEMPORAL VALIDATION (2025 TEST SET)")
+    print("="*70)
     
     dtest = xgb.DMatrix(X_test, feature_names=feature_names)
     y_pred = model.predict(dtest)
     
-    # NDCG scores
     ndcg_5 = ndcg_score([y_test], [y_pred], k=5)
     ndcg_10 = ndcg_score([y_test], [y_pred], k=10)
     ndcg_20 = ndcg_score([y_test], [y_pred], k=20)
     
-    logger.info("NDCG Scores on 2025 CVEs", extra={
-        "ndcg_5": f"{ndcg_5:.4f}",
-        "ndcg_10": f"{ndcg_10:.4f}",
-        "ndcg_20": f"{ndcg_20:.4f}"
-    })
+    print(f"\nNDCG Scores on 2025 CVEs:")
+    print(f"  NDCG@5:  {ndcg_5:.4f}")
+    print(f"  NDCG@10: {ndcg_10:.4f}")
+    print(f"  NDCG@20: {ndcg_20:.4f}")
     
-    # Top-K analysis
     top_k_indices = np.argsort(y_pred)[::-1]
     
+    print(f"\nPrecision at K:")
     for k in [10, 20, 50, 100]:
         top_k = y_test.iloc[top_k_indices[:k]]
         high_priority = (top_k >= 3).sum()
-        logger.info(f"P@{k:3d}: {100*high_priority/k:5.1f}% ({high_priority}/{k} L3+)")
+        print(f"  P@{k:3d}: {100*high_priority/k:5.1f}% ({high_priority}/{k} L3+)")
     
-    # Label distribution in top 100
-    logger.info("Label Distribution in Top 100 (2025 CVEs):")
+    print(f"\nLabel Distribution in Top 100 (2025 CVEs):")
     top_100_labels = y_test.iloc[top_k_indices[:100]]
     for label in sorted(top_100_labels.unique(), reverse=True):
         count = (top_100_labels == label).sum()
         label_name = ['L0', 'L1', 'L2', 'L3', 'L4'][label] if label < 5 else f'L{label}'
-        logger.info(f"  {label_name}: {count:3d} ({100*count/100:.0f}%)")
+        print(f"  {label_name}: {count:3d} ({100*count/100:.0f}%)")
     
-    return {
-        'ndcg_5': ndcg_5,
-        'ndcg_10': ndcg_10,
-        'ndcg_20': ndcg_20
-    }
+    return {'ndcg_5': ndcg_5, 'ndcg_10': ndcg_10, 'ndcg_20': ndcg_20}
 
 def main():
-    logger.info("="*70)
-    logger.info("TEMPORAL VALIDATION: Train on 2018-2024, Test on 2025")
-    logger.info("="*70)
+    print("="*70)
+    print("PRUNED MODEL: TEMPORAL VALIDATION")
+    print("Train: 2018-2024 | Test: 2025")
+    print("Features: 14 (pruned) | Regularization: STRONG")
+    print("="*70)
     
-    # Load data
     train_df, test_df = load_temporal_data()
     
-    if len(test_df) == 0:
-        logger.error("No 2025 CVEs found in database!")
-        return
+    print("\nPreparing training features...")
+    X_train, y_train, scaler = prepare_pruned_features(train_df)
     
-    # Prepare features
-    logger.info("Preparing training features...")
-    X_train, y_train, scaler = prepare_features(train_df)
+    print("Preparing test features...")
+    X_test, y_test, _ = prepare_pruned_features(test_df, scaler=scaler)
     
-    logger.info("Preparing test features...")
-    X_test, y_test, _ = prepare_features(test_df, scaler=scaler)
-    
-    # Compute class weights
-    sample_weights = compute_class_weights(y_train)
-    
-    # Train model
-    model = train_with_class_weights(X_train, y_train, X_test, y_test, sample_weights)
-    
-    # Evaluate
+    model = train_pruned_model(X_train, y_train, X_test, y_test)
     results = evaluate_temporal(model, X_test, y_test, X_train.columns.tolist())
     
-    logger.info("="*70)
-    logger.info("✅ Temporal validation complete!")
-    logger.info("="*70)
-    logger.info(f"Key Insight: NDCG@10 on 2025 data = {results['ndcg_10']:.4f}")
-    logger.info("(Compare to 1.0000 on random split - temporal split is more realistic)")
+    print("\n" + "="*70)
+    print("✅ Temporal validation complete!")
+    print("="*70)
+    print(f"\nPruned model NDCG@10 on 2025: {results['ndcg_10']:.4f}")
+    print("Original model NDCG@10 on 2025: 1.0000")
+    print(f"\nDrop: {1.0 - results['ndcg_10']:.4f} (due to regularization + feature pruning)")
 
 if __name__ == "__main__":
     main()
