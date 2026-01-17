@@ -170,7 +170,9 @@ class HealthcareMapper:
         
         for vendor_key, patterns in self.vendor_patterns.items():
             for pattern in patterns:
-                if pattern in text_lower:
+                # Use word boundaries to avoid false positives like "epic fail" matching "epic"
+                regex_pattern = r'\b' + re.escape(pattern) + r'\b'
+                if re.search(regex_pattern, text_lower):
                     return vendor_key
         
         return None

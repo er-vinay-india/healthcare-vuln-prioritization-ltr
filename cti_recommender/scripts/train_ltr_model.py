@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import ndcg_score, precision_score, recall_score
+from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 import pickle
 from datetime import datetime
@@ -91,10 +92,18 @@ def prepare_features(df):
     features['days_since_2018'] = (df['published'] - baseline_date).dt.days.fillna(0).astype(int)
     features['is_recent'] = (features['days_since_2018'] > 2500).astype(int)  # ~7 years
     
+    # Apply feature scaling to continuous variables
+    continuous_cols = ['cvss', 'epss_score', 'epss_percentile', 'attack_technique_count', 
+                       'healthcare_x_cvss', 'kev_x_epss', 'attack_count_x_healthcare', 'days_since_2018']
+    
+    scaler = StandardScaler()
+    features[continuous_cols] = scaler.fit_transform(features[continuous_cols])
+    
     print(f"Created {len(features.columns)} features:")
     print(f"  - {list(features.columns)}")
+    print(f"Applied StandardScaler to {len(continuous_cols)} continuous features")
     
-    return features, df['label']
+    return features, df['label'], scaler
 
 def train_model(X_train, y_train, X_test, y_test):
     """Train XGBoost ranker model."""
@@ -177,7 +186,7 @@ def evaluate_model(model, X_test, y_test, feature_names):
         'y_pred': y_pred
     }
 
-def save_model(model, feature_names, metrics):
+def save_model(model, feature_names, metrics, scaler):
     """Save trained model and metadata."""
     output_dir = Path(__file__).parent.parent / 'models'
     output_dir.mkdir(exist_ok=True)
@@ -189,16 +198,18 @@ def save_model(model, feature_names, metrics):
     model.save_model(str(model_path))
     print(f"\nModel saved: {model_path}")
     
-    # Save metadata
+    # Save metadata including scaler
     metadata = {
         'feature_names': feature_names,
         'metrics': metrics,
+        'scaler': scaler,
         'training_date': datetime.now().isoformat(),
         'model_type': 'xgboost_ranker'
     }
     with open(metadata_path, 'wb') as f:
         pickle.dump(metadata, f)
     print(f"Metadata saved: {metadata_path}")
+    print(f"Scaler saved in metadata for inference")
 
 def main():
     print("="*70)
@@ -209,7 +220,7 @@ def main():
     df = load_training_data()
     
     # Prepare features and labels
-    X, y = prepare_features(df)
+    X, y, scaler = prepare_features(df)
     feature_names = list(X.columns)
     
     print(f"\nLabel distribution:")
@@ -232,8 +243,8 @@ def main():
     # Evaluate
     metrics = evaluate_model(model, X_test, y_test, feature_names)
     
-    # Save model
-    save_model(model, feature_names, metrics)
+    # Save model with scaler
+    save_model(model, feature_names, metrics, scaler)
     
     print("\n" + "="*70)
     print("✅ Training complete!")

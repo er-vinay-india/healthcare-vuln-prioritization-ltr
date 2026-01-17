@@ -34,8 +34,14 @@ class HealthcareCVERecommender:
             self.metadata = pickle.load(f)
         
         self.feature_names = self.metadata['feature_names']
+        self.scaler = self.metadata.get('scaler', None)
+        
         print(f"Loaded model trained on {self.metadata['training_date'][:10]}")
         print(f"Model performance: NDCG@10 = {self.metadata['metrics']['ndcg_10']:.4f}")
+        if self.scaler is not None:
+            print(f"Feature scaler loaded for inference")
+        else:
+            print(f"⚠️  Warning: No scaler found in metadata (old model?)")
     
     def prepare_features(self, df):
         """Extract features from CVE dataframe (same as training)."""
@@ -75,6 +81,12 @@ class HealthcareCVERecommender:
             features['days_since_2018'] = 0
             features['is_recent'] = 0
         
+        # Apply same scaling as training
+        if self.scaler is not None:
+            continuous_cols = ['cvss', 'epss_score', 'epss_percentile', 'attack_technique_count',
+                             'healthcare_x_cvss', 'kev_x_epss', 'attack_count_x_healthcare', 'days_since_2018']
+            features[continuous_cols] = self.scaler.transform(features[continuous_cols])
+        
         return features[self.feature_names]
     
     def recommend(self, df, top_k=50):
@@ -102,27 +114,29 @@ class HealthcareCVERecommender:
         # Get recent CVEs
         cutoff_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
         
-        query = f"""
+        query = """
         SELECT 
             e.cve_id,
             e.kev_flag,
             e.epss_score,
             e.epss_percentile,
             e.is_healthcare,
-            e.is_curated,            e.chpl_flag,
+            e.is_curated,
+            e.chpl_flag,
             e.attack_flag,
-            e.attack_technique_count,            e.label,
+            e.attack_technique_count,
+            e.label,
             c.cvss,
             CAST(c.published AS TEXT) as published_str,
             c.description
         FROM enrichments e
         LEFT JOIN cves c ON e.cve_id = c.cve_id
-        WHERE c.published >= '{cutoff_date}'
-          AND c.cvss >= {min_cvss}
+        WHERE c.published >= ?
+          AND c.cvss >= ?
         ORDER BY c.published DESC
         """
         
-        df = pd.read_sql_query(query, db.conn)
+        df = pd.read_sql_query(query, db.conn, params=[cutoff_date, min_cvss])
         db.close()
         
         if len(df) == 0:

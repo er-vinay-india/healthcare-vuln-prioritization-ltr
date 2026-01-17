@@ -13,10 +13,13 @@ Traditional vulnerability management relies on CVSS scores alone. This system co
 - **CHPL** - 6,900 certified healthcare IT products
 
 **Current Performance:**
-- ✅ Precision@20: 50-60% healthcare relevance
-- ✅ KEV Detection: 15% (3/20 in top recommendations)
-- ✅ Multi-source integration: 4 data sources
-- ✅ Phase 1 complete: Data quality validated
+- ✅ Model: NDCG@10=0.75, P@100=100%
+- ✅ Multi-source: 6 authoritative sources (NVD, KEV, EPSS, Healthcare, ATT&CK, CHPL)
+- ✅ Database: 226,320 CVEs (2018-2025)
+- ✅ Healthcare coverage: 125,606 CVEs (55.5%)
+- ✅ ATT&CK mapping: 83,574 CVEs (36.9%)
+- ✅ CHPL integration: 706 products, 5,089 CVEs matched
+- ✅ Ablation study: +27.5% NDCG improvement vs baseline
 
 ---
 
@@ -282,5 +285,5 @@ For issues or questions:
 ---
 
 **Last Updated:** 2026-01-17  
-**Version:** 1.0.0  
-**Status:** Phase 1 Complete ✅
+**Version:** 2.0.0  
+**Status:** Phase 4 Complete ✅ - Production-Ready with Improvements

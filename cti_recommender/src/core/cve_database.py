@@ -68,12 +68,24 @@ class CVEDatabase:
                 curated_severity TEXT,
                 healthcare_score REAL,
                 attack_flag INTEGER DEFAULT 0,
+                attack_technique_count INTEGER DEFAULT 0,
                 chpl_flag INTEGER DEFAULT 0,
                 label INTEGER DEFAULT 0,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (cve_id) REFERENCES cves(cve_id) ON DELETE CASCADE
             )
         """)
+        
+        # Add attack_technique_count column if it doesn't exist (migration for existing DBs)
+        try:
+            cursor.execute("""
+                ALTER TABLE enrichments ADD COLUMN attack_technique_count INTEGER DEFAULT 0
+            """)
+            self.conn.commit()
+            logger.info("Added attack_technique_count column to enrichments table")
+        except sqlite3.OperationalError:
+            # Column already exists
+            pass
         
         # Fetch tracking log
         cursor.execute("""
@@ -139,21 +151,31 @@ class CVEDatabase:
             # Store full row as JSON for future reference
             raw_json = row.to_json()
             
-            cursor.execute("""
-                INSERT INTO cves (cve_id, published, modified, description, cvss, cvss_vector, cwe, raw_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(cve_id) DO UPDATE SET
-                    modified = excluded.modified,
-                    description = excluded.description,
-                    cvss = excluded.cvss,
-                    cvss_vector = excluded.cvss_vector,
-                    cwe = excluded.cwe,
-                    raw_json = excluded.raw_json
-            """, (cve_id, published, modified, description, cvss, cvss_vector, cwe, raw_json))
-            count += 1
+            try:
+                cursor.execute("""
+                    INSERT INTO cves (cve_id, published, modified, description, cvss, cvss_vector, cwe, raw_json)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(cve_id) DO UPDATE SET
+                        modified = excluded.modified,
+                        description = excluded.description,
+                        cvss = excluded.cvss,
+                        cvss_vector = excluded.cvss_vector,
+                        cwe = excluded.cwe,
+                        raw_json = excluded.raw_json
+                """, (cve_id, published, modified, description, cvss, cvss_vector, cwe, raw_json))
+                count += 1
+            except sqlite3.IntegrityError as e:
+                logger.error(f"Integrity error for CVE {cve_id}: {e}")
+                continue
         
-        self.conn.commit()
-        logger.info(f"Upserted {count} CVEs to database")
+        try:
+            self.conn.commit()
+            logger.info(f"Upserted {count} CVEs to database")
+        except Exception as e:
+            logger.error(f"Commit failed: {e}")
+            self.conn.rollback()
+            raise
+        
         return count
     
     def upsert_enrichments(self, df: pd.DataFrame) -> int:
@@ -307,7 +329,8 @@ class CVEDatabase:
         query += " ORDER BY c.published DESC"
         
         if limit:
-            query += f" LIMIT {limit}"
+            query += " LIMIT ?"
+            params.append(limit)
         
         df = pd.read_sql_query(query, self.conn, params=params)
         logger.info(f"Queried {len(df)} CVEs from database")
