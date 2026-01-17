@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Backfill historical CVE data from NVD (2018-2024)
+Backfill historical CVE data from NVD (2018-2025)
 Fetches data in monthly chunks with rate limiting
 """
 
@@ -23,7 +23,7 @@ from src.core import cti_recommender
 
 # Configuration
 START_YEAR = 2018
-END_YEAR = 2024
+END_YEAR = 2025
 DB_PATH = Path("data/cve_database.db")
 
 
