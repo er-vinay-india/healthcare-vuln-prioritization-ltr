@@ -69,6 +69,7 @@ class CVEDatabase:
                 healthcare_score REAL,
                 attack_flag INTEGER DEFAULT 0,
                 chpl_flag INTEGER DEFAULT 0,
+                label INTEGER DEFAULT 0,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (cve_id) REFERENCES cves(cve_id) ON DELETE CASCADE
             )
@@ -186,6 +187,7 @@ class CVEDatabase:
                 'healthcare_score': row.get('healthcare_score'),
                 'attack_flag': row.get('attack_flag', 0),
                 'chpl_flag': row.get('chpl_flag', 0),
+                'label': row.get('label', 0),
             }
             
             # Filter out None values

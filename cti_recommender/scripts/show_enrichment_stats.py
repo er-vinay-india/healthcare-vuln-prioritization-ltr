@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 """Show enrichment summary and sample high-priority CVEs"""
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from src.core.cve_database import CVEDatabase
 import pandas as pd
 
@@ -41,7 +45,7 @@ print(f'\n' + '='*70)
 print('SAMPLE HIGH-PRIORITY CVEs (Label 3+)')
 print('='*70)
 sample_query = '''
-    SELECT c.cve_id, c.cvss, e.epss_score, e.kev_flag, e.healthcare_flag, e.label
+    SELECT c.cve_id, c.cvss, e.epss_score, e.kev_flag, e.is_healthcare, e.label
     FROM cves c
     JOIN enrichments e ON c.cve_id = e.cve_id
     WHERE e.label >= 3
