@@ -62,21 +62,22 @@ cti_recommender/
 │
 ├── data_cache/                   # API response cache (auto-generated)
 ├── outputs/                      # Generated results
-│   ├── top20_recalibrated.csv   # Current top-20 recommendations
-│   ├── top_scored.csv           # Full scored dataset
-│   └── phase1_quality_report.txt
+│   ├── top_scored.csv           # Scored CVEs
+│   └── plots/                   # Analysis plots
 │
 ├── docs/                         # Documentation
-│   ├── PHASE1_SUMMARY.md        # Phase 1 audit results
-│   ├── PHASE1_FIXES.md          # Bug fixes & calibration
-│   ├── RESEARCH_CONTEXT.md      # Literature review & gaps
-│   └── reports/                 # Generated reports & plots
+│   ├── README.md                # Documentation index
+│   ├── QUICKSTART.md            # Installation & basic usage
+│   ├── API.md                   # REST API & Docker deployment
+│   ├── DEVELOPMENT.md           # Development guide
+│   ├── RESEARCH_CONTEXT.md      # Literature review
+│   └── reports/                 # Generated analysis reports
 │
 ├── archive/                      # Archived/unused files
-│   ├── adhoc_scripts/           # Consolidated/deprecated scripts (Phase 2)
+│   ├── adhoc_scripts/           # Consolidated scripts (Phase 2)
+│   ├── historical_docs/         # Old documentation
 │   ├── notebooks/               # Old experiment notebooks
-│   ├── experiments/             # Experimental scripts
-│   └── titanic_data/            # Unrelated Kaggle data
+│   └── experiments/             # Experimental scripts
 │
 ├── requirements.txt             # Python dependencies
 └── README.md                    # This file
@@ -86,6 +87,8 @@ cti_recommender/
 
 ## 🚀 Quick Start
 
+**For detailed installation and usage instructions, see [docs/QUICKSTART.md](docs/QUICKSTART.md)**
+
 ### 1. Setup Environment
 
 ```bash
@@ -94,7 +97,7 @@ git clone https://github.com/er-vinay-india/cti-recommender.git
 cd cti_recommender
 
 # Create virtual environment
-python3.14 -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
@@ -299,6 +302,19 @@ python -m pytest tests/test_attack_mapping.py -v
 
 ---
 
+## 📚 Documentation
+
+**Complete documentation available in [docs/](docs/) directory:**
+
+- **[Quick Start](docs/QUICKSTART.md)** - Installation and basic usage
+- **[API Guide](docs/API.md)** - REST API and Docker deployment
+- **[Development Guide](docs/DEVELOPMENT.md)** - Contributing and development setup
+- **[Architecture Guide](ARCHITECTURE_GUIDE.md)** - System architecture and design
+- **[Migration Guide](MIGRATION_GUIDE.md)** - Upgrading from older versions
+- **[Research Context](docs/RESEARCH_CONTEXT.md)** - Academic background and literature review
+
+---
+
 ## 🤝 Contributing
 
 This is a research project. Contributions welcome for:
@@ -306,6 +322,8 @@ This is a research project. Contributions welcome for:
 - CHPL API workarounds
 - Label quality improvements
 - Evaluation metrics
+
+**See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for development guidelines.**
 
 ---
 
@@ -334,8 +352,9 @@ This is a research project. Contributions welcome for:
 ## 🆘 Support
 
 For issues or questions:
-- GitHub Issues: https://github.com/er-vinay-india/cti-recommender/issues
-- Email: [your-email]
+- **Documentation**: See [docs/README.md](docs/README.md) for complete documentation index
+- **GitHub Issues**: https://github.com/er-vinay-india/cti-recommender/issues
+- **Email**: [your-email]
 
 ---
 
