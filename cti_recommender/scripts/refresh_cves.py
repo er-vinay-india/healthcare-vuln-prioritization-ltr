@@ -19,6 +19,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.core.cve_database import CVEDatabase
 from src.core import cti_recommender
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 DB_PATH = Path("data/cve_database.db")
 
 
@@ -35,35 +43,35 @@ def refresh_cves(api_key: str = None, days_back: int = None):
     if api_key is None:
         api_key = os.environ.get("NVD_API_KEY")
     
-    print(f"\n{'='*70}")
-    print("CVE DATABASE REFRESH")
-    print(f"{'='*70}\n")
+    logger.info("="*70)
+    logger.info("CVE DATABASE REFRESH")
+    logger.info("="*70)
     
     # Initialize database
-    print(f"Database: {DB_PATH}")
+    logger.info(f"Database: {DB_PATH}")
     db = CVEDatabase(DB_PATH)
     
     # Determine fetch date range
     if days_back:
         start_date = datetime.now(timezone.utc) - timedelta(days=days_back)
-        print(f"Manual mode: Fetching last {days_back} days")
+        logger.info(f"Manual mode: Fetching last {days_back} days", extra={'days_back': days_back})
     else:
         last_fetch = db.get_last_fetch_date(fetch_type='weekly')
         
         if last_fetch:
             start_date = last_fetch
-            print(f"Last fetch: {start_date.isoformat()}")
+            logger.info(f"Last fetch: {start_date.isoformat()}")
         else:
             # First time - fetch last 7 days
             start_date = datetime.now(timezone.utc) - timedelta(days=7)
-            print(f"First run: Fetching last 7 days")
+            logger.info("First run: Fetching last 7 days")
     
     end_date = datetime.now(timezone.utc)
     
     start_str = start_date.strftime("%Y-%m-%d")
     end_str = end_date.strftime("%Y-%m-%d")
     
-    print(f"Fetching CVEs: {start_str} to {end_str}\n")
+    logger.info(f"Fetching CVEs: {start_str} to {end_str}", extra={'start_date': start_str, 'end_date': end_str})
     
     try:
         # Fetch new CVEs
@@ -74,7 +82,7 @@ def refresh_cves(api_key: str = None, days_back: int = None):
         )
         
         if df.empty:
-            print("✓ No new CVEs found")
+            logger.info("✓ No new CVEs found")
             db.log_fetch(
                 start_date=start_str,
                 end_date=end_str,
@@ -83,7 +91,7 @@ def refresh_cves(api_key: str = None, days_back: int = None):
                 status='success'
             )
         else:
-            print(f"\nInserting {len(df)} CVEs into database...")
+            logger.info(f"Inserting {len(df)} CVEs into database...", extra={'cve_count': len(df)})
             count = db.upsert_cves(df)
             
             db.log_fetch(
@@ -94,17 +102,17 @@ def refresh_cves(api_key: str = None, days_back: int = None):
                 status='success'
             )
             
-            print(f"✓ Successfully added/updated {count} CVEs")
+            logger.info(f"✓ Successfully added/updated {count} CVEs", extra={'upserted_count': count})
         
-        print(f"\n{'='*70}")
-        print("REFRESH COMPLETE")
-        print(f"{'='*70}\n")
+        logger.info("="*70)
+        logger.info("REFRESH COMPLETE")
+        logger.info("="*70)
         
         # Show updated stats
         db.print_summary()
         
     except Exception as e:
-        print(f"\n✗ ERROR: {e}")
+        logger.error(f"✗ ERROR: {e}")
         db.log_fetch(
             start_date=start_str,
             end_date=end_str,
@@ -119,7 +127,7 @@ def refresh_cves(api_key: str = None, days_back: int = None):
 
 
 if __name__ == "__main__":
-    print("""
+    logger.info("""
 ╔══════════════════════════════════════════════════════════════════╗
 ║                   WEEKLY CVE REFRESH                             ║
 ║              Update database with new CVEs                       ║
@@ -129,18 +137,18 @@ if __name__ == "__main__":
     # Check for API key
     api_key = os.environ.get("NVD_API_KEY")
     if api_key:
-        print(f"✓ NVD API Key: {'*' * 20}{api_key[-4:]}")
+        logger.info(f"✓ NVD API Key: {'*' * 20}{api_key[-4:]}")
     else:
-        print("⚠️  NVD API Key: Not found (rate limited to 5 req/30s)")
+        logger.warning("⚠️  NVD API Key: Not found (rate limited to 5 req/30s)")
     
     # Parse command line args
     days_back = None
     if len(sys.argv) > 1:
         try:
             days_back = int(sys.argv[1])
-            print(f"   Override: Fetching last {days_back} days")
+            logger.info(f"   Override: Fetching last {days_back} days", extra={'days_back': days_back})
         except ValueError:
-            print(f"   Invalid argument: {sys.argv[1]}")
+            logger.error(f"   Invalid argument: {sys.argv[1]}")
             sys.exit(1)
     
     refresh_cves(api_key, days_back)
