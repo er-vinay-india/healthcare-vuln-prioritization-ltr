@@ -222,8 +222,8 @@ def enrich_database(batch_size: int = 5000, limit: int = None):
                 'cve_id': row['cve_id'],
                 'kev_flag': row['kev_flag'],
                 'epss_score': row['epss_score'],
-                'healthcare_flag': row['is_healthcare'],
-                'curated_flag': row['is_curated'],
+                'is_healthcare': row['is_healthcare'],  # Fixed: was 'healthcare_flag'
+                'is_curated': row['is_curated'],        # Fixed: was 'curated_flag'
                 'label': row['label']
             })
         

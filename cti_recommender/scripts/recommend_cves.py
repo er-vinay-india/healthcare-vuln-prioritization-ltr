@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+"""
+Healthcare CVE Recommender - Production interface for ranking CVEs by healthcare relevance.
+Uses trained LTR model to score and recommend high-priority vulnerabilities.
+"""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+import pandas as pd
+import numpy as np
+import xgboost as xgb
+import pickle
+from datetime import datetime, timedelta
+
+from src.core.cve_database import CVEDatabase
+
+class HealthcareCVERecommender:
+    """Recommender system for healthcare CVEs using trained LTR model."""
+    
+    def __init__(self, model_path=None, metadata_path=None):
+        """Initialize recommender with trained model."""
+        if model_path is None:
+            model_dir = Path(__file__).parent.parent / 'models'
+            model_path = model_dir / 'ltr_ranker.model'
+            metadata_path = model_dir / 'ltr_metadata.pkl'
+        
+        # Load model
+        self.model = xgb.Booster()
+        self.model.load_model(str(model_path))
+        
+        # Load metadata
+        with open(metadata_path, 'rb') as f:
+            self.metadata = pickle.load(f)
+        
+        self.feature_names = self.metadata['feature_names']
+        print(f"Loaded model trained on {self.metadata['training_date'][:10]}")
+        print(f"Model performance: NDCG@10 = {self.metadata['metrics']['ndcg_10']:.4f}")
+    
+    def prepare_features(self, df):
+        """Extract features from CVE dataframe (same as training)."""
+        features = pd.DataFrame({
+            'kev_flag': df['kev_flag'],
+            'epss_score': df['epss_score'].fillna(0.0),
+            'epss_percentile': df['epss_percentile'].fillna(0.0),
+            'is_healthcare': df['is_healthcare'],
+            'is_curated': df['is_curated'],
+            'cvss': df['cvss'].fillna(0.0),
+        })
+        
+        # Engineered features
+        features['cvss_high'] = (features['cvss'] >= 7.0).astype(int)
+        features['cvss_critical'] = (features['cvss'] >= 9.0).astype(int)
+        features['epss_high'] = (features['epss_score'] >= 0.1).astype(int)
+        features['healthcare_critical'] = (features['is_healthcare'] & features['cvss_critical']).astype(int)
+        features['kev_healthcare'] = (features['kev_flag'] & features['is_healthcare']).astype(int)
+        features['healthcare_x_cvss'] = features['is_healthcare'] * features['cvss']
+        features['kev_x_epss'] = features['kev_flag'] * features['epss_score']
+        
+        # Recency
+        if 'published_str' in df.columns:
+            df['published'] = pd.to_datetime(df['published_str'], errors='coerce')
+            baseline_date = pd.to_datetime('2018-01-01')
+            features['days_since_2018'] = (df['published'] - baseline_date).dt.days.fillna(0).astype(int)
+            features['is_recent'] = (features['days_since_2018'] > 2500).astype(int)
+        else:
+            features['days_since_2018'] = 0
+            features['is_recent'] = 0
+        
+        return features[self.feature_names]
+    
+    def recommend(self, df, top_k=50):
+        """Recommend top-K CVEs from dataframe."""
+        # Prepare features
+        X = self.prepare_features(df)
+        
+        # Predict scores
+        dmatrix = xgb.DMatrix(X, feature_names=self.feature_names)
+        scores = self.model.predict(dmatrix)
+        
+        # Add scores to dataframe
+        df = df.copy()
+        df['model_score'] = scores
+        
+        # Sort by score (descending) and return top K
+        df_ranked = df.sort_values('model_score', ascending=False).head(top_k)
+        
+        return df_ranked
+    
+    def recommend_from_db(self, days_back=30, top_k=50, min_cvss=0.0):
+        """Recommend recent CVEs from database."""
+        db = CVEDatabase()
+        
+        # Get recent CVEs
+        cutoff_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
+        
+        query = f"""
+        SELECT 
+            e.cve_id,
+            e.kev_flag,
+            e.epss_score,
+            e.epss_percentile,
+            e.is_healthcare,
+            e.is_curated,
+            e.label,
+            c.cvss,
+            CAST(c.published AS TEXT) as published_str,
+            c.description
+        FROM enrichments e
+        LEFT JOIN cves c ON e.cve_id = c.cve_id
+        WHERE c.published >= '{cutoff_date}'
+          AND c.cvss >= {min_cvss}
+        ORDER BY c.published DESC
+        """
+        
+        df = pd.read_sql_query(query, db.conn)
+        db.close()
+        
+        if len(df) == 0:
+            print(f"No CVEs found in last {days_back} days with CVSS >= {min_cvss}")
+            return pd.DataFrame()
+        
+        print(f"Analyzing {len(df):,} CVEs from last {days_back} days...")
+        
+        # Get recommendations
+        recommendations = self.recommend(df, top_k=top_k)
+        
+        return recommendations
+
+def main():
+    """Demo: Recommend recent healthcare CVEs."""
+    print("="*70)
+    print("HEALTHCARE CVE RECOMMENDER")
+    print("="*70)
+    
+    # Initialize recommender
+    recommender = HealthcareCVERecommender()
+    
+    # Get recommendations for last 30 days
+    print("\nTop 20 healthcare CVEs from last 30 days:")
+    print("="*70)
+    
+    recommendations = recommender.recommend_from_db(days_back=30, top_k=20, min_cvss=7.0)
+    
+    if len(recommendations) > 0:
+        # Display recommendations
+        display_cols = ['cve_id', 'cvss', 'model_score', 'kev_flag', 'is_healthcare', 'label', 'published_str']
+        print(recommendations[display_cols].to_string(index=False))
+        
+        # Summary statistics
+        print(f"\n" + "="*70)
+        print(f"Summary:")
+        print(f"  Total analyzed: {len(recommendations):,}")
+        print(f"  Healthcare CVEs: {recommendations['is_healthcare'].sum()}")
+        print(f"  KEV-flagged: {recommendations['kev_flag'].sum()}")
+        print(f"  Avg CVSS: {recommendations['cvss'].mean():.1f}")
+        print(f"  Avg Model Score: {recommendations['model_score'].mean():.2f}")
+    
+    print("="*70)
+
+if __name__ == "__main__":
+    main()
