@@ -1,4 +1,4 @@
-# 🚀 Quick Start Guide
+# Quick Start Guide
 
 **Last Updated:** 2026-01-17  
 **Version:** 2.0.0
@@ -288,4 +288,4 @@ pip install -r requirements.txt --upgrade
 
 ---
 
-✅ **You're all set!** Start with Step 1 above to enrich your CVE database.
+- **You're all set!** Start with Step 1 above to enrich your CVE database.

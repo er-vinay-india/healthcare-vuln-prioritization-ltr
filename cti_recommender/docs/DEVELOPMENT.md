@@ -1,4 +1,4 @@
-# 🔧 Development Guide
+# Development Guide
 
 **Last Updated:** 2026-01-17  
 **Version:** 2.0.0

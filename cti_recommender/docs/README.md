@@ -1,11 +1,11 @@
-# 📚 Documentation Index
+# Documentation Index
 
 **Last Updated:** 2026-01-26  
 **CTI Recommender Version:** 2.0.0
 
 ---
 
-## 🏗️ Architecture Diagrams
+## Architecture Diagrams
 
 | Diagram | Description |
 |---------|-------------|
@@ -14,7 +14,7 @@
 | [LTR Model](diagrams/ltr_model.svg) | Learning-to-Rank model structure |
 | [Examiner Flowchart](diagrams/examiner_flowchart.svg) | High-level system overview |
 
-> 📂 Mermaid source files available in [diagrams/](diagrams/)
+> Mermaid source files available in [diagrams/](diagrams/)
 
 ---
 
@@ -122,4 +122,4 @@ docs/
 
 ---
 
-✅ Start with [QUICKSTART.md](QUICKSTART.md) for installation and basic usage.
+- Start with [QUICKSTART.md](QUICKSTART.md) for installation and basic usage.

@@ -37,7 +37,7 @@ Total Score = KEV flag          (weight: 0.28)   ← Highest weight!
 - `label`: 3
 - `cvss`: 9.8
 - `is_healthcare`: 0 ❌
-- `kev_flag`: 1 ✅
+- `kev_flag`: 1 
 - `epss_score`: 0.85
 
 **Score Calculation:**
@@ -59,7 +59,7 @@ TOTAL          : 0.797
 
 **Hypothetical Healthcare CVE (not #1):**
 - `cvss`: 9.8
-- `is_healthcare`: 1 ✅
+- `is_healthcare`: 1 
 - `kev_flag`: 0 ❌
 - `epss_score`: 0.15
 

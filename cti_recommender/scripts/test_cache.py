@@ -35,7 +35,7 @@ def test_cache_status(verbose=False):
     total_size = 0
     total_files = 0
     
-    print("\n📊 Current Cache Status:")
+    print("\nCurrent Cache Status:")
     print("-" * 70)
     for source, info in cache_info.items():
         if info['exists']:
@@ -147,7 +147,7 @@ def test_cache_operations_dry_run():
     cache_mgr = CacheManager()
     cache_info = cache_mgr.get_cache_info()
     
-    print("\n🔧 Available Cache Operations:")
+    print("\nAvailable Cache Operations:")
     print("-" * 70)
     
     # Operation 1: Clear specific cache (simulation)

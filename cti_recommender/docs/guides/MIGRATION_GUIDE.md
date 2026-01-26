@@ -1,4 +1,4 @@
-# 🔄 Migration Guide: Phase 2 Refactoring
+# Migration Guide: Phase 2 Refactoring
 
 **Last Updated:** 2025-01-18  
 **Version:** 2.0.0  
@@ -69,7 +69,7 @@ python scripts/analyze/ablation_study.py
 
 ---
 
-## 🔄 Workflow Migration
+## Workflow Migration
 
 ### Old Workflow (9 Steps - Phase 1)
 
@@ -110,7 +110,7 @@ python scripts/temporal_validation_old.py
 
 ---
 
-### New Workflow (4 Steps - Phase 2) ✅
+### New Workflow (4 Steps - Phase 2) 
 
 ```bash
 # 1. Enrich CVEs (single consolidated pipeline)
@@ -127,10 +127,10 @@ python scripts/analyze/enrichment_stats.py
 ```
 
 **Benefits:**
-- ✅ Single enrichment pass (6x faster)
-- ✅ Fewer manual steps (less error-prone)
-- ✅ Optional flags: `--skip-attack`, `--skip-chpl`
-- ✅ Better logging and progress tracking
+- - Single enrichment pass (6x faster)
+- - Fewer manual steps (less error-prone)
+- - Optional flags: `--skip-attack`, `--skip-chpl`
+- - Better logging and progress tracking
 
 ---
 
@@ -296,7 +296,7 @@ python scripts/analyze/medical_terms.py
 
 ---
 
-## ⚙️ Configuration Changes
+## Configuration Changes
 
 ### Database Schema
 
@@ -376,7 +376,7 @@ from scripts.train_ltr import train_model
 
 ---
 
-## 📊 Performance Comparison
+## Performance Comparison
 
 ### Enrichment Pipeline Speed
 
@@ -398,7 +398,7 @@ from scripts.train_ltr import train_model
 
 ---
 
-## 🎯 Quick Migration Checklist
+## Quick Migration Checklist
 
 - [ ] Read this migration guide
 - [ ] Update script references in your code
@@ -411,7 +411,7 @@ from scripts.train_ltr import train_model
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
 - **REFACTORING_PLAN.md** - Comprehensive technical debt analysis
 - **archive/adhoc_scripts/README.md** - Why scripts were archived
@@ -421,7 +421,7 @@ from scripts.train_ltr import train_model
 
 ---
 
-## 🆘 Need Help?
+## Need Help?
 
 If you encounter issues during migration:
 
@@ -438,4 +438,4 @@ If you encounter issues during migration:
 
 ---
 
-✅ **Migration complete!** Your workflow should now be simpler, faster, and more maintainable.
+- **Migration complete!** Your workflow should now be simpler, faster, and more maintainable.

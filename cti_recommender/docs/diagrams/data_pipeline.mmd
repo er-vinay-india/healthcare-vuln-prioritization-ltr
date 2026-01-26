@@ -1,13 +1,13 @@
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e8e8e8', 'primaryTextColor': '#000000', 'primaryBorderColor': '#333333', 'secondaryColor': '#f5f5f5', 'secondaryTextColor': '#000000', 'tertiaryColor': '#ffffff', 'tertiaryTextColor': '#000000', 'lineColor': '#333333', 'textColor': '#000000', 'background': '#ffffff', 'mainBkg': '#f0f0f0', 'nodeBorder': '#333333', 'clusterBkg': '#f8f8f8', 'clusterBorder': '#666666', 'titleColor': '#000000'}}}%%
 flowchart LR
-    subgraph Ingest["1️⃣ Data Ingestion"]
+    subgraph Ingest["1. Data Ingestion"]
         direction TB
         A1["Fetch NVD CVEs<br/>(2018-2025)"]
         A2["Load to SQLite"]
         A1 --> A2
     end
 
-    subgraph Enrich["2️⃣ Enrichment Pipeline"]
+    subgraph Enrich["2. Enrichment Pipeline"]
         direction TB
         B1["EPSS Scores"]
         B2["KEV Lookup"]
@@ -21,7 +21,7 @@ flowchart LR
         B5 --> B6
     end
 
-    subgraph Features["3️⃣ Feature Engineering"]
+    subgraph Features["3. Feature Engineering"]
         direction TB
         C1["14 Features Extracted"]
         C2["cvss_score"]
@@ -38,7 +38,7 @@ flowchart LR
         C1 --> C7
     end
 
-    subgraph Train["4️⃣ Model Training"]
+    subgraph Train["4. Model Training"]
         direction TB
         D1["Temporal Split<br/>Train: 2018-2023<br/>Test: 2024"]
         D2["Create Labels<br/>KEV + High CVSS"]
@@ -47,7 +47,7 @@ flowchart LR
         D1 --> D2 --> D3 --> D4
     end
 
-    subgraph Eval["5️⃣ Evaluation"]
+    subgraph Eval["5. Evaluation"]
         direction TB
         E1["NDCG@K"]
         E2["Precision@K"]
@@ -55,7 +55,7 @@ flowchart LR
         E4["Feature Importance"]
     end
 
-    subgraph Output["6️⃣ Output"]
+    subgraph Output["6. Output"]
         direction TB
         F1["Ranked CVE List"]
         F2["Top-20 Healthcare"]

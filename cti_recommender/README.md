@@ -2,7 +2,7 @@
 
 A multi-source vulnerability scoring and ranking system specifically designed for healthcare organizations. Integrates data from NVD, CISA KEV, MITRE ATT&CK, and CHPL to provide actionable vulnerability prioritization.
 
-## 🎯 Project Objective
+## Project Objective
 
 **Build an intelligent vulnerability prioritization system that answers:** *"Which vulnerabilities should healthcare security teams patch first?"*
 
@@ -13,17 +13,17 @@ Traditional vulnerability management relies on CVSS scores alone. This system co
 - **CHPL** - 6,900 certified healthcare IT products
 
 **Current Performance:**
-- ✅ Model: NDCG@10=0.75, P@100=100%
-- ✅ Multi-source: 6 authoritative sources (NVD, KEV, EPSS, Healthcare, ATT&CK, CHPL)
-- ✅ Database: 226,320 CVEs (2018-2025)
-- ✅ Healthcare coverage: 125,606 CVEs (55.5%)
-- ✅ ATT&CK mapping: 83,574 CVEs (36.9%)
-- ✅ CHPL integration: 706 products, 5,089 CVEs matched
-- ✅ Ablation study: +27.5% NDCG improvement vs baseline
+- - Model: NDCG@10=0.75, P@100=100%
+- - Multi-source: 6 authoritative sources (NVD, KEV, EPSS, Healthcare, ATT&CK, CHPL)
+- - Database: 226,320 CVEs (2018-2025)
+- - Healthcare coverage: 125,606 CVEs (55.5%)
+- - ATT&CK mapping: 83,574 CVEs (36.9%)
+- - CHPL integration: 706 products, 5,089 CVEs matched
+- - Ablation study: +27.5% NDCG improvement vs baseline
 
 ---
 
-## 🏗️ Architecture Diagrams
+## Architecture Diagrams
 
 ### Project Architecture
 ![Project Architecture](docs/diagrams/project_architecture.svg)
@@ -34,11 +34,11 @@ Traditional vulnerability management relies on CVSS scores alone. This system co
 ### LTR Model
 ![LTR Model](docs/diagrams/ltr_model.svg)
 
-> 📂 **Diagram Sources:** See [docs/diagrams/](docs/diagrams/) for Mermaid source files (.mmd)
+> **Diagram Sources:** See [docs/diagrams/](docs/diagrams/) for Mermaid source files (.mmd)
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 cti_recommender/
@@ -66,7 +66,7 @@ cti_recommender/
 │       └── feature_correlation.py # Feature correlation matrix
 │
 ├── notebooks/                    # Jupyter notebooks
-│   └── simple_cti_recommender.ipynb  # Main analysis notebook
+│   └── healthcare_cve_prioritization_ltr.ipynb  # Main analysis notebook
 │
 ├── tests/                        # Unit tests
 │   ├── test_attack_mapping.py
@@ -115,7 +115,7 @@ cti_recommender/
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 **For detailed installation and usage instructions, see [docs/QUICKSTART.md](docs/QUICKSTART.md)**
 
@@ -196,12 +196,12 @@ python scripts/analyze/feature_correlation.py
 ### 6. Explore with Jupyter
 
 ```bash
-jupyter notebook notebooks/simple_cti_recommender.ipynb
+jupyter notebook notebooks/healthcare_cve_prioritization_ltr.ipynb
 ```
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Scoring Weights (Phase 1 Calibrated)
 
@@ -225,30 +225,30 @@ w_attack  = 0.05  # ATT&CK technique (0/1)
 
 ---
 
-## 📊 Phase 1 Results
+## Phase 1 Results
 
 ### Data Quality Metrics
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| Total CVEs | 2,000 | ✅ |
-| Missing CVSS | 34.4% | ⚠️ Acceptable |
-| KEV Entries | 1,488 | ✅ |
-| ATT&CK Techniques | 835 | ✅ |
-| CHPL Products | 0 (API issue) | ⚠️ External |
-| Healthcare Flagged | 66.6% (1,333/2,000) | ✅ |
+| Total CVEs | 2,000 | - |
+| Missing CVSS | 34.4% | - Acceptable |
+| KEV Entries | 1,488 | - |
+| ATT&CK Techniques | 835 | - |
+| CHPL Products | 0 (API issue) | - External |
+| Healthcare Flagged | 66.6% (1,333/2,000) | - |
 
 ### Top-20 Performance
 
 | Metric | Before | After Calibration | Change |
 |--------|--------|------------------|--------|
 | Healthcare Precision | 60% | 50% | -10% (CHPL unavailable) |
-| KEV Detection | 5% (1/20) | **15% (3/20)** | ✅ +200% |
-| Healthcare Vendors | 0 | 1 (Epic) | ✅ Improved |
+| KEV Detection | 5% (1/20) | **15% (3/20)** | - +200% |
+| Healthcare Vendors | 0 | 1 (Epic) | - Improved |
 
 ---
 
-## 🔧 Development
+## Development
 
 ### Running Tests
 
@@ -276,55 +276,55 @@ python -m pytest tests/test_attack_mapping.py -v
 
 ---
 
-## 📈 Roadmap
+## Roadmap
 
-### ✅ Phase 1: Data Quality & Validation (COMPLETE)
-- ✅ Data quality framework
-- ✅ Healthcare mapping system
-- ✅ Bug fixes & weight calibration
-- ✅ Automated audit pipeline
+### - Phase 1: Data Quality & Validation (COMPLETE)
+- - Data quality framework
+- - Healthcare mapping system
+- - Bug fixes & weight calibration
+- - Automated audit pipeline
 
-### ✅ Phase 2: Refactoring & Consolidation (COMPLETE)
-- ✅ Consolidated enrichment pipeline (9 steps → 4 steps)
-- ✅ Database schema standardization
-- ✅ Script cleanup (24 scripts → 10 main scripts)
-- ✅ Analysis scripts organization
-- ✅ EPSS integration
-- ✅ Multi-level labels (0-5 scale)
+### - Phase 2: Refactoring & Consolidation (COMPLETE)
+- - Consolidated enrichment pipeline (9 steps → 4 steps)
+- - Database schema standardization
+- - Script cleanup (24 scripts → 10 main scripts)
+- - Analysis scripts organization
+- - EPSS integration
+- - Multi-level labels (0-5 scale)
 
-### 🔄 Phase 3: Advanced Features (NEXT)
+### Phase 3: Advanced Features (NEXT)
 - [ ] Enhanced ATT&CK technique weighting
 - [ ] Temporal trend analysis
 - [ ] Vendor risk scoring
 - [ ] Scanner integration (Nessus, Qualys)
 
-### ⏳ Phase 4: LTR Model Optimization
+### Phase 4: LTR Model Optimization
 - [x] Hyperparameter tuning (Phase 2 complete)
 - [x] Model comparison (LightGBM selected)
 - [x] Feature importance analysis (Phase 2 complete)
 - [ ] Advanced feature engineering
 - [ ] Ensemble models
 
-### ⏳ Phase 5: Evaluation & Ablation
+### Phase 5: Evaluation & Ablation
 - [x] Precision@K metrics (Phase 2 complete)
 - [x] NDCG@K metrics (Phase 2 complete)
 - [x] Ablation studies (Phase 2 complete)
 - [x] Temporal validation (Phase 2 complete)
 - [ ] Cross-dataset validation
 
-### ⏳ Phase 6: Production Interface
+### Phase 6: Production Interface
 - [ ] CLI tool
 - [ ] REST API (FastAPI)
 - [ ] Automated refresh pipeline
 - [ ] Docker containerization
 
-### ⏳ Phase 7: Advanced Analytics
+### Phase 7: Advanced Analytics
 - [ ] Vendor dashboards
 - [ ] Trend analysis
 - [ ] What-if scenarios
 - [ ] Real-time alerting
 
-### ⏳ Phase 8: Research Publication
+### Phase 8: Research Publication
 - [ ] Methodology paper
 - [ ] Benchmark dataset
 - [ ] Baseline comparisons
@@ -332,7 +332,7 @@ python -m pytest tests/test_attack_mapping.py -v
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 **Complete documentation available in [docs/](docs/) directory:**
 
@@ -345,7 +345,7 @@ python -m pytest tests/test_attack_mapping.py -v
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 This is a research project. Contributions welcome for:
 - Healthcare vendor/product patterns
@@ -357,20 +357,20 @@ This is a research project. Contributions welcome for:
 
 ---
 
-## 📝 License
+## License
 
 [Specify License]
 
 ---
 
-## 👥 Authors
+## Authors
 
 - Vinay Kumar Sharma (@er-vinay-india)
 - [Add other contributors]
 
 ---
 
-## 📚 References
+## References
 
 1. **NVD API**: https://nvd.nist.gov/developers
 2. **CISA KEV**: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
@@ -379,7 +379,7 @@ This is a research project. Contributions welcome for:
 
 ---
 
-## 🆘 Support
+## Support
 
 For issues or questions:
 - **Documentation**: See [docs/README.md](docs/README.md) for complete documentation index
@@ -390,4 +390,4 @@ For issues or questions:
 
 **Last Updated:** 2026-01-17  
 **Version:** 2.0.0  
-**Status:** Phase 4 Complete ✅ - Production-Ready with Improvements
+**Status:** Phase 4 Complete - - Production-Ready with Improvements

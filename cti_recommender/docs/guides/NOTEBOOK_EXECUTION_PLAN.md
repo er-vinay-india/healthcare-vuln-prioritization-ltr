@@ -1,24 +1,24 @@
 # Notebook Execution Plan: Safe Phased Approach
 
 **Date:** 2026-01-18  
-**Notebook:** `notebooks/simple_cti_recommender.ipynb`  
+**Notebook:** `notebooks/healthcare_cve_prioritization_ltr.ipynb`  
 **Strategy:** Execute in phases with checkpoints and commits
 
 ---
 
-## ✅ PRE-FLIGHT CHECK
+## - PRE-FLIGHT CHECK
 
 ### Data Status (Verified):
-- ✅ **Database:** `data/cve_database.db` (319 MB) - EXISTS
-- ✅ **Cache:** `cache/` (organized by source) - EXISTS
-- ✅ **NVD Cache:** `cache/nvd/` - Multiple files (7d, 30d, enhanced)
-- ✅ **KEV Cache:** `cache/kev/kev_catalog.pkl.gz`
-- ✅ **EPSS Cache:** `cache/epss/epss_persistent.json` + daily cache
-- ✅ **ATT&CK Cache:** `cache/attack/attack_techniques.pkl.gz`
-- ✅ **CHPL Cache:** `cache/chpl/` - Products JSON & pickle
+- - **Database:** `data/cve_database.db` (319 MB) - EXISTS
+- - **Cache:** `cache/` (organized by source) - EXISTS
+- - **NVD Cache:** `cache/nvd/` - Multiple files (7d, 30d, enhanced)
+- - **KEV Cache:** `cache/kev/kev_catalog.pkl.gz`
+- - **EPSS Cache:** `cache/epss/epss_persistent.json` + daily cache
+- - **ATT&CK Cache:** `cache/attack/attack_techniques.pkl.gz`
+- - **CHPL Cache:** `cache/chpl/` - Products JSON & pickle
 
 ### Code Analysis (Reviewed):
-**✅ NO API CALLS IN NOTEBOOK!** All data sources use cached data:
+**- NO API CALLS IN NOTEBOOK!** All data sources use cached data:
 
 1. **CVEDatabase** (`cve_database.py`):
    - Reads from SQLite database
@@ -62,7 +62,7 @@
 
 **Action After Phase 1:**
 ```bash
-git add notebooks/simple_cti_recommender.ipynb
+git add notebooks/healthcare_cve_prioritization_ltr.ipynb
 git commit -m "chore: Execute Phase 1 - Setup & validation complete"
 git push
 ```
@@ -85,7 +85,7 @@ git push
 
 **Action After Phase 2:**
 ```bash
-git add notebooks/simple_cti_recommender.ipynb
+git add notebooks/healthcare_cve_prioritization_ltr.ipynb
 git commit -m "chore: Execute Phase 2 - Data loading complete"
 git push
 ```
@@ -110,14 +110,14 @@ git push
 
 **Action After Phase 3:**
 ```bash
-git add notebooks/simple_cti_recommender.ipynb
+git add notebooks/healthcare_cve_prioritization_ltr.ipynb
 git commit -m "chore: Execute Phase 3 - EDA visualizations complete"
 git push
 ```
 
 ---
 
-### **PHASE 4: Feature Engineering** (Cell 20) ⚠️ BOTTLENECK (~2-3 min)
+### **PHASE 4: Feature Engineering** (Cell 20) - BOTTLENECK (~2-3 min)
 **Goal:** Extract 14 features per CVE
 
 **Cell:**
@@ -139,7 +139,7 @@ The code uses pandas `.apply()` which can be slow. Consider:
 
 **Action After Phase 4:**
 ```bash
-git add notebooks/simple_cti_recommender.ipynb
+git add notebooks/healthcare_cve_prioritization_ltr.ipynb
 git commit -m "chore: Execute Phase 4 - Feature engineering complete"
 git push
 ```
@@ -159,14 +159,14 @@ git push
 
 **Action After Phase 5:**
 ```bash
-git add notebooks/simple_cti_recommender.ipynb
+git add notebooks/healthcare_cve_prioritization_ltr.ipynb
 git commit -m "chore: Execute Phase 5 - Train/test split complete"
 git push
 ```
 
 ---
 
-### **PHASE 6: Model Training** (Cell 24) ⚠️ MAJOR BOTTLENECK (~5-10 min)
+### **PHASE 6: Model Training** (Cell 24) - MAJOR BOTTLENECK (~5-10 min)
 **Goal:** Train LambdaMART model
 
 **Cell:**
@@ -187,7 +187,7 @@ git push
 - Print progress updates
 - Consider reducing `num_boost_rounds` in initial runs
 
-**⚠️ TIMEOUT HANDLING:**
+**- TIMEOUT HANDLING:**
 If stuck > 10 minutes, interrupt and check:
 1. Are labels correctly generated?
 2. Is data properly formatted for LightGBM?
@@ -195,7 +195,7 @@ If stuck > 10 minutes, interrupt and check:
 
 **Action After Phase 6:**
 ```bash
-git add notebooks/simple_cti_recommender.ipynb
+git add notebooks/healthcare_cve_prioritization_ltr.ipynb
 git commit -m "chore: Execute Phase 6 - Model training complete"
 git push
 ```
@@ -221,14 +221,14 @@ git push
 
 **Action After Phase 7:**
 ```bash
-git add notebooks/simple_cti_recommender.ipynb
+git add notebooks/healthcare_cve_prioritization_ltr.ipynb
 git commit -m "chore: Execute Phase 7 - Evaluation complete"
 git push
 ```
 
 ---
 
-### **PHASE 8: Ablation Study** (Cell 36) ⚠️ BOTTLENECK (~3-5 min)
+### **PHASE 8: Ablation Study** (Cell 36) - BOTTLENECK (~3-5 min)
 **Goal:** Measure feature source importance
 
 **Cell:**
@@ -242,7 +242,7 @@ git push
 
 **Action After Phase 8:**
 ```bash
-git add notebooks/simple_cti_recommender.ipynb
+git add notebooks/healthcare_cve_prioritization_ltr.ipynb
 git commit -m "chore: Execute Phase 8 - Ablation study complete"
 git push
 ```
@@ -258,7 +258,7 @@ git push
 - Cell 45: Clear specific cache - SKIP unless needed  
 - Cell 47: Cache management guide
 
-**⚠️ WARNING:** Cells 43 & 45 clear cache - SKIP these cells unless intentional
+**- WARNING:** Cells 43 & 45 clear cache - SKIP these cells unless intentional
 
 **Action:** These cells can be executed individually if needed for testing
 
@@ -289,7 +289,7 @@ try:
         # Cell code here
         pass
 except TimeoutError as e:
-    print(f"⚠️ {e}")
+    print(f"- {e}")
     print("Check logs and data quality")
 ```
 
@@ -309,24 +309,24 @@ callbacks = [
 
 ---
 
-## 📊 ESTIMATED TIMELINE
+## ESTIMATED TIMELINE
 
 | Phase | Description | Time | Risk |
 |-------|-------------|------|------|
-| 1 | Setup & Validation | 30s | ✅ Low |
-| 2 | Data Loading | 20s | ✅ Low |
+| 1 | Setup & Validation | 30s | - Low |
+| 2 | Data Loading | 20s | - Low |
 | 3 | EDA Visualizations | 1-2 min | ⚡ Medium |
-| 4 | Feature Engineering | 2-3 min | ⚠️ Medium-High |
-| 5 | Train/Test Split | 5s | ✅ Low |
+| 4 | Feature Engineering | 2-3 min | - Medium-High |
+| 5 | Train/Test Split | 5s | - Low |
 | 6 | Model Training | 5-10 min | 🔴 HIGH |
-| 7 | Evaluation | 30s | ✅ Low |
-| 8 | Ablation Study | 3-5 min | ⚠️ Medium-High |
-| 9 | Cache Management | 10s | ✅ Low |
+| 7 | Evaluation | 30s | - Low |
+| 8 | Ablation Study | 3-5 min | - Medium-High |
+| 9 | Cache Management | 10s | - Low |
 | **TOTAL** | **12-20 minutes** | **~15 min avg** | |
 
 ---
 
-## 🎯 EXECUTION COMMANDS
+## EXECUTION COMMANDS
 
 ### Option 1: Manual Phase-by-Phase (RECOMMENDED)
 Execute each phase sequentially in VS Code, verify output, then commit.
@@ -337,13 +337,13 @@ Execute each phase sequentially in VS Code, verify output, then commit.
 jupyter nbconvert --to notebook --execute \
     --ExecutePreprocessor.timeout=600 \
     --ExecutePreprocessor.kernel_name=python3 \
-    notebooks/simple_cti_recommender.ipynb \
-    --output simple_cti_recommender_executed.ipynb
+    notebooks/healthcare_cve_prioritization_ltr.ipynb \
+    --output healthcare_cve_prioritization_ltr_executed.ipynb
 ```
 
 ---
 
-## ✅ VALIDATION CHECKLIST
+## - VALIDATION CHECKLIST
 
 After full execution, verify:
 - [ ] All cells executed without errors
@@ -388,7 +388,7 @@ for i in range(0, len(df), chunk_size):
 
 ---
 
-## 📝 NOTES
+## NOTES
 
 1. **No API Calls:** All data is cached - confirmed by code review
 2. **Database is Read-Only:** Notebook only reads from SQLite

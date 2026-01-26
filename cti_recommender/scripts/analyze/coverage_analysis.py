@@ -99,7 +99,7 @@ def analyze_coverage():
     logger.info("   Status: 706 products cached")
     
     logger.info("")
-    logger.info("2. 🔄 FDA Medical Device Database (RECOMMENDED):")
+    logger.info("2. FDA Medical Device Database (RECOMMENDED):")
     logger.info("   Source: FDA GUDID (Global Unique Device ID)")
     logger.info("   API: https://accessgudid.nlm.nih.gov/")
     logger.info("   Coverage: ~2M medical devices")
@@ -107,7 +107,7 @@ def analyze_coverage():
     logger.info("   Estimated useful: ~5,000 products")
     
     logger.info("")
-    logger.info("3. 🔄 Healthcare Vendor List (RECOMMENDED):")
+    logger.info("3. Healthcare Vendor List (RECOMMENDED):")
     logger.info("   Source: Manual curation from:")
     logger.info("   - Top medical device manufacturers")
     logger.info("   - Major healthcare software vendors")
@@ -116,7 +116,7 @@ def analyze_coverage():
     logger.info("   Estimated: ~500 key vendors/products")
     
     logger.info("")
-    logger.info("4. 🔄 CPE Healthcare Filter (OPTIONAL):")
+    logger.info("4. CPE Healthcare Filter (OPTIONAL):")
     logger.info("   Source: NVD CPE dictionary")
     logger.info("   Filter: Healthcare-related CPEs from CVE database")
     logger.info("   Extract unique vendors/products mentioned in CVEs")
@@ -127,7 +127,7 @@ def analyze_coverage():
     logger.info("Current coverage:  706 products (~3-5% of ecosystem)")
     logger.info("With FDA GUDID:    ~5,706 products (~25-30% coverage)")
     logger.info("With vendor list:  ~6,206 products (~35-40% coverage)")
-    logger.info("🎯 Target: 6,000+ products for comprehensive research coverage")
+    logger.info("Target: 6,000+ products for comprehensive research coverage")
     logger.info("="*70)
 
 if __name__ == '__main__':

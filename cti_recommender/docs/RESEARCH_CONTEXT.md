@@ -39,7 +39,7 @@ Saved: 2026-01-13
 
 ---
 
-## CHPL fetcher & usage ✅
+## CHPL fetcher & usage 
 
 - Implemented `fetch_chpl_products` and `get_chpl_cached` in `cti_recommender/cti_recommender.py` to obtain CHPL product and vendor lists.
 - Usage: set your CHPL API key in the environment variable `CHPL_API_KEY` (e.g., `export CHPL_API_KEY="<your_key>"`) and run `python cti_recommender/healthcare_local.py` from the repository root; outputs saved to `data/processed/CHPL_products.parquet` (and CSV fallback).

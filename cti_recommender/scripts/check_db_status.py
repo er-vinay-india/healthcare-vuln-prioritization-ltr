@@ -29,14 +29,14 @@ chpl = cursor.fetchone()[0]
 cursor.execute('SELECT COUNT(*) FROM enrichments WHERE is_curated = 1')
 curated = cursor.fetchone()[0]
 
-print(f'\n📊 Multi-Source Coverage:')
+print(f'\nMulti-Source Coverage:')
 print(f'   KEV (exploited):              {kev:,}')
 print(f'   Healthcare-related:           {healthcare:,}')
 print(f'   ATT&CK mapped:                {attack:,}')
 print(f'   CHPL certified products:      {chpl:,}')
 print(f'   Curated breaches:             {curated:,}')
 
-print(f'\n🎯 Multi-signal CVEs:')
+print(f'\nMulti-signal CVEs:')
 cursor.execute('SELECT COUNT(*) FROM enrichments WHERE kev_flag = 1 AND is_healthcare = 1')
 kev_healthcare = cursor.fetchone()[0]
 

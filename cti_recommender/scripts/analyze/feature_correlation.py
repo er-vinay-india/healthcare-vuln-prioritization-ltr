@@ -124,7 +124,7 @@ def analyze_correlations(features):
         logger.info("  ✅ No highly correlated pairs found!")
     
     # Analyze EPSS-related features
-    logger.info("📊 EPSS Feature Correlations:")
+    logger.info("EPSS Feature Correlations:")
     logger.info("-" * 70)
     epss_features = ['epss_score', 'epss_percentile', 'epss_high', 'kev_x_epss']
     for feat in epss_features:
@@ -150,7 +150,7 @@ def analyze_correlations(features):
 
 def plot_correlation_heatmap(corr_matrix):
     """Create correlation heatmap visualization."""
-    logger.info("📈 Generating correlation heatmap...")
+    logger.info("Generating correlation heatmap...")
     
     plt.figure(figsize=(16, 14))
     
@@ -183,7 +183,7 @@ def plot_correlation_heatmap(corr_matrix):
 def recommend_removals(high_corr_pairs, features):
     """Recommend which features to remove."""
     logger.info("="*70)
-    logger.info("🎯 RECOMMENDATIONS")
+    logger.info("RECOMMENDATIONS")
     logger.info("="*70)
     
     if not high_corr_pairs:

@@ -6,7 +6,7 @@
 
 ---
 
-## 🎯 EXECUTIVE SUMMARY
+## EXECUTIVE SUMMARY
 
 ### Problem Statement
 Traditional vulnerability management relies on CVSS severity scores alone, which:
@@ -32,7 +32,7 @@ Traditional vulnerability management relies on CVSS severity scores alone, which
 
 ---
 
-## 📊 DETAILED DATA FLOW
+## DETAILED DATA FLOW
 
 ### Stage 1: Data Collection (Multi-Source Ingestion)
 
@@ -268,14 +268,14 @@ Traditional vulnerability management relies on CVSS severity scores alone, which
 | **CAVP** (Industry best practice) | Asset-context scoring | Manual asset tagging required | Automated healthcare detection |
 
 **Novelty of Our Work:**
-1. ✅ **First** to fuse NVD + KEV + EPSS + ATT&CK + CHPL for healthcare
-2. ✅ **Automated** healthcare relevance detection (no manual tagging)
-3. ✅ **Learning-to-Rank** with temporal validation (not heuristic weights)
-4. ✅ **Comprehensive** evaluation (NDCG, ablation, cross-validation)
+1. - **First** to fuse NVD + KEV + EPSS + ATT&CK + CHPL for healthcare
+2. - **Automated** healthcare relevance detection (no manual tagging)
+3. - **Learning-to-Rank** with temporal validation (not heuristic weights)
+4. - **Comprehensive** evaluation (NDCG, ablation, cross-validation)
 
 ---
 
-## 📈 OUTCOME INTERPRETATION FOR HEALTHCARE TEAMS
+## OUTCOME INTERPRETATION FOR HEALTHCARE TEAMS
 
 ### What Does the Model Output Mean?
 
@@ -310,7 +310,7 @@ Total Score = KEV (0.28)
   - CVE-2024-9999: CVSS=9.8 (0.147) + Healthcare (0.05) = **0.197 score**
     - CVSS 9.8, but EPSS 0.02 (2nd percentile), no KEV, no healthcare context
 
-**🎯 Key Principle: Exploitation Evidence > Domain Relevance**
+**Key Principle: Exploitation Evidence > Domain Relevance**
 - A non-healthcare CVE with KEV=1 can outrank a healthcare CVE without KEV
 - **Justification:** Actively exploited threats require immediate action regardless of sector
 - Healthcare flag provides +0.05 bonus, but KEV (0.28) and EPSS (0.22) dominate
@@ -424,11 +424,11 @@ Conclusion: Model generalizes well to future data
 
 ### 4. Comprehensive Evaluation
 **Innovation:** Multi-faceted validation beyond single metrics
-- ✅ Ranking metrics: NDCG@K, Precision@K, MRR
-- ✅ Temporal validation: Train on past, test on future
-- ✅ Cross-validation: 5-fold to measure variance
-- ✅ Ablation study: Isolate feature contributions
-- ✅ Baseline comparison: 4 dimensional baselines
+- - Ranking metrics: NDCG@K, Precision@K, MRR
+- - Temporal validation: Train on past, test on future
+- - Cross-validation: 5-fold to measure variance
+- - Ablation study: Isolate feature contributions
+- - Baseline comparison: 4 dimensional baselines
 
 ### 5. Production-Ready Architecture
 **Innovation:** Cache-first design for operational efficiency
@@ -439,7 +439,7 @@ Conclusion: Model generalizes well to future data
 
 ---
 
-## 🎯 WHAT TO TELL YOUR EXAMINER
+## WHAT TO TELL YOUR EXAMINER
 
 ### 1. The Problem (30 seconds)
 *"Healthcare organizations face 200+ Critical/High CVEs weekly. Traditional CVSS-only prioritization causes alert fatigue. Security teams need context: Which vulnerabilities are actually exploited? Which affect our systems? What do attackers do with them?"*
@@ -476,10 +476,10 @@ Conclusion: Model generalizes well to future data
 
 ---
 
-## 📚 SUPPORTING EVIDENCE
+## SUPPORTING EVIDENCE
 
 ### Code Artifacts
-- **Notebook:** `notebooks/simple_cti_recommender.ipynb` (comprehensive walkthrough)
+- **Notebook:** `notebooks/healthcare_cve_prioritization_ltr.ipynb` (comprehensive walkthrough)
 - **Training Script:** `scripts/train_ltr.py` (reproducible training)
 - **Evaluation:** `scripts/temporal_validation.py`, `scripts/cross_validation.py`
 - **Documentation:** `docs/` (10+ markdown files, 5000+ lines)
@@ -499,7 +499,7 @@ Conclusion: Model generalizes well to future data
 
 ---
 
-## ⚠️ LIMITATIONS & FUTURE WORK
+## - LIMITATIONS & FUTURE WORK
 
 ### Current Limitations
 1. **Label Quality:** Labels partially derived from features (circular dependency)
@@ -541,7 +541,7 @@ Conclusion: Model generalizes well to future data
 
 ---
 
-## ✅ CHECKLIST FOR EXAMINER MEETING
+## - CHECKLIST FOR EXAMINER MEETING
 
 **Prepare to Explain:**
 - [ ] Problem statement (alert fatigue, CVSS limitations)
@@ -603,18 +603,18 @@ Conclusion: Model generalizes well to future data
 
 ---
 
-## 🎯 FINAL CONFIDENCE CHECK
+## FINAL CONFIDENCE CHECK
 
 **You Are Ready If You Can Answer:**
-✅ What problem does this solve? (Alert fatigue, CVSS limitations)  
-✅ What data sources do you use? (6: NVD, KEV, EPSS, ATT&CK, CHPL, Healthcare)  
-✅ What's your model? (LightGBM LambdaMART learning-to-rank)  
-✅ What's your main result? (NDCG@10 = 0.76, +27.5% vs baseline)  
-✅ What's novel? (First multi-source LTR for healthcare)  
-✅ How did you validate? (Temporal, ablation, cross-validation)  
-✅ What's the impact? (~10 hours/week saved, $50K/year per analyst)  
-✅ What are limitations? (Label quality, ATT&CK coverage, CHPL scope)  
-✅ What's next? (Ground truth labels, more data sources, online learning)  
+- What problem does this solve? (Alert fatigue, CVSS limitations)  
+- What data sources do you use? (6: NVD, KEV, EPSS, ATT&CK, CHPL, Healthcare)  
+- What's your model? (LightGBM LambdaMART learning-to-rank)  
+- What's your main result? (NDCG@10 = 0.76, +27.5% vs baseline)  
+- What's novel? (First multi-source LTR for healthcare)  
+- How did you validate? (Temporal, ablation, cross-validation)  
+- What's the impact? (~10 hours/week saved, $50K/year per analyst)  
+- What are limitations? (Label quality, ATT&CK coverage, CHPL scope)  
+- What's next? (Ground truth labels, more data sources, online learning)  
 
 ---
 

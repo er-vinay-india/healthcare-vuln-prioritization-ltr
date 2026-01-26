@@ -23,7 +23,7 @@ def main():
     print("="*80 + "\n")
     
     # Load datasets
-    print("📂 Loading datasets...")
+    print("Loading datasets...")
     nvd_df = cr.get_nvd_cached()
     kev_df = cr.get_kev_cached()
     attack_df = cr.get_attack_cached()
@@ -47,7 +47,7 @@ def main():
     old_top20_cves = set(old_top20['cve_id'].tolist())
     
     print("\n" + "-"*80)
-    print("⚙️  WEIGHT COMPARISON")
+    print(" WEIGHT COMPARISON")
     print("-"*80)
     print("\nOLD WEIGHTS (Pre-Phase 1):")
     print("  recency: 0.35  |  KEV: 0.35  |  CVSS: 0.20")
@@ -60,7 +60,7 @@ def main():
     print("  Total: 1.00")
     
     print("\n" + "-"*80)
-    print("🔄 Re-scoring with new weights...")
+    print("Re-scoring with new weights...")
     print("-"*80 + "\n")
     
     # New weights (Phase 1 calibrated)
@@ -111,7 +111,7 @@ def main():
     print("RESULTS COMPARISON")
     print("="*80)
     
-    print(f"\n📊 Healthcare Precision:")
+    print(f"\nHealthcare Precision:")
     print(f"  OLD: {old_hc_count}/20 ({old_hc_count/20*100:.0f}%)")
     print(f"  NEW: {new_hc_count}/20 ({new_hc_count/20*100:.0f}%)")
     
@@ -128,7 +128,7 @@ def main():
     print(f"  Added to top-20: {len(only_new)}")
     
     # Detailed breakdown
-    print(f"\n🎯 New Top-20 Breakdown:")
+    print(f"\nNew Top-20 Breakdown:")
     print(f"  {'Rank':<5} {'CVE ID':<18} {'CVSS':<6} {'KEV':<5} {'Score':<7} {'HC':<4} {'Vendor'}")
     print("  " + "-"*75)
     
@@ -168,7 +168,7 @@ def main():
     print(f"  • CHPL fallback mechanism fixed (API unavailable, but code working)")
     print(f"  • Scoring weights recalibrated")
     
-    print(f"\n📈 Improvements:")
+    print(f"\nImprovements:")
     if new_hc_count >= old_hc_count:
         print(f"  • Healthcare precision maintained/improved: {new_hc_count}/20")
     print(f"  • Reduced over-reliance on recency (0.35→0.25)")
@@ -179,12 +179,12 @@ def main():
     print(f"  • 34.4% CVEs missing CVSS scores (NVD data quality)")
     print(f"  • Limited vendor matches (only 79/2000 CVEs)")
     
-    print(f"\n📁 Output Files:")
+    print(f"\nOutput Files:")
     print(f"  • outputs/top20_recalibrated.csv")
     print(f"  • outputs/top20_recalibrated_enriched.csv")
     print(f"  • outputs/top_scored.csv (full dataset)")
     
-    print(f"\n🎯 Phase 1 Status: {85 if new_hc_count >= old_hc_count else 80}% Complete")
+    print(f"\nPhase 1 Status: {85 if new_hc_count >= old_hc_count else 80}% Complete")
     print(f"  Ready to proceed to Phase 2: Improved Labeling Strategy")
     
     print("\n")

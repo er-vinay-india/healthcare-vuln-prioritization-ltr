@@ -101,7 +101,7 @@ def analyze_medical_terms():
         print("   None found")
     
     print("\n" + "="*70)
-    print("🔧 MEDICAL DEVICE/SYSTEM TERMS:")
+    print("MEDICAL DEVICE/SYSTEM TERMS:")
     print("="*70)
     if term_count:
         for term, count in term_count.most_common(15):
@@ -110,7 +110,7 @@ def analyze_medical_terms():
         print("   None found")
     
     print("\n" + "="*70)
-    print("📊 COVERAGE GAP ANALYSIS:")
+    print("COVERAGE GAP ANALYSIS:")
     print("="*70)
     print(f"   CHPL vendors:                {len(chpl_vendors)}")
     print(f"   Device vendors found in CVEs: {len(vendor_count)}")

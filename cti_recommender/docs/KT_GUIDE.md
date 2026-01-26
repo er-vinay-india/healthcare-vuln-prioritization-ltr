@@ -691,19 +691,19 @@ CTI Recommender = Smart vulnerability prioritization for healthcare
 ### ❌ Wrong Answers:
 
 1. **"It only uses CVSS scores"**
-   - ✅ Correct: Uses 6 data sources including CVSS
+   - - Correct: Uses 6 data sources including CVSS
 
 2. **"It's just for hospitals"**
-   - ✅ Correct: Designed for healthcare but applicable to any domain
+   - - Correct: Designed for healthcare but applicable to any domain
 
 3. **"Random forest algorithm"**
-   - ✅ Correct: LightGBM (Learning to Rank)
+   - - Correct: LightGBM (Learning to Rank)
 
 4. **"1000 CVEs"**
-   - ✅ Correct: 226,320 CVEs
+   - - Correct: 226,320 CVEs
 
 5. **"Train on future data"**
-   - ✅ Correct: Temporal validation (train on past, test on future)
+   - - Correct: Temporal validation (train on past, test on future)
 
 ---
 

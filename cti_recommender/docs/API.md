@@ -1,6 +1,6 @@
 # CTI Recommender - Deployment & Development Guide
 
-## 🚀 Quick Start (Docker)
+## Quick Start (Docker)
 
 ### Prerequisites
 - Docker Engine 20.10+
@@ -72,7 +72,7 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -134,7 +134,7 @@ curl http://localhost:8000/api/v1/cve/CVE-2024-1234
 curl http://localhost:8000/api/v1/stats
 ```
 
-## 📊 Monitoring
+## Monitoring
 
 ### Logs
 
@@ -162,7 +162,7 @@ curl http://localhost:8000/health | jq
 docker-compose exec api sqlite3 data/cve_database.db "SELECT COUNT(*) FROM cves;"
 ```
 
-## 🔄 Data Pipeline
+## Data Pipeline
 
 ### Refresh CVE Database
 
@@ -246,7 +246,7 @@ docker-compose up
 docker-compose logs -f api
 ```
 
-## 🚀 Production Deployment
+## Production Deployment
 
 ### Performance Tuning
 
@@ -294,7 +294,7 @@ openssl req -x509 -newkey rsa:4096 -nodes \
 # Update nginx.conf for HTTPS
 ```
 
-## 📚 API Documentation
+## API Documentation
 
 Once running, visit:
 - **Interactive Docs**: http://localhost:8000/docs
