@@ -9,10 +9,10 @@
 
 | Diagram | Description |
 |---------|-------------|
-| [Project Architecture](diagrams/project_architecture.png) | System components and data flow |
-| [Data Pipeline](diagrams/data_pipeline.png) | End-to-end processing pipeline |
-| [LTR Model](diagrams/ltr_model.png) | Learning-to-Rank model structure |
-| [Examiner Flowchart](diagrams/examiner_flowchart.png) | High-level system overview |
+| [Project Architecture](diagrams/project_architecture.svg) | System components and data flow |
+| [Data Pipeline](diagrams/data_pipeline.svg) | End-to-end processing pipeline |
+| [LTR Model](diagrams/ltr_model.svg) | Learning-to-Rank model structure |
+| [Examiner Flowchart](diagrams/examiner_flowchart.svg) | High-level system overview |
 
 > 📂 Mermaid source files available in [diagrams/](diagrams/)
 
