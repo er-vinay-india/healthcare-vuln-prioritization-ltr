@@ -34,8 +34,9 @@ class CHPLFetcher:
     def __init__(self, api_key=None):
         """Initialize with optional API key."""
         self.api_key = api_key or os.getenv('CHPL_API_KEY')
-        self.cache_dir = Path(__file__).parent.parent / 'data_cache'
-        self.cache_dir.mkdir(exist_ok=True)
+        # Use centralized cache directory structure
+        self.cache_dir = Path(__file__).parent.parent.parent / 'cache' / 'chpl'
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.cache_file = self.cache_dir / 'chpl_products.pkl.gz'
         self.json_cache = self.cache_dir / 'chpl_products.json'
     

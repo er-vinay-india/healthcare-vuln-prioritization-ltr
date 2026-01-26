@@ -29,19 +29,20 @@ class CacheManager:
         Initialize cache manager
         
         Args:
-            cache_root: Root directory for cache (default: data_cache/)
+            cache_root: Root directory for cache (default: cache/)
         """
         if cache_root is None:
-            self.cache_root = Path(__file__).parent.parent.parent / 'data_cache'
+            self.cache_root = Path(__file__).parent.parent.parent / 'cache'
         else:
             self.cache_root = Path(cache_root)
         
+        # Organized cache structure with subdirectories for each source
         self.cache_sources = {
-            'nvd': self.cache_root,  # NVD files directly in cache_root
+            'nvd': self.cache_root / 'nvd',
             'epss': self.cache_root / 'epss',
-            'kev': self.cache_root,  # KEV files directly in cache_root
-            'attack': self.cache_root,  # ATT&CK files directly in cache_root
-            'chpl': self.cache_root  # CHPL files directly in cache_root
+            'kev': self.cache_root / 'kev',
+            'attack': self.cache_root / 'attack',
+            'chpl': self.cache_root / 'chpl'
         }
     
     def get_cache_info(self) -> Dict[str, Dict]:
@@ -60,8 +61,9 @@ class CacheManager:
         """
         cache_info = {}
         
-        # NVD cache (files with 'nvd' prefix)
-        nvd_files = list(self.cache_root.glob('nvd*.pkl.gz'))
+        # NVD cache (now in cache/nvd/)
+        nvd_dir = self.cache_sources['nvd']
+        nvd_files = list(nvd_dir.glob('*.pkl.gz')) if nvd_dir.exists() else []
         if nvd_files:
             total_size = sum(f.stat().st_size for f in nvd_files)
             latest_mod = max(f.stat().st_mtime for f in nvd_files)
@@ -75,7 +77,7 @@ class CacheManager:
         else:
             cache_info['nvd'] = {'exists': False}
         
-        # EPSS cache
+        # EPSS cache (in cache/epss/)
         epss_dir = self.cache_sources['epss']
         if epss_dir.exists() and list(epss_dir.glob('*.json')):
             epss_files = list(epss_dir.glob('*.json'))
@@ -91,8 +93,9 @@ class CacheManager:
         else:
             cache_info['epss'] = {'exists': False}
         
-        # KEV cache
-        kev_file = self.cache_root / 'kev_catalog.pkl.gz'
+        # KEV cache (now in cache/kev/)
+        kev_dir = self.cache_sources['kev']
+        kev_file = kev_dir / 'kev_catalog.pkl.gz'
         if kev_file.exists():
             kev_stat = kev_file.stat()
             cache_info['kev'] = {
@@ -105,8 +108,9 @@ class CacheManager:
         else:
             cache_info['kev'] = {'exists': False}
         
-        # ATT&CK cache
-        attack_file = self.cache_root / 'attack_techniques.pkl.gz'
+        # ATT&CK cache (now in cache/attack/)
+        attack_dir = self.cache_sources['attack']
+        attack_file = attack_dir / 'attack_techniques.pkl.gz'
         if attack_file.exists():
             attack_stat = attack_file.stat()
             cache_info['attack'] = {
@@ -119,8 +123,9 @@ class CacheManager:
         else:
             cache_info['attack'] = {'exists': False}
         
-        # CHPL cache
-        chpl_files = list(self.cache_root.glob('chpl*.json'))
+        # CHPL cache (now in cache/chpl/)
+        chpl_dir = self.cache_sources['chpl']
+        chpl_files = list(chpl_dir.glob('*.json')) if chpl_dir.exists() else []
         if chpl_files:
             total_size = sum(f.stat().st_size for f in chpl_files)
             latest_mod = max(f.stat().st_mtime for f in chpl_files)

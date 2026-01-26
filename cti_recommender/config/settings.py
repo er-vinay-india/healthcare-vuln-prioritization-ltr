@@ -45,8 +45,8 @@ class Settings(BaseSettings):
     # ============================================================================
     # CACHING CONFIGURATION
     # ============================================================================
-    CACHE_DIR: Path = Path("data_cache")
-    EPSS_CACHE_DIR: Path = Path("data_cache/epss")
+    CACHE_DIR: Path = Path("cache")
+    EPSS_CACHE_DIR: Path = Path("cache/epss")
     EPSS_CACHE_EXPIRY_DAYS: int = 1
     EPSS_PERSISTENT_CACHE: str = "epss_persistent.json"
     

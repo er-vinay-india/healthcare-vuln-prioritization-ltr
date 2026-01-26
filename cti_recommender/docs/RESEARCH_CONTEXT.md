@@ -45,9 +45,9 @@ Saved: 2026-01-13
 - Usage: set your CHPL API key in the environment variable `CHPL_API_KEY` (e.g., `export CHPL_API_KEY="<your_key>"`) and run `python cti_recommender/healthcare_local.py` from the repository root; outputs saved to `data/processed/CHPL_products.parquet` (and CSV fallback).
 - The CHPL data is used to compute a `chpl_flag` in `build_healthcare_features(...)` (exact-match signals), and `build_weighted_score(...)` now supports `w_chpl` weight to include CHPL signals in ranking.
 - A one-time run using the key you provided successfully fetched CHPL products: **6,900** entries were retrieved. Artifacts saved:
-  - Cache: `data_cache/chpl_products.pkl.gz`
+  - Cache: `cache/chpl/chpl_products.pkl.gz`
   - Processed: `data/processed/CHPL_products.parquet`
-  - Raw page dumps (for debugging): `data_cache/chpl_v3_search_page_*.json`
+  - Raw page dumps (for debugging): `cache/chpl/*.json`
   Re-scored NVD (4,979 CVEs) with CHPL signals and saved outputs to `outputs/` (e.g., `top_scored.csv`, `top20.csv`). Performed a weight grid search over `w_chpl` (0.00–0.20); best weight by precision@20 is **w_chpl = 0.10** (precision@20 = **0.85**). Grid results and summary saved as `outputs/weight_grid_chpl.csv` and `outputs/eval_grid_chpl.txt`.
 
 - ATT&CK integration: added `fetch_attack_techniques` and `get_attack_cached` to pull MITRE ATT&CK Enterprise techniques (enterprise-attack.json) and persist to `data/processed/ATTACK_techniques.parquet`. Implemented a first-pass heuristic mapping that sets `attack_flag` when a technique *name* or *alias* appears in the CVE `description_en`; this `attack_flag` is included in `build_healthcare_features(...)` and used by `build_weighted_score(...)` via `w_attack`. Unit tests were added in `cti_recommender/tests/test_attack_mapping.py` to validate matching behavior.
@@ -58,7 +58,7 @@ Saved: 2026-01-13
 - **Snapshot commit:** `f17586224614a53cc48cfac8a5f3fe3e8aeb1815`
 
 ## Recent engineering actions (snapshot)
-- CHPL fetcher implemented and run (6,900 products). Artifacts: `data_cache/chpl_products.pkl.gz`, `data/processed/CHPL_products.parquet`, `data_cache/chpl_v3_search_page_*.json`.
+- CHPL fetcher implemented and run (6,900 products). Artifacts: `cache/chpl/chpl_products.pkl.gz`, `data/processed/CHPL_products.parquet`.
 - ATT&CK integration implemented (techniques fetched from MITRE CTI and cached). Simple CVE→ATT&CK mapping added via substring matching (technique names/aliases) -> `attack_flag`.
 - Grid tuning performed:
   - `w_chpl` fine-tuned; **best found: 0.08** (precision@20 improvement recorded in `outputs/weight_fine_grid_chpl.csv` and `outputs/chpl_finetune_report.txt`).
@@ -76,7 +76,7 @@ Saved: 2026-01-13
 ## Artifacts & where to find them
 - `outputs/` — scored CSVs and evaluation reports (top20, grid CSVs, finetune reports).
 - `data/processed/` — persisted NVD, KEV, CHPL, and ATT&CK processed files.
-- `data_cache/` — raw fetch caches and pickled caches.
+- `cache/` — organized cache by source (nvd/, epss/, kev/, attack/, chpl/).
 - `models/` — LTR model (`ltr_model.pkl`).
 
 ## Notes & next steps

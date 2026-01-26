@@ -61,9 +61,9 @@ data/*.sqlite
 data/*.sqlite3
 
 # Cache (will be mounted as volume)
-data_cache/*.pkl.gz
-data_cache/*.json
-data_cache/*.parquet
+cache/**/*.pkl.gz
+cache/**/*.json
+cache/**/*.parquet
 
 # Outputs (will be mounted as volume)
 outputs/

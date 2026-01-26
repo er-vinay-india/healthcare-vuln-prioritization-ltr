@@ -20,7 +20,7 @@ class AttackMapper:
     def __init__(self, cache_path=None):
         """Load ATT&CK techniques from cache."""
         if cache_path is None:
-            cache_path = Path(__file__).parent.parent.parent / 'data_cache' / 'attack_techniques.pkl.gz'
+            cache_path = Path(__file__).parent.parent.parent / 'cache' / 'attack' / 'attack_techniques.pkl.gz'
         
         with gzip.open(cache_path, 'rb') as f:
             self.techniques_df = pickle.load(f)

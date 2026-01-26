@@ -353,7 +353,7 @@ Key achievements include:
         '├── cti_recommender.py - Core scoring and feature engineering',
         '├── ltr.py - Learning-to-rank implementation',
         '├── healthcare_local.py - Healthcare-specific pipeline',
-        '├── data_cache/ - Cached API responses',
+        '├── cache/ - Cached API responses (nvd/, epss/, kev/, attack/, chpl/)',
         '├── data/processed/ - Processed datasets',
         '├── outputs/ - Results and reports',
         '├── models/ - Trained ML models',

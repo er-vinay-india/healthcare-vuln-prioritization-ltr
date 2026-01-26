@@ -10,12 +10,12 @@
 
 ### Data Status (Verified):
 - ✅ **Database:** `data/cve_database.db` (319 MB) - EXISTS
-- ✅ **Cache:** `data_cache/` (24 MB) - EXISTS
-- ✅ **NVD Cache:** Multiple files (7d, 30d, enhanced)
-- ✅ **KEV Cache:** `kev_catalog.pkl.gz`
-- ✅ **EPSS Cache:** `epss_persistent.json` + daily cache
-- ✅ **ATT&CK Cache:** `attack_techniques.pkl.gz`
-- ✅ **CHPL Cache:** Multiple JSON files
+- ✅ **Cache:** `cache/` (organized by source) - EXISTS
+- ✅ **NVD Cache:** `cache/nvd/` - Multiple files (7d, 30d, enhanced)
+- ✅ **KEV Cache:** `cache/kev/kev_catalog.pkl.gz`
+- ✅ **EPSS Cache:** `cache/epss/epss_persistent.json` + daily cache
+- ✅ **ATT&CK Cache:** `cache/attack/attack_techniques.pkl.gz`
+- ✅ **CHPL Cache:** `cache/chpl/` - Products JSON & pickle
 
 ### Code Analysis (Reviewed):
 **✅ NO API CALLS IN NOTEBOOK!** All data sources use cached data:

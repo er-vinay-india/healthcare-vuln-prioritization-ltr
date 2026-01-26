@@ -99,7 +99,7 @@ Docker volumes for persistence:
 - `./data` - CVE database
 - `./models` - Trained ML models
 - `./logs` - Application logs
-- `./data_cache` - API response cache
+- `./cache` - API response cache (organized by source)
 
 ## 🧪 Testing
 

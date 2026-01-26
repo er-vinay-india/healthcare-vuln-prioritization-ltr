@@ -43,9 +43,9 @@ env/
 .DS_Store
 
 # Data Cache (keep structure, ignore contents)
-data_cache/*.pkl.gz
-data_cache/*.json
-data_cache/*.parquet
+cache/**/*.pkl.gz
+cache/**/*.json
+cache/**/*.parquet
 
 # Outputs (optional - keep latest results)
 outputs/merged.csv.gz

@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y \
 
 # Create app user (non-root)
 RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app /app/data /app/logs /app/models /app/data_cache && \
+    mkdir -p /app /app/data /app/logs /app/models /app/cache && \
     chown -R appuser:appuser /app
 
 # Copy virtual environment from builder

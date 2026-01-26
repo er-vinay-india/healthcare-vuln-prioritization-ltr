@@ -34,7 +34,9 @@ cti_recommender/
 │   ├── analysis/                 # Data quality & healthcare mapping
 │   │   ├── data_quality.py      # Validation framework
 │   │   └── healthcare_mapping.py # Healthcare relevance detection
-│   └── utils/                    # Utility modules (future)
+│   └── utils/                    # Utility modules
+│       ├── cache_manager.py     # Unified cache management
+│       └── logging_config.py    # Structured logging
 │
 ├── scripts/                      # Executable scripts
 │   ├── enrich_cves.py           # Consolidated enrichment pipeline
@@ -56,14 +58,25 @@ cti_recommender/
 │   ├── test_features_chpl.py
 │   └── test_ltr_smoke.py
 │
-├── data/                         # Configuration data
+├── data/                         # Configuration & database
+│   ├── cve_database.db          # SQLite database (226K+ CVEs)
 │   └── config/
 │       └── healthcare_mapping.csv  # 142 healthcare patterns
 │
-├── data_cache/                   # API response cache (auto-generated)
+├── cache/                        # API response cache (organized by source)
+│   ├── nvd/                     # NVD API responses
+│   ├── epss/                    # EPSS scores cache
+│   ├── kev/                     # CISA KEV catalog
+│   ├── attack/                  # MITRE ATT&CK techniques
+│   └── chpl/                    # CHPL healthcare products
+│
+├── models/                       # Trained ML models
+│   ├── ltr_ranker.model         # Full LightGBM model
+│   └── ltr_ranker_pruned.model  # Pruned model
+│
 ├── outputs/                      # Generated results
 │   ├── top_scored.csv           # Scored CVEs
-│   └── plots/                   # Analysis plots
+│   └── *.csv                    # Analysis outputs
 │
 ├── docs/                         # Documentation
 │   ├── README.md                # Documentation index
@@ -71,13 +84,15 @@ cti_recommender/
 │   ├── API.md                   # REST API & Docker deployment
 │   ├── DEVELOPMENT.md           # Development guide
 │   ├── RESEARCH_CONTEXT.md      # Literature review
+│   ├── guides/                  # Technical guides
+│   │   ├── ARCHITECTURE_GUIDE.md
+│   │   └── MIGRATION_GUIDE.md
 │   └── reports/                 # Generated analysis reports
 │
 ├── archive/                      # Archived/unused files
 │   ├── adhoc_scripts/           # Consolidated scripts (Phase 2)
 │   ├── historical_docs/         # Old documentation
-│   ├── notebooks/               # Old experiment notebooks
-│   └── experiments/             # Experimental scripts
+│   └── notebooks/               # Old experiment notebooks
 │
 ├── requirements.txt             # Python dependencies
 └── README.md                    # This file

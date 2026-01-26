@@ -1,0 +1,15 @@
+flowchart TD
+    A[NVD CVE Database<br/>cves table] --> E[Enrichment Pipeline<br/>scripts/enrich_cves.py]
+    B[CISA KEV Catalog] --> E
+    C[EPSS Bulk API] --> E
+    D[MITRE ATT&CK Data] --> E
+    F[CHPL Products] --> E
+    G[Healthcare Curated List] --> E
+    H[Healthcare Keyword/Vendor Mapping] --> E
+
+    E --> I[Enriched CVE Table<br/>enrichments]
+    I --> J[Feature Engineering]
+    J --> K[Train/Test Split<br/>Temporal]
+    K --> L[Learning-to-Rank Model]
+    L --> M[Evaluation<br/>NDCG, P, MRR]
+    M --> N[Ranked Outputs<br/>top20_enriched.csv, top_scored.csv]

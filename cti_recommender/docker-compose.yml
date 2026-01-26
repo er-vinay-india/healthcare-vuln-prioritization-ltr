@@ -19,7 +19,7 @@ services:
       # Persist logs
       - ./logs:/app/logs
       # Cache directory
-      - ./data_cache:/app/data_cache
+      - ./cache:/app/cache
     environment:
       - LOG_LEVEL=INFO
       - DATABASE_PATH=/app/data/cve_database.db
@@ -62,4 +62,4 @@ volumes:
   data:
   models:
   logs:
-  data_cache:
+  cache:

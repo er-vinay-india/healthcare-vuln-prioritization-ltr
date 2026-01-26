@@ -36,7 +36,7 @@ logging.basicConfig(level=logging.INFO)
 # Defaults (can be overridden by passing args to functions)
 NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 CISA_KEV_URL = "https://www.cisa.gov/sites/default/files/csv/known_exploited_vulnerabilities.csv"
-CACHE_DIR = Path("data_cache")
+CACHE_DIR = Path("cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -315,7 +315,7 @@ def fetch_chpl_products(api_base: str = "https://chpl.healthit.gov/rest", api_ke
     `pageNumber` (zero-based) and `pageSize` (max 100). The function uses the
     documented `API-Key` header when an API key is provided and pages until all
     records are retrieved (or `max_pages` is reached). Raw response bodies are
-    saved to `data_cache` for debugging when non-200 or unexpected payloads are seen.
+    saved to `cache` for debugging when non-200 or unexpected payloads are seen.
 
     Returns a DataFrame with columns 'product', 'developer' and raw data in 'raw'.
     """

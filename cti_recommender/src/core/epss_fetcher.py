@@ -35,7 +35,7 @@ class EPSSFetcher:
             self.cache_dir = settings.get_cache_dir() / "epss"
             self.api_base = settings.EPSS_API_BASE
         elif cache_dir is None:
-            self.cache_dir = Path("data_cache/epss")
+            self.cache_dir = Path("cache/epss")
             self.api_base = "https://api.first.org/data/v1/epss"
         else:
             self.cache_dir = Path(cache_dir)
