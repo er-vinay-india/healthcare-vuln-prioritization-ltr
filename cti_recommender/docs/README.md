@@ -1,7 +1,20 @@
 # 📚 Documentation Index
 
-**Last Updated:** 2026-01-17  
+**Last Updated:** 2026-01-26  
 **CTI Recommender Version:** 2.0.0
+
+---
+
+## 🏗️ Architecture Diagrams
+
+| Diagram | Description |
+|---------|-------------|
+| [Project Architecture](diagrams/project_architecture.png) | System components and data flow |
+| [Data Pipeline](diagrams/data_pipeline.png) | End-to-end processing pipeline |
+| [LTR Model](diagrams/ltr_model.png) | Learning-to-Rank model structure |
+| [Examiner Flowchart](diagrams/examiner_flowchart.png) | High-level system overview |
+
+> 📂 Mermaid source files available in [diagrams/](diagrams/)
 
 ---
 
@@ -14,10 +27,10 @@
 ### Technical Documentation
 - **[API Documentation](API.md)** - REST API endpoints, Docker deployment, and usage examples
 - **[Development Guide](DEVELOPMENT.md)** - Developer setup, coding standards, and contribution guidelines
-- **[Architecture Guide](../ARCHITECTURE_GUIDE.md)** - System architecture, completed implementations, and technical stack
+- **[Architecture Guide](guides/ARCHITECTURE_GUIDE.md)** - System architecture, completed implementations, and technical stack
 
 ### Reference
-- **[Migration Guide](../MIGRATION_GUIDE.md)** - Guide for upgrading from Phase 1 to Phase 2
+- **[Migration Guide](guides/MIGRATION_GUIDE.md)** - Guide for upgrading from Phase 1 to Phase 2
 - **[Research Context](RESEARCH_CONTEXT.md)** - Literature review, research gaps, and academic context
 
 ---
@@ -31,6 +44,14 @@ docs/
 ├── API.md                      # REST API & Docker deployment
 ├── DEVELOPMENT.md              # Development guide
 ├── RESEARCH_CONTEXT.md         # Research background
+├── diagrams/                   # Architecture diagrams (PNG, SVG, Mermaid)
+│   ├── project_architecture.*
+│   ├── data_pipeline.*
+│   ├── ltr_model.*
+│   └── examiner_flowchart.*
+├── guides/                     # Technical guides
+│   ├── ARCHITECTURE_GUIDE.md
+│   └── MIGRATION_GUIDE.md
 └── reports/                    # Generated analysis reports
 ```
 

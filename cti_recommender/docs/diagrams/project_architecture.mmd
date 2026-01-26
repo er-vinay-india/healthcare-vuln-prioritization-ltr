@@ -1,0 +1,86 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4a90d9', 'secondaryColor': '#f0f0f0', 'tertiaryColor': '#fff'}}}%%
+flowchart TB
+    subgraph External["🌐 External Data Sources"]
+        NVD["📊 NVD API<br/>CVE Database"]
+        EPSS["📈 EPSS API<br/>Exploitation Scores"]
+        KEV["🚨 CISA KEV<br/>Known Exploited"]
+        ATTACK["⚔️ MITRE ATT&CK<br/>Threat Mappings"]
+        CHPL["🏥 ONC CHPL<br/>Healthcare Products"]
+    end
+
+    subgraph Cache["💾 Cache Layer (cache/)"]
+        NVD_C["nvd/"]
+        EPSS_C["epss/"]
+        KEV_C["kev/"]
+        ATTACK_C["attack/"]
+        CHPL_C["chpl/"]
+    end
+
+    subgraph Core["⚙️ Core Processing (src/core/)"]
+        FETCHER["Data Fetchers<br/>epss_fetcher.py<br/>chpl_fetcher.py"]
+        DB["CVE Database<br/>cve_database.py"]
+        LTR["LTR Engine<br/>ltr.py"]
+        RECOMMENDER["CTI Recommender<br/>cti_recommender.py"]
+    end
+
+    subgraph Analysis["🔬 Analysis (src/analysis/)"]
+        ATTACK_MAP["ATT&CK Mapper<br/>attack_mapper.py"]
+        QUALITY["Data Quality<br/>data_quality.py"]
+    end
+
+    subgraph Utils["🔧 Utilities (src/utils/)"]
+        CACHE_MGR["Cache Manager<br/>cache_manager.py"]
+        HEALTHCARE["Healthcare Utils<br/>healthcare.py"]
+    end
+
+    subgraph Storage["💿 Data Storage (data/)"]
+        SQLITE[("cve_database.db<br/>226,320 CVEs")]
+        BREACHES["healthcare_breaches.json"]
+    end
+
+    subgraph Models["🤖 ML Models (models/)"]
+        LTR_MODEL["ltr_ranker.model<br/>LambdaMART"]
+    end
+
+    subgraph Outputs["📤 Outputs (outputs/)"]
+        TOP20["top20_enriched.csv"]
+        METRICS["ranking_metrics.csv"]
+        REPORTS["Quality Reports"]
+    end
+
+    subgraph Scripts["📜 Scripts (scripts/)"]
+        ENRICH["enrich_cves.py"]
+        TRAIN["train_ltr.py"]
+        RECOMMEND["recommend_cves.py"]
+        VALIDATE["temporal_validation.py"]
+    end
+
+    subgraph Notebook["📓 Research (notebooks/)"]
+        NB["healthcare_cve_<br/>prioritization_ltr.ipynb"]
+    end
+
+    %% Data Flow
+    NVD --> NVD_C
+    EPSS --> EPSS_C
+    KEV --> KEV_C
+    ATTACK --> ATTACK_C
+    CHPL --> CHPL_C
+
+    NVD_C --> FETCHER
+    EPSS_C --> FETCHER
+    KEV_C --> FETCHER
+    CHPL_C --> FETCHER
+    ATTACK_C --> ATTACK_MAP
+
+    FETCHER --> DB
+    DB --> SQLITE
+    CACHE_MGR --> Cache
+
+    SQLITE --> LTR
+    LTR --> LTR_MODEL
+    LTR_MODEL --> RECOMMENDER
+    RECOMMENDER --> Outputs
+
+    Scripts --> Core
+    NB --> Core
+    NB --> Analysis

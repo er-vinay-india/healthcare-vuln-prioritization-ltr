@@ -1,0 +1,65 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#2ecc71', 'secondaryColor': '#3498db'}}}%%
+flowchart LR
+    subgraph Ingest["1️⃣ Data Ingestion"]
+        direction TB
+        A1["Fetch NVD CVEs<br/>(2018-2025)"]
+        A2["Load to SQLite"]
+        A1 --> A2
+    end
+
+    subgraph Enrich["2️⃣ Enrichment Pipeline"]
+        direction TB
+        B1["EPSS Scores"]
+        B2["KEV Lookup"]
+        B3["ATT&CK Mapping"]
+        B4["CHPL Healthcare"]
+        B5["Keyword Matching"]
+        B1 --> B6["Merge Enrichments"]
+        B2 --> B6
+        B3 --> B6
+        B4 --> B6
+        B5 --> B6
+    end
+
+    subgraph Features["3️⃣ Feature Engineering"]
+        direction TB
+        C1["14 Features Extracted"]
+        C2["cvss_score"]
+        C3["epss_score"]
+        C4["is_kev"]
+        C5["attack_count"]
+        C6["is_healthcare"]
+        C7["vendor_healthcare"]
+        C1 --> C2
+        C1 --> C3
+        C1 --> C4
+        C1 --> C5
+        C1 --> C6
+        C1 --> C7
+    end
+
+    subgraph Train["4️⃣ Model Training"]
+        direction TB
+        D1["Temporal Split<br/>Train: 2018-2023<br/>Test: 2024"]
+        D2["Create Labels<br/>KEV + High CVSS"]
+        D3["LightGBM<br/>LambdaMART"]
+        D4["Hyperparameter<br/>Tuning"]
+        D1 --> D2 --> D3 --> D4
+    end
+
+    subgraph Eval["5️⃣ Evaluation"]
+        direction TB
+        E1["NDCG@K"]
+        E2["Precision@K"]
+        E3["MRR"]
+        E4["Feature Importance"]
+    end
+
+    subgraph Output["6️⃣ Output"]
+        direction TB
+        F1["Ranked CVE List"]
+        F2["Top-20 Healthcare"]
+        F3["Risk Scores"]
+    end
+
+    Ingest --> Enrich --> Features --> Train --> Eval --> Output

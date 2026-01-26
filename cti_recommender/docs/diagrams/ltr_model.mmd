@@ -1,0 +1,47 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#9b59b6'}}}%%
+flowchart TB
+    subgraph Input["📥 Input Layer"]
+        CVE["CVE Record"]
+        META["CVE Metadata<br/>CVSS, Published Date"]
+    end
+
+    subgraph Features["🔢 Feature Vector (14 Features)"]
+        direction LR
+        F1["cvss_score"]
+        F2["epss_score"]
+        F3["is_kev"]
+        F4["attack_technique_count"]
+        F5["attack_tactic_count"]
+        F6["is_healthcare"]
+        F7["chpl_products"]
+        F8["vendor_healthcare"]
+        F9["keyword_healthcare"]
+        F10["cve_age_days"]
+        F11["has_exploit"]
+        F12["severity_level"]
+        F13["impact_score"]
+        F14["exploitability_score"]
+    end
+
+    subgraph Model["🤖 LambdaMART Model"]
+        direction TB
+        TREES["Gradient Boosted<br/>Decision Trees"]
+        LAMBDA["Lambda Gradient<br/>Optimization"]
+        RANK["Pairwise Ranking<br/>Loss Function"]
+        TREES --> LAMBDA --> RANK
+    end
+
+    subgraph Output["📤 Output"]
+        SCORE["Risk Score<br/>(0-100)"]
+        RANK_POS["Rank Position"]
+        EXPLAIN["Feature<br/>Contributions"]
+    end
+
+    CVE --> Features
+    META --> Features
+    Features --> Model
+    Model --> Output
+
+    style F3 fill:#e74c3c,color:#fff
+    style F2 fill:#e67e22,color:#fff
+    style F6 fill:#27ae60,color:#fff

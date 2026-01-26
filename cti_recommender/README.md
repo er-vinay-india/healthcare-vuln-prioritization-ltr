@@ -23,6 +23,21 @@ Traditional vulnerability management relies on CVSS scores alone. This system co
 
 ---
 
+## 🏗️ Architecture Diagrams
+
+### Project Architecture
+![Project Architecture](docs/diagrams/project_architecture.png)
+
+### Data Pipeline
+![Data Pipeline](docs/diagrams/data_pipeline.png)
+
+### LTR Model
+![LTR Model](docs/diagrams/ltr_model.png)
+
+> 📂 **Diagram Sources:** See [docs/diagrams/](docs/diagrams/) for Mermaid source files (.mmd)
+
+---
+
 ## 📁 Project Structure
 
 ```
