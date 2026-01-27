@@ -396,6 +396,351 @@ async def get_statistics(db: CVEDatabase = Depends(get_database)):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
+@app.post("/api/v1/predict", response_model=dict)
+async def predict_scores(
+    cve_ids: List[str],
+    db: CVEDatabase = Depends(get_database)
+):
+    """
+    Score a list of CVE IDs using the trained LTR model.
+    
+    Args:
+        cve_ids: List of CVE identifiers
+        
+    Returns:
+        Dictionary mapping CVE IDs to scores
+    """
+    try:
+        model, scaler = load_model()
+        
+        # Query CVEs from database
+        placeholders = ','.join('?' * len(cve_ids))
+        query = f"""
+        SELECT 
+            e.cve_id,
+            c.cvss,
+            c.published,
+            e.epss_score,
+            e.epss_percentile,
+            e.kev_flag,
+            e.attack_technique_count,
+            e.chpl_flag,
+            e.is_healthcare
+        FROM enrichments e
+        LEFT JOIN cves c ON e.cve_id = c.cve_id
+        WHERE UPPER(e.cve_id) IN ({placeholders})
+        """
+        
+        df = pd.read_sql_query(query, db.conn, params=[cve.upper() for cve in cve_ids])
+        
+        if df.empty:
+            raise HTTPException(status_code=404, detail="No CVEs found")
+        
+        # Create features using modular function
+        from src.features.engineering import create_all_features
+        
+        FEATURE_COLS = [
+            'cvss_norm', 'epss_score', 'epss_percentile', 'kev_flag',
+            'days_since_published', 'recency_score', 'attack_technique_count',
+            'has_attack', 'chpl_flag', 'is_healthcare',
+            'cvss_epss_product', 'kev_healthcare_interaction'
+        ]
+        
+        df = create_all_features(df, FEATURE_COLS)
+        
+        # Get predictions using LightGBM
+        import lightgbm as lgb
+        X = df[FEATURE_COLS].values
+        
+        # Load LightGBM model if not already loaded
+        model_path = Path("models/ltr_model_conf_weighted.pkl")
+        if model_path.exists():
+            with open(model_path, 'rb') as f:
+                lgb_model = pickle.load(f)
+            scores = lgb_model.predict(X)
+        else:
+            raise HTTPException(status_code=500, detail="Model not found")
+        
+        # Build response
+        result = {
+            cve_id: float(score) 
+            for cve_id, score in zip(df['cve_id'].values, scores)
+        }
+        
+        logger.info(f"Scored {len(result)} CVEs")
+        return {"predictions": result, "count": len(result)}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Prediction failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/api/v1/top_cves", response_model=dict)
+async def get_top_cves(
+    limit: int = Query(20, ge=1, le=100, description="Number of top CVEs to return"),
+    date_start: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    date_end: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    healthcare_only: bool = Query(False, description="Only healthcare-relevant CVEs"),
+    kev_only: bool = Query(False, description="Only KEV CVEs"),
+    min_cvss: Optional[float] = Query(None, ge=0.0, le=10.0, description="Minimum CVSS score"),
+    db: CVEDatabase = Depends(get_database)
+):
+    """
+    Get top-K ranked CVEs with filtering options.
+    
+    Query params:
+        limit: Number of CVEs to return (1-100)
+        date_start: Filter CVEs published after this date
+        date_end: Filter CVEs published before this date  
+        healthcare_only: Only include healthcare-relevant CVEs
+        kev_only: Only include KEV CVEs
+        min_cvss: Minimum CVSS score threshold
+        
+    Returns:
+        Top-K CVEs with scores and details
+    """
+    try:
+        model, scaler = load_model()
+        
+        # Build query with filters
+        query = """
+        SELECT 
+            e.cve_id,
+            c.cvss,
+            c.published,
+            c.description,
+            e.epss_score,
+            e.epss_percentile,
+            e.kev_flag,
+            e.attack_technique_count,
+            e.chpl_flag,
+            e.is_healthcare,
+            e.label
+        FROM enrichments e
+        LEFT JOIN cves c ON e.cve_id = c.cve_id
+        WHERE 1=1
+        """
+        
+        params = []
+        
+        if date_start:
+            query += " AND c.published >= ?"
+            params.append(date_start)
+        
+        if date_end:
+            query += " AND c.published <= ?"
+            params.append(date_end)
+        
+        if healthcare_only:
+            query += " AND e.is_healthcare = 1"
+        
+        if kev_only:
+            query += " AND e.kev_flag = 1"
+        
+        if min_cvss is not None:
+            query += " AND c.cvss >= ?"
+            params.append(min_cvss)
+        
+        query += " LIMIT ?"
+        params.append(min(limit * 10, 10000))  # Get more for ranking
+        
+        df = pd.read_sql_query(query, db.conn, params=params)
+        
+        if df.empty:
+            raise HTTPException(status_code=404, detail="No CVEs found matching criteria")
+        
+        # Create features and score
+        from src.features.engineering import create_all_features
+        
+        FEATURE_COLS = [
+            'cvss_norm', 'epss_score', 'epss_percentile', 'kev_flag',
+            'days_since_published', 'recency_score', 'attack_technique_count',
+            'has_attack', 'chpl_flag', 'is_healthcare',
+            'cvss_epss_product', 'kev_healthcare_interaction'
+        ]
+        
+        df = create_all_features(df, FEATURE_COLS)
+        
+        # Get predictions
+        model_path = Path("models/ltr_model_conf_weighted.pkl")
+        with open(model_path, 'rb') as f:
+            lgb_model = pickle.load(f)
+        
+        X = df[FEATURE_COLS].values
+        df['ltr_score'] = lgb_model.predict(X)
+        
+        # Sort by score and take top K
+        top_df = df.nlargest(limit, 'ltr_score')
+        
+        # Build response
+        results = []
+        for rank, (_, row) in enumerate(top_df.iterrows(), start=1):
+            results.append({
+                'rank': rank,
+                'cve_id': row['cve_id'],
+                'score': float(row['ltr_score']),
+                'cvss': float(row['cvss']) if pd.notna(row['cvss']) else None,
+                'epss_score': float(row['epss_score']) if pd.notna(row['epss_score']) else None,
+                'kev_flag': bool(row['kev_flag']),
+                'is_healthcare': bool(row['is_healthcare']),
+                'label': int(row['label']) if pd.notna(row['label']) else None,
+                'published': row['published'].isoformat() if pd.notna(row['published']) else None,
+                'description': row['description'][:200] if pd.notna(row['description']) else None
+            })
+        
+        logger.info(f"Returned top {len(results)} CVEs (filters: healthcare={healthcare_only}, kev={kev_only})")
+        
+        return {
+            'top_cves': results,
+            'count': len(results),
+            'total_candidates': len(df),
+            'filters': {
+                'date_start': date_start,
+                'date_end': date_end,
+                'healthcare_only': healthcare_only,
+                'kev_only': kev_only,
+                'min_cvss': min_cvss
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Top CVEs retrieval failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.post("/api/v1/explain", response_model=dict)
+async def explain_prediction(
+    cve_id: str,
+    db: CVEDatabase = Depends(get_database)
+):
+    """
+    Get SHAP-based explanation for a CVE prediction.
+    
+    Args:
+        cve_id: CVE identifier
+        
+    Returns:
+        Feature contributions and explanations
+    """
+    try:
+        # Query CVE
+        query = """
+        SELECT 
+            e.cve_id,
+            c.cvss,
+            c.published,
+            c.description,
+            e.epss_score,
+            e.epss_percentile,
+            e.kev_flag,
+            e.attack_technique_count,
+            e.chpl_flag,
+            e.is_healthcare,
+            e.label
+        FROM enrichments e
+        LEFT JOIN cves c ON e.cve_id = c.cve_id
+        WHERE UPPER(e.cve_id) = ?
+        """
+        
+        df = pd.read_sql_query(query, db.conn, params=[cve_id.upper()])
+        
+        if df.empty:
+            raise HTTPException(status_code=404, detail=f"CVE not found: {cve_id}")
+        
+        # Create features
+        from src.features.engineering import create_all_features
+        
+        FEATURE_COLS = [
+            'cvss_norm', 'epss_score', 'epss_percentile', 'kev_flag',
+            'days_since_published', 'recency_score', 'attack_technique_count',
+            'has_attack', 'chpl_flag', 'is_healthcare',
+            'cvss_epss_product', 'kev_healthcare_interaction'
+        ]
+        
+        df = create_all_features(df, FEATURE_COLS)
+        
+        # Get model prediction
+        model_path = Path("models/ltr_model_conf_weighted.pkl")
+        with open(model_path, 'rb') as f:
+            model = pickle.load(f)
+        
+        X = df[FEATURE_COLS].values
+        score = model.predict(X)[0]
+        
+        # Compute SHAP values (if shap available)
+        try:
+            import shap
+            explainer = shap.TreeExplainer(model)
+            shap_values = explainer.shap_values(X)
+            
+            # Build explanation
+            feature_importance = {
+                feat: float(shap_val)
+                for feat, shap_val in zip(FEATURE_COLS, shap_values[0])
+            }
+            
+            # Sort by absolute importance
+            sorted_features = sorted(
+                feature_importance.items(),
+                key=lambda x: abs(x[1]),
+                reverse=True
+            )
+            
+            explanation = {
+                'cve_id': cve_id.upper(),
+                'prediction_score': float(score),
+                'feature_contributions': dict(sorted_features),
+                'top_3_features': [
+                    {'feature': feat, 'contribution': float(val)}
+                    for feat, val in sorted_features[:3]
+                ],
+                'feature_values': {
+                    feat: float(df[feat].values[0])
+                    for feat in FEATURE_COLS
+                },
+                'cve_details': {
+                    'cvss': float(df['cvss'].values[0]) if pd.notna(df['cvss'].values[0]) else None,
+                    'kev_flag': bool(df['kev_flag'].values[0]),
+                    'is_healthcare': bool(df['is_healthcare'].values[0]),
+                    'label': int(df['label'].values[0]) if pd.notna(df['label'].values[0]) else None
+                }
+            }
+            
+        except ImportError:
+            # Fallback: Use feature importance from model
+            feature_importance = dict(zip(FEATURE_COLS, model.feature_importances_))
+            
+            explanation = {
+                'cve_id': cve_id.upper(),
+                'prediction_score': float(score),
+                'feature_importance': feature_importance,
+                'note': 'SHAP not available, showing feature importance instead',
+                'feature_values': {
+                    feat: float(df[feat].values[0])
+                    for feat in FEATURE_COLS
+                },
+                'cve_details': {
+                    'cvss': float(df['cvss'].values[0]) if pd.notna(df['cvss'].values[0]) else None,
+                    'kev_flag': bool(df['kev_flag'].values[0]),
+                    'is_healthcare': bool(df['is_healthcare'].values[0]),
+                    'label': int(df['label'].values[0]) if pd.notna(df['label'].values[0]) else None
+                }
+            }
+        
+        logger.info(f"Explained prediction for {cve_id}")
+        return explanation
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Explanation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 def prepare_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     Prepare features for model inference (matches training)
