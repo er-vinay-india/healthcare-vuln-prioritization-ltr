@@ -1,0 +1,51 @@
+# =============================================================
+# Production Experiment Configuration
+# =============================================================
+# Full data, optimized hyperparameters for deployment.
+# Inherits from default.yaml.
+#
+# Usage:
+#   from config.experiment_config import load_config
+#   cfg = load_config('production')
+# =============================================================
+
+# Inherit all defaults, override below
+_inherit: default
+
+experiment:
+  name: "cve_prioritization_production"
+  description: "Production mode - full data, optimized settings"
+
+# -------------------------------------------------------------
+# Full Data (null = all)
+# -------------------------------------------------------------
+sampling:
+  graph_sample_size: null
+  rgcn_sample_size: null
+  test_sample_size: null
+
+# -------------------------------------------------------------
+# Production Model Settings
+# -------------------------------------------------------------
+rgcn:
+  hidden_channels: 64
+  num_layers: 2
+  dropout: 0.3
+  learning_rate: 0.01
+  epochs: 100
+  early_stopping_patience: 10
+  max_neighbors: 5  # More neighbors for better graph
+
+# -------------------------------------------------------------
+# Full Evaluation
+# -------------------------------------------------------------
+evaluation:
+  k_values: [10, 20, 50, 100, 200]
+  precision_threshold: 3
+
+# -------------------------------------------------------------
+# Production Output
+# -------------------------------------------------------------
+output:
+  save_predictions: true
+  save_plots: true

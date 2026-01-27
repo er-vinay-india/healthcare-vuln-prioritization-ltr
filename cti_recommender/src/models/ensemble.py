@@ -85,8 +85,8 @@ class EnsembleRanker:
         
         elif self.method == 'weighted_average':
             # Learn optimal weights via linear regression
-            from sklearn.linear_model import Ridge
-            ridge = Ridge(alpha=1.0, fit_intercept=False, positive=True)
+            from sklearn.linear_model import Ridge as RidgeRegressor
+            ridge = RidgeRegressor(alpha=1.0, fit_intercept=False, positive=True)
             ridge.fit(X, labels)
             self.weights = ridge.coef_
             # Normalize to sum to 1

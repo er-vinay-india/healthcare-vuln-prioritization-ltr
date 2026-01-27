@@ -1,0 +1,39 @@
+# =============================================================
+# Debug Experiment Configuration
+# =============================================================
+# Fast iteration with small samples for development/testing.
+# Inherits from default.yaml, overrides sampling and model sizes.
+#
+# Usage:
+#   from config.experiment_config import load_config
+#   cfg = load_config('debug')
+# =============================================================
+
+# Inherit all defaults, override below
+_inherit: default
+
+experiment:
+  name: "cve_prioritization_debug"
+  description: "Debug mode - small samples for fast iteration"
+
+# -------------------------------------------------------------
+# Reduced Sample Sizes for Speed
+# -------------------------------------------------------------
+sampling:
+  graph_sample_size: 500
+  rgcn_sample_size: 200
+  test_sample_size: 200
+
+# -------------------------------------------------------------
+# Smaller Model for Fast Training
+# -------------------------------------------------------------
+rgcn:
+  hidden_channels: 16
+  epochs: 20
+  early_stopping_patience: 3
+
+# -------------------------------------------------------------
+# Reduced Evaluation
+# -------------------------------------------------------------
+evaluation:
+  k_values: [10, 20, 50]

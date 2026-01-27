@@ -1,16 +1,39 @@
 """Model evaluation and comparison modules."""
 
-from .metrics import evaluate_ranking, evaluate_by_week, compute_ranking_metrics
-from .comparison import compare_models, rank_models, save_comparison_results
-from .significance import wilcoxon_test, bonferroni_correction
+from .metrics import evaluate_ranking, ndcg_at_k, precision_at_k
+from .significance import (
+    wilcoxon_test, 
+    bonferroni_correction,
+    pairwise_significance_test,
+    create_comparison_table,
+    print_significance_report
+)
 
-__all__ = [
-    'evaluate_ranking',
-    'evaluate_by_week',
-    'compute_ranking_metrics',
-    'compare_models',
-    'rank_models',
-    'save_comparison_results',
-    'wilcoxon_test',
-    'bonferroni_correction',
-]
+# Try to import comparison module if it exists
+try:
+    from .comparison import compare_models, rank_models, save_comparison_results
+    __all__ = [
+        'evaluate_ranking',
+        'ndcg_at_k',
+        'precision_at_k',
+        'compare_models',
+        'rank_models',
+        'save_comparison_results',
+        'wilcoxon_test',
+        'bonferroni_correction',
+        'pairwise_significance_test',
+        'create_comparison_table',
+        'print_significance_report',
+    ]
+except ImportError:
+    __all__ = [
+        'evaluate_ranking',
+        'ndcg_at_k',
+        'precision_at_k',
+        'wilcoxon_test',
+        'bonferroni_correction',
+        'pairwise_significance_test',
+        'create_comparison_table',
+        'print_significance_report',
+    ]
+

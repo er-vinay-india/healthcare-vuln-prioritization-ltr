@@ -1,0 +1,111 @@
+# =============================================================
+# Default Experiment Configuration
+# =============================================================
+# Base configuration inherited by all experiment profiles.
+# Override specific values in debug.yaml or production.yaml
+# =============================================================
+
+# Experiment metadata
+experiment:
+  name: "cve_prioritization"
+  version: "1.0.0"
+  description: "CVE Prioritization with Graph Neural Networks"
+
+# -------------------------------------------------------------
+# Data Configuration
+# -------------------------------------------------------------
+data:
+  database_path: "data/cve_database.db"
+  min_cve_date: "2024-01-01"
+  train_test_split_date: "2024-11-01"
+  
+  # Feature columns for all models
+  feature_cols:
+    - cvss_norm
+    - epss_score
+    - epss_percentile
+    - kev_flag
+    - days_since_published
+    - recency_score
+    - attack_technique_count
+    - has_attack
+    - chpl_flag
+    - is_healthcare
+    - cvss_epss_product
+    - kev_healthcare_interaction
+  
+  # Features for similarity computation
+  similarity_features:
+    - cvss
+    - epss_score
+    - kev_flag
+    - is_healthcare
+    - attack_technique_count
+
+# -------------------------------------------------------------
+# Sampling Configuration
+# -------------------------------------------------------------
+sampling:
+  # null = use all data, integer = sample size
+  graph_sample_size: null
+  rgcn_sample_size: null
+  test_sample_size: null
+
+# -------------------------------------------------------------
+# RGCN Hyperparameters
+# -------------------------------------------------------------
+rgcn:
+  hidden_channels: 64
+  num_layers: 2
+  dropout: 0.3
+  learning_rate: 0.01
+  epochs: 100
+  early_stopping_patience: 5
+  max_neighbors: 3  # Keep graph sparse
+
+# -------------------------------------------------------------
+# DiffusionRank Parameters
+# -------------------------------------------------------------
+diffusion:
+  alpha: 0.85  # Restart probability
+  max_iter: 100
+  tolerance: 1.0e-6
+
+# -------------------------------------------------------------
+# Similarity Graph Parameters
+# -------------------------------------------------------------
+similarity:
+  k_neighbors: 10
+  threshold: 0.7
+
+# -------------------------------------------------------------
+# Evaluation Configuration
+# -------------------------------------------------------------
+evaluation:
+  k_values: [10, 20, 50, 100]
+  precision_threshold: 3  # Label threshold for precision
+
+# -------------------------------------------------------------
+# Model Paths
+# -------------------------------------------------------------
+models:
+  baseline_path: "models/ltr_model_conf_weighted.pkl"
+  rgcn_path: "models/rgcn_model.pt"
+  ensemble_path: "models/ensemble_model.pkl"
+
+# -------------------------------------------------------------
+# Output Configuration
+# -------------------------------------------------------------
+output:
+  dir: "outputs"
+  save_predictions: true
+  save_plots: true
+
+# -------------------------------------------------------------
+# Device Configuration
+# -------------------------------------------------------------
+device:
+  # auto | cpu | cuda | mps
+  training: "auto"
+  inference: "cpu"  # CPU often faster for small batches
+  force_cpu: false
