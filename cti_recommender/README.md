@@ -7,19 +7,47 @@ A multi-source vulnerability scoring and ranking system specifically designed fo
 **Build an intelligent vulnerability prioritization system that answers:** *"Which vulnerabilities should healthcare security teams patch first?"*
 
 Traditional vulnerability management relies on CVSS scores alone. This system combines:
-- **NVD** - 2,000+ recent CVEs with severity scores
+- **NVD** - 226K+ CVEs with severity scores
 - **CISA KEV** - 1,460+ actively exploited vulnerabilities
 - **MITRE ATT&CK** - 835 adversary techniques and tactics
 - **CHPL** - 6,900 certified healthcare IT products
+- **EPSS** - Exploit prediction scores
+- **Healthcare Mappings** - Breach and medical device data
 
 **Current Performance:**
-- - Model: NDCG@10=0.75, P@100=100%
-- - Multi-source: 6 authoritative sources (NVD, KEV, EPSS, Healthcare, ATT&CK, CHPL)
-- - Database: 226,320 CVEs (2018-2025)
-- - Healthcare coverage: 125,606 CVEs (55.5%)
-- - ATT&CK mapping: 83,574 CVEs (36.9%)
-- - CHPL integration: 706 products, 5,089 CVEs matched
-- - Ablation study: +27.5% NDCG improvement vs baseline
+- Model: NDCG@10=0.75+, Confidence-Weighted LambdaRank
+- Multi-source: 6 authoritative sources (NVD, KEV, EPSS, Healthcare, ATT&CK, CHPL)
+- Database: 226,320 CVEs (2018-2025)
+- Healthcare coverage: 125,606 CVEs (55.5%)
+- ATT&CK mapping: 83,574 CVEs (36.9%)
+- CHPL integration: 706 products, 5,089 CVEs matched
+- **NEW**: GPU-accelerated training (Apple M5/CUDA support)
+
+---
+
+## Quick Start
+
+### Run the Final Notebook
+
+```bash
+# Activate environment
+source venv/bin/activate
+
+# Launch Jupyter
+jupyter notebook notebooks/CVE_Prioritization_Final.ipynb
+```
+
+**The consolidated notebook** (`CVE_Prioritization_Final.ipynb`) provides a complete pipeline:
+1. Data loading from SQLite database
+2. Feature engineering (CVSS, EPSS, KEV, ATT&CK, Healthcare)
+3. Weak label construction with confidence scores
+4. Temporal train/val/test split
+5. Confidence-weighted LambdaRank training
+6. Evaluation against baselines
+7. Explainability (Feature importance, SHAP)
+8. Results summary
+
+**Streamlined**: 400 lines (down from 2,425 lines) using modular functions.
 
 ---
 
@@ -42,12 +70,51 @@ Traditional vulnerability management relies on CVSS scores alone. This system co
 
 ```
 cti_recommender/
-├── src/                          # Source code
-│   ├── core/                     # Core vulnerability scoring
-│   │   ├── cti_recommender.py   # Multi-source scoring engine
-│   │   └── ltr.py               # Learning-to-rank (LightGBM)
-│   ├── analysis/                 # Data quality & healthcare mapping
-│   │   ├── data_quality.py      # Validation framework
+├── notebooks/
+│   └── CVE_Prioritization_Final.ipynb    # Production notebook (streamlined)
+├── archive/notebooks/                     # Original research notebooks
+│   ├── healthcare_cve_prioritization_ltr.ipynb
+│   └── confidence_weighted_weak_supervision_ltr.ipynb
+├── src/                                   # Modular source code
+│   ├── core/                             # Core vulnerability scoring
+│   │   ├── cve_database.py              # SQLite database interface
+│   │   └── cti_recommender.py           # Multi-source scoring engine
+│   ├── data/                             # Data loading and preprocessing
+│   │   ├── loader.py                    # CVE data loading
+│   │   └── preprocessing.py             # Data cleaning
+│   ├── features/                         # Feature engineering
+│   │   ├── engineering.py               # Feature extraction
+│   │   └── labeling.py                  # Weak label construction ⭐
+│   ├── models/                           # ML models
+│   │   ├── ltr.py                       # LambdaRank training ⭐
+│   │   ├── baselines.py                 # Baseline models
+│   │   ├── diffusion_imputer.py         # DiffusionRank (GPU)
+│   │   ├── rgcn_ranker.py               # Graph neural network (GPU)
+│   │   └── bootstrap_ensemble.py        # Uncertainty-aware ensemble
+│   ├── evaluation/                       # Evaluation metrics
+│   │   ├── metrics.py                   # NDCG@K, Precision@K ⭐
+│   │   ├── comparison.py                # Model comparison
+│   │   └── significance.py              # Statistical tests
+│   ├── visualization/                    # Visualization
+│   │   ├── eda.py                       # Exploratory data analysis
+│   │   └── explainability.py            # Feature importance, SHAP ⭐
+│   ├── utils/                            # Utilities
+│   │   ├── temporal.py                  # Temporal splits ⭐
+│   │   ├── config.py                    # Configuration management
+│   │   └── device_manager.py            # GPU device detection ⭐
+│   └── analysis/                         # Data quality & healthcare mapping
+│       ├── data_quality.py              # Validation framework
+│       └── healthcare_mapper.py         # CHPL/breach mapping
+├── cache/                                # Cached API responses
+├── data/                                 # SQLite database
+├── models/                               # Trained models
+├── outputs/                              # Results and reports
+├── scripts/                              # Utility scripts
+├── tests/                                # Unit tests
+└── docs/                                 # Documentation
+
+⭐ = New modular functions (Phase 3 refactor)
+```
 │   │   └── healthcare_mapping.py # Healthcare relevance detection
 │   └── utils/                    # Utility modules
 │       ├── cache_manager.py     # Unified cache management
