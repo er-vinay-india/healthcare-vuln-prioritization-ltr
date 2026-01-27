@@ -6,8 +6,70 @@ Includes CVSS, EPSS, KEV, ATT&CK, CHPL, and healthcare-related features.
 """
 
 from typing import List, Optional, Tuple
+from datetime import datetime
 import pandas as pd
 import numpy as np
+
+
+def create_all_features(df: pd.DataFrame, feature_cols: List[str]) -> pd.DataFrame:
+    """
+    Create all features for CVE prioritization (production-ready, simple version).
+    
+    This function performs inline feature engineering matching the notebook implementation.
+    Features created:
+    - cvss_norm: Normalized CVSS score [0,1]
+    - epss_score, epss_percentile: EPSS features (filled)
+    - kev_flag: Binary KEV membership
+    - days_since_published, recency_score: Temporal features
+    - attack_technique_count, has_attack: ATT&CK features
+    - chpl_flag, is_healthcare: Healthcare flags
+    - cvss_epss_product, kev_healthcare_interaction: Interaction features
+    - published_week: Week grouping for ranking
+    
+    Args:
+        df: DataFrame with raw CVE data (must have 'published' and 'cvss' columns)
+        feature_cols: List of feature column names to validate
+    
+    Returns:
+        DataFrame with all engineered features
+    """
+    # CVSS normalization
+    df['cvss_norm'] = df['cvss'].fillna(5.0) / 10.0
+
+    # EPSS handling
+    df['epss_score'] = df['epss_score'].fillna(0.0)
+    df['epss_percentile'] = df['epss_percentile'].fillna(0.0)
+
+    # KEV flag
+    df['kev_flag'] = df['kev_flag'].fillna(0).astype(int)
+
+    # Temporal features
+    df['days_since_published'] = (datetime.now() - df['published']).dt.days
+    max_days = df['days_since_published'].max()
+    df['recency_score'] = 1.0 - (df['days_since_published'] / max_days) if max_days > 0 else 1.0
+
+    # ATT&CK features
+    df['attack_technique_count'] = df['attack_technique_count'].fillna(0).astype(int)
+    df['has_attack'] = (df['attack_technique_count'] > 0).astype(int)
+    if 'attack_flag' in df.columns:
+        df['has_attack'] = ((df['attack_technique_count'] > 0) | (df['attack_flag'] == 1)).astype(int)
+
+    # CHPL and healthcare flags
+    df['chpl_flag'] = df['chpl_flag'].fillna(0).astype(int)
+    df['is_healthcare'] = df['is_healthcare'].fillna(0).astype(int)
+
+    # Interaction features
+    df['cvss_epss_product'] = df['cvss_norm'] * df['epss_score']
+    df['kev_healthcare_interaction'] = df['kev_flag'] * df['is_healthcare']
+
+    # Week grouping for ranking
+    df['published_week'] = df['published'].dt.strftime('%Y-%U')
+
+    print(f"Feature engineering complete: {len(df):,} rows, {len(feature_cols)} features")
+    print("\nFeature statistics:")
+    print(df[feature_cols].describe().T[['mean', 'std', 'min', 'max']].round(4))
+    
+    return df
 
 
 def build_features(df: pd.DataFrame, reference_date: str = '2025-01-01') -> pd.DataFrame:
