@@ -1,20 +1,44 @@
-requests
-pandas
-python-dateutil
-nbconvert
-jupyter
-nbclient
-matplotlib
-pyarrow
+# Core dependencies
+requests>=2.32.0
+pandas>=2.0.0
+python-dateutil>=2.9.0
+nbconvert>=7.0.0
+jupyter>=1.0.0
+nbclient>=0.10.0
+matplotlib>=3.8.0
+pyarrow>=10.0.0
 attackcti
-tqdm
+tqdm>=4.65.0
+numpy>=1.24.0
+
+# Machine Learning
 xgboost>=1.7.6
-scikit-learn
+scikit-learn>=1.3.0
+lightgbm>=4.0.0
+
+# Deep Learning (PyTorch for cross-platform GPU support)
+# Works on: Apple MPS (M1/M2/M3/M4/M5), NVIDIA CUDA, AMD ROCm, CPU
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+torch-geometric>=2.3.0
+
+# Explainability & Analysis
+shap>=0.44.0
+seaborn>=0.13.0
+plotly>=5.0.0
+
+# API & Web
 python-dotenv>=1.0.0
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Testing
 pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Data Validation
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
 python-json-logger>=2.0.0
 tenacity>=8.0.0
-fastapi>=0.109.0
-uvicorn[standard]>=0.27.0

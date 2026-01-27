@@ -2,6 +2,7 @@
 RGCN Relational Model for CVE-Vendor Graph
 
 Implements a simplified Relational Graph Convolutional Network.
+Supports cross-platform GPU acceleration (Apple MPS, NVIDIA CUDA, CPU).
 """
 import re
 import numpy as np
@@ -11,7 +12,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.preprocessing import StandardScaler
 from collections import defaultdict
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from src.utils.device_manager import get_device_manager, DeviceManager
 
 
 def extract_vendor_from_description(description: str) -> str:
@@ -110,11 +117,24 @@ class SimpleRGCN(nn.Module):
 
 
 class RGCNRanker:
-    """RGCN-based ranker for CVE prioritization."""
+    """RGCN-based ranker for CVE prioritization with cross-platform GPU support."""
     
     def __init__(self, cve_dim: int, hidden_dim: int = 64, num_layers: int = 2,
-                 lr: float = 1e-3, device: str = 'cpu'):
-        self.device = device
+                 lr: float = 1e-3, device: Optional[str] = None):
+        """
+        Initialize RGCN ranker.
+        
+        Args:
+            cve_dim: Dimension of CVE features
+            hidden_dim: Hidden dimension size
+            num_layers: Number of RGCN layers
+            lr: Learning rate
+            device: Device to use ('mps', 'cuda', 'cpu', or None for auto-detect)
+        """
+        # Initialize device manager (auto-detects best device if None)
+        self.device_manager = get_device_manager(prefer_device=device)
+        self.device = self.device_manager.device
+        
         self.cve_dim = cve_dim
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers

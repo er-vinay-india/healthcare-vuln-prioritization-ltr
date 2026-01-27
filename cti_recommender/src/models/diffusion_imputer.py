@@ -48,12 +48,22 @@ class DenoisingMLP(nn.Module):
 
 
 class DiffusionRankImputer:
-    """DiffusionRank-style label imputation model."""
+    """DiffusionRank-style label imputation model with GPU support."""
     
     def __init__(self, input_dim: int, hidden_dim: int = 128, num_layers: int = 3,
-                 lr: float = 1e-3, device: str = 'cpu'):
-        self.device = device
-        self.model = DenoisingMLP(input_dim, hidden_dim, num_layers).to(device)
+                 lr: float = 1e-3, device: str = None):
+        # Auto-detect best device if not specified
+        if device is None:
+            if torch.backends.mps.is_available():
+                self.device = torch.device('mps')
+            elif torch.cuda.is_available():
+                self.device = torch.device('cuda')
+            else:
+                self.device = torch.device('cpu')
+        else:
+            self.device = torch.device(device)
+        
+        self.model = DenoisingMLP(input_dim, hidden_dim, num_layers).to(self.device)
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=lr, weight_decay=1e-4)
         self.scaler = StandardScaler()
         self.label_mean = 0.0
