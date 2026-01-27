@@ -123,5 +123,17 @@ def query_cves_by_date_range(
     Returns:
         DataFrame with CVEs in date range
     """
-    # TODO: Implement date-based query
-    raise NotImplementedError("To be implemented")
+    import sqlite3
+    
+    conn = sqlite3.connect(db_path)
+    query = """
+        SELECT c.*, e.*
+        FROM cves c
+        LEFT JOIN enrichments e ON c.cve_id = e.cve_id
+        WHERE c.published >= ? AND c.published <= ?
+        ORDER BY c.published DESC
+    """
+    df = pd.read_sql(query, conn, params=(start_date, end_date))
+    conn.close()
+    
+    return df

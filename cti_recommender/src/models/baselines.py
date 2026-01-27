@@ -86,5 +86,4 @@ def compute_epss_only_scores(df: pd.DataFrame) -> pd.Series:
     Returns:
         Series of EPSS-based scores
     """
-    # TODO: Implement EPSS baseline
-    raise NotImplementedError("To be implemented")
+    return df['epss_score'].fillna(0.0)

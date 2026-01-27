@@ -72,28 +72,38 @@ def validate_temporal_leakage(
     Returns:
         True if no leakage, False otherwise
     """
-    # TODO: Implement leakage check
-    # - Check max(train_dates) < min(test_dates)
-    raise NotImplementedError("To be implemented")
+    train_max = train_df[date_col].max()
+    test_min = test_df[date_col].min()
+    
+    if test_min < train_max:
+        print(f"⚠️  TEMPORAL LEAKAGE DETECTED!")
+        print(f"   Train max date: {train_max}")
+        print(f"   Test min date: {test_min}")
+        print(f"   Overlap: {(train_max - test_min).days} days")
+        return False
+    
+    print(f"✓ No temporal leakage detected")
+    print(f"   Train ends: {train_max}")
+    print(f"   Test starts: {test_min}")
+    return True
 
 
 def add_temporal_features(df: pd.DataFrame, date_col: str = 'published_date') -> pd.DataFrame:
     """
     Add temporal features (age, recency, day of week, etc.).
     
+    NOTE: This functionality is now in src/features/engineering.py (create_all_features)
+    This function is kept for backward compatibility.
+    
     Args:
         df: DataFrame with date column
         date_col: Date column name
     
     Returns:
-        DataFrame with added temporal features
+        DataFrame with added temporal features (unchanged - use create_all_features instead)
     """
-    # TODO: Implement temporal feature engineering
-    # - CVE age (days since publication)
-    # - Recency (inverse age)
-    # - Day of week
-    # - Month
-    raise NotImplementedError("To be implemented")
+    print("Note: Temporal features should be added via create_all_features() from src/features/engineering")
+    return df
 
 
 def group_by_time_period(
