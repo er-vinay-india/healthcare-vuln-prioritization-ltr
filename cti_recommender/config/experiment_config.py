@@ -88,6 +88,10 @@ class RGCNConfig:
     epochs: int = 100
     early_stopping_patience: int = 5
     max_neighbors: int = 3
+    # Mini-batch training (critical for scalability!)
+    use_minibatch: bool = True  # Auto-enables for >5K nodes
+    batch_size: int = 1024      # Nodes per mini-batch
+    num_neighbors: List[int] = field(default_factory=lambda: [15, 10])  # Per layer
 
 
 @dataclass

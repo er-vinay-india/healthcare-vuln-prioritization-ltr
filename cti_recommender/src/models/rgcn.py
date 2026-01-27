@@ -9,6 +9,11 @@ Architecture:
 - RGCN layers: Learn node embeddings using typed edges
 - Output: Priority scores for each CVE
 
+Optimizations (v2):
+- Mini-batch training with NeighborLoader for O(batch) vs O(n) per epoch
+- CPU training (more stable than MPS for sparse GNN ops)
+- Progress tracking with tqdm
+
 Author: Vinayk Sharma
 Date: January 27, 2026
 Phase: 7 - Advanced Models
@@ -20,9 +25,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import RGCNConv
 from torch_geometric.data import Data, HeteroData
+from torch_geometric.loader import NeighborLoader
 from sklearn.preprocessing import StandardScaler
 from typing import Dict, List, Tuple, Optional
+from tqdm.auto import tqdm
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -175,6 +183,10 @@ class RGCNPrioritizer(nn.Module):
 class CVERGCNTrainer:
     """
     Trainer for RGCN CVE prioritization model.
+    
+    Supports two training modes:
+    1. Full-batch (small graphs < 5K nodes): Original O(n) per epoch
+    2. Mini-batch (large graphs): Uses NeighborLoader for O(batch) per epoch
     """
     
     def __init__(
@@ -182,7 +194,10 @@ class CVERGCNTrainer:
         model: RGCNPrioritizer,
         learning_rate: float = 0.01,
         weight_decay: float = 5e-4,
-        device: str = None
+        device: str = None,
+        use_minibatch: bool = True,
+        batch_size: int = 1024,
+        num_neighbors: List[int] = None
     ):
         """
         Initialize trainer.
@@ -192,17 +207,25 @@ class CVERGCNTrainer:
             learning_rate: Learning rate
             weight_decay: L2 regularization
             device: Device to use ('cpu', 'cuda', 'mps')
+            use_minibatch: Use mini-batch training (recommended for >5K nodes)
+            batch_size: Mini-batch size (only if use_minibatch=True)
+            num_neighbors: Neighbors to sample per layer [layer1, layer2, ...]
         """
         self.model = model
+        self.use_minibatch = use_minibatch
+        self.batch_size = batch_size
+        self.num_neighbors = num_neighbors or [15, 10]  # Default: 15 L1, 10 L2 neighbors
         
-        # Auto-detect device
+        # FORCE CPU for RGCN - MPS has issues with sparse ops, CPU is often faster
+        # Only use CUDA if available (proper GPU)
         if device is None:
             if torch.cuda.is_available():
                 device = 'cuda'
-            elif torch.backends.mps.is_available():
-                device = 'mps'
             else:
-                device = 'cpu'
+                device = 'cpu'  # CPU is faster than MPS for sparse GNN ops!
+        elif device == 'mps':
+            logger.warning("MPS is slow for RGCN sparse ops - switching to CPU")
+            device = 'cpu'
         
         self.device = torch.device(device)
         self.model.to(self.device)
@@ -217,6 +240,7 @@ class CVERGCNTrainer:
         self.criterion = nn.MSELoss()
         
         logger.info(f"RGCN Trainer initialized on device: {self.device}")
+        logger.info(f"Mini-batch training: {use_minibatch}, batch_size: {batch_size}")
     
     def train_epoch(
         self,
@@ -289,6 +313,22 @@ class CVERGCNTrainer:
         
         return loss.item(), predictions
     
+    def _create_neighbor_loader(
+        self,
+        data: Data,
+        input_nodes: torch.Tensor,
+        shuffle: bool = True
+    ) -> NeighborLoader:
+        """Create NeighborLoader for mini-batch training."""
+        return NeighborLoader(
+            data,
+            num_neighbors=self.num_neighbors,
+            batch_size=self.batch_size,
+            input_nodes=input_nodes,
+            shuffle=shuffle,
+            num_workers=0,  # No multiprocessing (simpler, avoids issues)
+        )
+    
     def fit(
         self,
         x: torch.Tensor,
@@ -304,6 +344,8 @@ class CVERGCNTrainer:
         """
         Train model with optional early stopping.
         
+        Uses mini-batch training with NeighborLoader for large graphs (>5K nodes).
+        
         Args:
             x: Node features
             edge_index: Edge connectivity
@@ -318,6 +360,35 @@ class CVERGCNTrainer:
         Returns:
             Training history
         """
+        num_nodes = x.shape[0]
+        use_minibatch = self.use_minibatch and num_nodes > 5000
+        
+        if use_minibatch:
+            return self._fit_minibatch(
+                x, edge_index, edge_type, y, train_mask, val_mask,
+                epochs, early_stopping_patience, verbose
+            )
+        else:
+            return self._fit_fullbatch(
+                x, edge_index, edge_type, y, train_mask, val_mask,
+                epochs, early_stopping_patience, verbose
+            )
+    
+    def _fit_fullbatch(
+        self,
+        x: torch.Tensor,
+        edge_index: torch.Tensor,
+        edge_type: torch.Tensor,
+        y: torch.Tensor,
+        train_mask: torch.Tensor,
+        val_mask: Optional[torch.Tensor] = None,
+        epochs: int = 200,
+        early_stopping_patience: int = 20,
+        verbose: bool = True
+    ) -> Dict[str, List[float]]:
+        """Full-batch training (original method for small graphs)."""
+        import sys
+        
         # Move data to device
         x = x.to(self.device)
         edge_index = edge_index.to(self.device)
@@ -337,6 +408,9 @@ class CVERGCNTrainer:
         patience_counter = 0
         best_model_state = None
         
+        if verbose:
+            print(f"Training: [", end="", flush=True)
+        
         for epoch in range(epochs):
             # Train
             train_loss = self.train_epoch(x, edge_index, edge_type, y, train_mask)
@@ -352,33 +426,213 @@ class CVERGCNTrainer:
                     best_val_loss = val_loss
                     patience_counter = 0
                     best_model_state = self.model.state_dict().copy()
+                    if verbose:
+                        print("↑", end="", flush=True)  # Improvement
                 else:
                     patience_counter += 1
-                
-                if verbose and (epoch + 1) % 10 == 0:
-                    logger.info(
-                        f"Epoch {epoch+1}/{epochs} - "
-                        f"Train Loss: {train_loss:.4f}, "
-                        f"Val Loss: {val_loss:.4f}"
-                    )
+                    if verbose:
+                        print(".", end="", flush=True)  # No improvement
                 
                 # Early stopping
                 if patience_counter >= early_stopping_patience:
-                    logger.info(f"Early stopping at epoch {epoch+1}")
+                    if verbose:
+                        print(f"] Early stop @ {epoch+1}")
                     break
             else:
-                if verbose and (epoch + 1) % 10 == 0:
-                    logger.info(
-                        f"Epoch {epoch+1}/{epochs} - "
-                        f"Train Loss: {train_loss:.4f}"
-                    )
+                if verbose:
+                    print(".", end="", flush=True)
+            
+            # Progress milestone every 10 epochs
+            if verbose and (epoch + 1) % 10 == 0:
+                print(f"{epoch+1}", end="", flush=True)
+        
+        if verbose and patience_counter < early_stopping_patience:
+            print(f"] Done!")
+            print(f"  Final: train_loss={train_loss:.4f}, val_loss={history['val_loss'][-1] if history['val_loss'] else 'N/A':.4f}")
         
         # Restore best model
         if best_model_state is not None:
             self.model.load_state_dict(best_model_state)
-            logger.info(f"Restored best model with val_loss={best_val_loss:.4f}")
+            if verbose:
+                print(f"  Best val_loss: {best_val_loss:.4f}")
         
         return history
+    
+    def _fit_minibatch(
+        self,
+        x: torch.Tensor,
+        edge_index: torch.Tensor,
+        edge_type: torch.Tensor,
+        y: torch.Tensor,
+        train_mask: torch.Tensor,
+        val_mask: Optional[torch.Tensor] = None,
+        epochs: int = 200,
+        early_stopping_patience: int = 20,
+        verbose: bool = True
+    ) -> Dict[str, List[float]]:
+        """
+        Mini-batch training with NeighborLoader.
+        
+        ~10-100x faster than full-batch for large graphs!
+        Falls back to full-batch if pyg-lib/torch-sparse not available.
+        """
+        import sys
+        
+        # Check if NeighborLoader dependencies are available
+        try:
+            # Test if sampling works
+            test_data = Data(x=x[:100], edge_index=edge_index[:, :100] if edge_index.shape[1] > 100 else edge_index)
+            test_loader = NeighborLoader(test_data, num_neighbors=[2], batch_size=10, 
+                                         input_nodes=torch.arange(min(10, x.shape[0])))
+            next(iter(test_loader))  # Try to get one batch
+        except (ImportError, RuntimeError) as e:
+            if verbose:
+                print(f"⚠ NeighborLoader not available ({type(e).__name__}), using full-batch", flush=True)
+            return self._fit_fullbatch(
+                x, edge_index, edge_type, y, train_mask, val_mask,
+                epochs, early_stopping_patience, verbose
+            )
+        
+        if verbose:
+            print(f"Mini-batch mode: batch_size={self.batch_size}")
+        start_time = time.time()
+        
+        # Create PyG Data object
+        if verbose:
+            print("  Creating graph data...", end="", flush=True)
+        data = Data(
+            x=x,
+            edge_index=edge_index,
+            edge_type=edge_type,
+            y=y,
+            train_mask=train_mask,
+            val_mask=val_mask if val_mask is not None else torch.zeros_like(train_mask)
+        )
+        if verbose:
+            print(" ✓", flush=True)
+        
+        # Get training node indices
+        train_nodes = train_mask.nonzero(as_tuple=True)[0]
+        
+        # Create loader for training
+        if verbose:
+            print(f"  Creating NeighborLoader ({len(train_nodes):,} train nodes)...", end="", flush=True)
+        train_loader = self._create_neighbor_loader(data, train_nodes, shuffle=True)
+        num_batches = len(train_loader)
+        if verbose:
+            print(f" ✓ ({num_batches} batches)", flush=True)
+        
+        history = {
+            'train_loss': [],
+            'val_loss': []
+        }
+        
+        best_val_loss = float('inf')
+        patience_counter = 0
+        best_model_state = None
+        
+        if verbose:
+            print(f"\nEpoch progress ({epochs} total):", flush=True)
+            print("[", end="", flush=True)
+        
+        for epoch in range(epochs):
+            epoch_start = time.time()
+            
+            # Train one epoch with mini-batches
+            self.model.train()
+            total_loss = 0
+            total_nodes = 0
+            
+            for batch_idx, batch in enumerate(train_loader):
+                batch = batch.to(self.device)
+                self.optimizer.zero_grad()
+                
+                # Forward pass on subgraph
+                out = self.model(batch.x, batch.edge_index, batch.edge_type)
+                
+                # Loss only on target nodes (first batch_size nodes in batch)
+                batch_size = batch.batch_size
+                loss = self.criterion(out[:batch_size], batch.y[:batch_size])
+                
+                # Backward
+                loss.backward()
+                self.optimizer.step()
+                
+                total_loss += loss.item() * batch_size
+                total_nodes += batch_size
+            
+            train_loss = total_loss / total_nodes
+            history['train_loss'].append(train_loss)
+            
+            # Validate
+            if val_mask is not None and val_mask.any():
+                val_loss, _ = self._evaluate_fullbatch(x, edge_index, edge_type, y, val_mask)
+                history['val_loss'].append(val_loss)
+                
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    patience_counter = 0
+                    best_model_state = self.model.state_dict().copy()
+                    if verbose:
+                        print("↑", end="", flush=True)  # Improved!
+                else:
+                    patience_counter += 1
+                    if verbose:
+                        print(".", end="", flush=True)  # No improvement
+                
+                # Show epoch number every 10 epochs
+                if verbose and (epoch + 1) % 10 == 0:
+                    elapsed = time.time() - start_time
+                    print(f" {epoch+1}({elapsed:.0f}s)", end="", flush=True)
+                
+                if patience_counter >= early_stopping_patience:
+                    if verbose:
+                        print(f"] Early stop @ epoch {epoch+1}")
+                    break
+            else:
+                if verbose:
+                    print(".", end="", flush=True)
+        
+        elapsed = time.time() - start_time
+        
+        if verbose and patience_counter < early_stopping_patience:
+            print(f"] Done!")
+        
+        if verbose:
+            print(f"\n✓ Training completed in {elapsed:.1f}s ({elapsed/60:.1f} min)")
+            print(f"  Final train_loss: {train_loss:.4f}")
+            if history['val_loss']:
+                print(f"  Best val_loss: {best_val_loss:.4f}")
+        
+        # Restore best model
+        if best_model_state is not None:
+            self.model.load_state_dict(best_model_state)
+        
+        return history
+    
+    @torch.no_grad()
+    def _evaluate_fullbatch(
+        self,
+        x: torch.Tensor,
+        edge_index: torch.Tensor,
+        edge_type: torch.Tensor,
+        y: torch.Tensor,
+        eval_mask: torch.Tensor
+    ) -> Tuple[float, np.ndarray]:
+        """Evaluate on full graph (for validation)."""
+        self.model.eval()
+        
+        x = x.to(self.device)
+        edge_index = edge_index.to(self.device)
+        edge_type = edge_type.to(self.device)
+        y = y.to(self.device)
+        eval_mask = eval_mask.to(self.device)
+        
+        out = self.model(x, edge_index, edge_type)
+        loss = self.criterion(out[eval_mask], y[eval_mask])
+        predictions = out[eval_mask].cpu().numpy()
+        
+        return loss.item(), predictions
     
     @torch.no_grad()
     def predict(
@@ -425,7 +679,8 @@ def prepare_rgcn_data(
     train_idx: np.ndarray,
     val_idx: Optional[np.ndarray] = None,
     test_idx: Optional[np.ndarray] = None,
-    normalize_features: bool = True
+    normalize_features: bool = True,
+    verbose: bool = True
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, 
            torch.Tensor, torch.Tensor, torch.Tensor]:
     """
@@ -439,21 +694,32 @@ def prepare_rgcn_data(
         val_idx: Validation indices
         test_idx: Test indices
         normalize_features: Whether to standardize features
+        verbose: Print progress
         
     Returns:
         (x, edge_index, edge_type, y, train_mask, val_mask, test_mask)
     """
+    import sys
+    
     num_cves = len(cve_features)
     num_features = cve_features.shape[1]
     
+    if verbose:
+        print(f"Preparing RGCN data ({num_cves:,} nodes)...", flush=True)
+    
     # Normalize features
     if normalize_features:
+        if verbose:
+            print("  [1/4] Normalizing features...", end="", flush=True)
         scaler = StandardScaler()
         cve_features = scaler.fit_transform(cve_features)
+        if verbose:
+            print(" ✓", flush=True)
     
     # Build edge list with types
-    # Edge type 0: CVE -> CWE
-    # Edge type 1: CWE -> CVE
+    if verbose:
+        print(f"  [2/4] Building edges ({len(cve_to_cwe):,} mappings)...", end="", flush=True)
+    
     edges = []
     edge_types = []
     
@@ -473,21 +739,30 @@ def prepare_rgcn_data(
             edges.append([cwe_idx, cve_idx])
             edge_types.append(1)
     
+    if verbose:
+        print(f" ✓ ({len(edges):,} edges)", flush=True)
+    
     # Convert to tensors
     if len(edges) == 0:
-        # No edges - create self-loops
         logger.warning("No edges found, creating self-loops")
         edges = [[i, i] for i in range(num_cves)]
         edge_types = [0] * num_cves
     
+    if verbose:
+        print("  [3/4] Creating tensors...", end="", flush=True)
+    
     edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
     edge_type = torch.tensor(edge_types, dtype=torch.long)
-    
-    # Convert features and labels
     x = torch.tensor(cve_features, dtype=torch.float32)
     y = torch.tensor(cve_labels, dtype=torch.float32)
     
+    if verbose:
+        print(" ✓", flush=True)
+    
     # Create masks
+    if verbose:
+        print("  [4/4] Creating masks...", end="", flush=True)
+    
     train_mask = torch.zeros(num_cves, dtype=torch.bool)
     train_mask[train_idx] = True
     
@@ -499,11 +774,9 @@ def prepare_rgcn_data(
     if test_idx is not None:
         test_mask[test_idx] = True
     
-    logger.info(f"Prepared RGCN data:")
-    logger.info(f"  Nodes: {num_cves}")
-    logger.info(f"  Edges: {edge_index.shape[1]}")
-    logger.info(f"  Features: {num_features}")
-    logger.info(f"  Train/Val/Test: {train_mask.sum()}/{val_mask.sum()}/{test_mask.sum()}")
+    if verbose:
+        print(" ✓", flush=True)
+        print(f"  → Nodes: {num_cves:,}, Edges: {edge_index.shape[1]:,}, Train/Val: {train_mask.sum()}/{val_mask.sum()}", flush=True)
     
     return x, edge_index, edge_type, y, train_mask, val_mask, test_mask
 
@@ -522,10 +795,21 @@ def train_rgcn_model(
     epochs: int = 200,
     early_stopping_patience: int = 20,
     device: str = None,
-    verbose: bool = True
+    verbose: bool = True,
+    use_minibatch: bool = True,
+    batch_size: int = 1024
 ) -> Tuple[RGCNPrioritizer, CVERGCNTrainer, Dict]:
     """
     Train RGCN model end-to-end.
+    
+    Optimized for large datasets:
+    - Uses CPU (more stable than MPS for sparse GNN ops)
+    - Mini-batch training with NeighborLoader for O(batch) per epoch
+    - Early stopping to prevent overfitting
+    
+    Expected training times (32K samples, 100 epochs):
+    - Old (full-batch MPS): 100+ minutes
+    - New (mini-batch CPU): ~5-10 minutes
     
     Args:
         cve_features: CVE feature matrix
@@ -540,35 +824,78 @@ def train_rgcn_model(
         learning_rate: Learning rate
         epochs: Max epochs
         early_stopping_patience: Early stopping patience
-        device: Device to use
+        device: Device to use (default: CPU for RGCN, CUDA if available)
         verbose: Print progress
+        use_minibatch: Use mini-batch training (recommended for >5K nodes)
+        batch_size: Mini-batch size
         
     Returns:
         (model, trainer, history)
     """
+    import sys
+    
+    if verbose:
+        print("\n" + "="*50, flush=True)
+        print("RGCN TRAINING PIPELINE", flush=True)
+        print("="*50, flush=True)
+    
     # Prepare data
+    if verbose:
+        print("\n[STEP 1/4] Preparing data...", flush=True)
+    
     x, edge_index, edge_type, y, train_mask, val_mask, test_mask = prepare_rgcn_data(
-        cve_features, cve_to_cwe, cve_labels, train_idx, val_idx, test_idx
+        cve_features, cve_to_cwe, cve_labels, train_idx, val_idx, test_idx, verbose=verbose
     )
     
-    # Create model
+    num_nodes = x.shape[0]
     num_features = x.shape[1]
+    
+    # Device selection
+    if verbose:
+        print("\n[STEP 2/4] Setting up device...", flush=True)
+    
+    if device is None or device == 'mps':
+        if torch.cuda.is_available():
+            device = 'cuda'
+        else:
+            device = 'cpu'
+            if verbose:
+                print(f"  → Using CPU (faster than MPS for sparse ops)", flush=True)
+    
+    # Auto-enable mini-batch for large graphs
+    if num_nodes > 5000 and use_minibatch:
+        if verbose:
+            print(f"  → Mini-batch enabled ({num_nodes:,} nodes > 5K)", flush=True)
+            print(f"  → Batch size: {batch_size}", flush=True)
+    
+    # Create model
+    if verbose:
+        print("\n[STEP 3/4] Creating model...", flush=True)
+    
     model = RGCNPrioritizer(
         num_features=num_features,
         hidden_channels=hidden_channels,
         num_layers=num_layers,
-        num_relations=2,  # CVE->CWE and CWE->CVE
+        num_relations=2,
         dropout=dropout
     )
+    
+    if verbose:
+        print(f"  → Model: {num_features} → {hidden_channels} → 1", flush=True)
     
     # Create trainer
     trainer = CVERGCNTrainer(
         model=model,
         learning_rate=learning_rate,
-        device=device
+        device=device,
+        use_minibatch=use_minibatch,
+        batch_size=batch_size
     )
     
     # Train
+    if verbose:
+        print("\n[STEP 4/4] Training...", flush=True)
+    
     history = trainer.fit(
         x=x,
         edge_index=edge_index,

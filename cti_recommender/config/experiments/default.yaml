@@ -62,6 +62,10 @@ rgcn:
   epochs: 100
   early_stopping_patience: 5
   max_neighbors: 3  # Keep graph sparse
+  # Mini-batch training (critical for large datasets!)
+  use_minibatch: true  # Auto-enables for >5K nodes
+  batch_size: 1024     # Nodes per mini-batch
+  num_neighbors: [15, 10]  # Neighbors sampled per layer
 
 # -------------------------------------------------------------
 # DiffusionRank Parameters
