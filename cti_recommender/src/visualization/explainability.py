@@ -8,8 +8,9 @@ including feature importance and SHAP analysis.
 from typing import List, Optional, Tuple
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import lightgbm as lgb
 
 
@@ -18,7 +19,7 @@ def plot_feature_importance(
     feature_names: Optional[List[str]] = None,
     importance_type: str = 'gain',
     max_features: int = 20,
-    figsize: tuple = (10, 8)
+    height: int = 600
 ) -> None:
     """
     Plot LightGBM feature importance.
@@ -28,7 +29,7 @@ def plot_feature_importance(
         feature_names: Optional list of feature names
         importance_type: 'gain' or 'split'
         max_features: Maximum number of features to show
-        figsize: Figure size
+        height: Figure height in pixels
     """
     # Get feature importance
     importance = model.feature_importance(importance_type=importance_type)
@@ -42,15 +43,21 @@ def plot_feature_importance(
         'importance': importance
     }).sort_values('importance', ascending=False).head(max_features)
     
-    # Plot
-    plt.figure(figsize=figsize)
+    # Plot with plotly
     importance_sorted = importance_df.sort_values('importance', ascending=True)
-    plt.barh(importance_sorted['feature'], importance_sorted['importance'], 
-             color='steelblue' if importance_type == 'gain' else 'forestgreen')
-    plt.xlabel(f'Importance ({importance_type})')
-    plt.title(f'Top {max_features} Features by {importance_type.capitalize()}')
-    plt.tight_layout()
-    plt.show()
+    color = 'steelblue' if importance_type == 'gain' else 'forestgreen'
+    
+    fig = px.bar(
+        importance_sorted,
+        y='feature',
+        x='importance',
+        orientation='h',
+        title=f'Top {max_features} Features by {importance_type.capitalize()}',
+        labels={'importance': f'Importance ({importance_type})', 'feature': 'Feature'},
+        color_discrete_sequence=[color]
+    )
+    fig.update_layout(height=height, showlegend=False)
+    fig.show()
     
     # Print text summary
     print(f"\nTop {min(15, max_features)} Features by {importance_type.capitalize()}:")
@@ -63,7 +70,7 @@ def plot_feature_importance(
 def plot_feature_importance_comparison(
     model: lgb.Booster,
     feature_names: List[str],
-    figsize: tuple = (14, 6)
+    height: int = 600
 ) -> None:
     """
     Plot feature importance by both gain and split count side-by-side.
@@ -71,7 +78,7 @@ def plot_feature_importance_comparison(
     Args:
         model: Trained LightGBM model
         feature_names: List of feature names
-        figsize: Figure size
+        height: Figure height in pixels
     """
     # Get both importance types
     importance_gain = model.feature_importance(importance_type='gain')
@@ -84,25 +91,43 @@ def plot_feature_importance_comparison(
         'split': importance_split
     }).sort_values('gain', ascending=False)
     
-    # Create subplots
-    fig, axes = plt.subplots(1, 2, figsize=figsize)
+    # Create subplots with plotly
+    fig = make_subplots(
+        rows=1, cols=2,
+        subplot_titles=('Feature Importance by Gain', 'Feature Importance by Split Count'),
+        horizontal_spacing=0.15
+    )
     
     # Gain importance
-    ax1 = axes[0]
     importance_df_sorted = importance_df.sort_values('gain', ascending=True)
-    ax1.barh(importance_df_sorted['feature'], importance_df_sorted['gain'], color='steelblue')
-    ax1.set_xlabel('Gain')
-    ax1.set_title('Feature Importance by Gain')
+    fig.add_trace(
+        go.Bar(
+            y=importance_df_sorted['feature'],
+            x=importance_df_sorted['gain'],
+            orientation='h',
+            marker_color='steelblue',
+            name='Gain'
+        ),
+        row=1, col=1
+    )
     
     # Split importance
-    ax2 = axes[1]
     importance_by_split = importance_df.sort_values('split', ascending=True)
-    ax2.barh(importance_by_split['feature'], importance_by_split['split'], color='forestgreen')
-    ax2.set_xlabel('Split Count')
-    ax2.set_title('Feature Importance by Split Count')
+    fig.add_trace(
+        go.Bar(
+            y=importance_by_split['feature'],
+            x=importance_by_split['split'],
+            orientation='h',
+            marker_color='forestgreen',
+            name='Split'
+        ),
+        row=1, col=2
+    )
     
-    plt.tight_layout()
-    plt.show()
+    fig.update_xaxes(title_text='Gain', row=1, col=1)
+    fig.update_xaxes(title_text='Split Count', row=1, col=2)
+    fig.update_layout(height=height, showlegend=False)
+    fig.show()
 
 
 def plot_shap_summary(
@@ -112,7 +137,7 @@ def plot_shap_summary(
     max_display: int = 20,
     sample_size: int = 5000,
     random_seed: int = 42,
-    figsize: tuple = (10, 8)
+    height: int = 600
 ) -> Optional[np.ndarray]:
     """
     Plot SHAP summary (requires shap library).
@@ -124,7 +149,7 @@ def plot_shap_summary(
         max_display: Max features to display
         sample_size: Number of samples to use for SHAP (for performance)
         random_seed: Random seed for sampling
-        figsize: Figure size
+        height: Figure height in pixels
     
     Returns:
         SHAP values array if successful, None if SHAP not available
@@ -157,16 +182,31 @@ def plot_shap_summary(
         else:
             feature_names = [f"feature_{i}" for i in range(X_sample.shape[1])]
     
-    # Summary plot
-    print("\nSHAP Summary Plot:")
-    plt.figure(figsize=figsize)
-    shap.summary_plot(shap_values, X_sample, feature_names=feature_names, 
-                     max_display=max_display, show=False)
-    plt.tight_layout()
-    plt.show()
-    
-    # Mean absolute SHAP values (text)
+    # Mean absolute SHAP values
     mean_shap = np.abs(shap_values).mean(axis=0)
+    shap_importance = pd.DataFrame({
+        'feature': feature_names,
+        'mean_abs_shap': mean_shap
+    }).sort_values('mean_abs_shap', ascending=False).head(max_display)
+    
+    # Plot with plotly
+    print("\nSHAP Summary Plot:")
+    shap_sorted = shap_importance.sort_values('mean_abs_shap', ascending=True)
+    
+    fig = px.bar(
+        shap_sorted,
+        y='feature',
+        x='mean_abs_shap',
+        orientation='h',
+        title=f'SHAP Feature Importance (Top {max_display} Features)',
+        labels={'mean_abs_shap': 'Mean Absolute SHAP Value', 'feature': 'Feature'},
+        color='mean_abs_shap',
+        color_continuous_scale='Reds'
+    )
+    fig.update_layout(height=height, showlegend=False)
+    fig.show()
+    
+    # Reset shap_importance for text output
     shap_importance = pd.DataFrame({
         'feature': feature_names,
         'mean_abs_shap': mean_shap

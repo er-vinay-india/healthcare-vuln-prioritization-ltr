@@ -10,8 +10,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.graph_objects as go
+import plotly.express as px
 from scipy.stats import spearmanr
 
 from src.core.cve_database import CVEDatabase
@@ -149,36 +149,48 @@ def analyze_correlations(features):
     return corr_matrix, high_corr_pairs
 
 def plot_correlation_heatmap(corr_matrix):
-    """Create correlation heatmap visualization."""
+    """Create interactive correlation heatmap visualization using plotly."""
     logger.info("Generating correlation heatmap...")
     
-    plt.figure(figsize=(16, 14))
+    # Create interactive heatmap with plotly
+    fig = go.Figure(data=go.Heatmap(
+        z=corr_matrix.values,
+        x=corr_matrix.columns,
+        y=corr_matrix.columns,
+        colorscale='RdBu',
+        zmid=0,
+        zmin=-1,
+        zmax=1,
+        colorbar=dict(title="Correlation"),
+        hoverongaps=False,
+        hovertemplate='%{x}<br>%{y}<br>Correlation: %{z:.3f}<extra></extra>'
+    ))
     
-    # Create mask for upper triangle
-    mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
-    
-    # Create heatmap
-    sns.heatmap(
-        corr_matrix,
-        mask=mask,
-        annot=False,
-        cmap='coolwarm',
-        center=0,
-        vmin=-1,
-        vmax=1,
-        square=True,
-        linewidths=0.5,
-        cbar_kws={"shrink": 0.8}
+    fig.update_layout(
+        title='Feature Correlation Matrix (Spearman)',
+        xaxis_title='',
+        yaxis_title='',
+        width=1200,
+        height=1100,
+        xaxis={'side': 'bottom'},
+        yaxis={'autorange': 'reversed'}
     )
     
-    plt.title('Feature Correlation Matrix (Spearman)', fontsize=16, pad=20)
-    plt.tight_layout()
+    # Save as HTML for interactivity and PNG for static view
+    output_dir = Path(__file__).parent.parent / 'outputs'
+    output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Save plot
-    output_path = Path(__file__).parent.parent / 'outputs' / 'feature_correlation_heatmap.png'
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    logger.info(f"  Saved: {output_path}")
-    plt.close()
+    html_path = output_dir / 'feature_correlation_heatmap.html'
+    fig.write_html(html_path)
+    logger.info(f"  Saved interactive: {html_path}")
+    
+    # Also save static image
+    try:
+        png_path = output_dir / 'feature_correlation_heatmap.png'
+        fig.write_image(png_path, width=1200, height=1100)
+        logger.info(f"  Saved static: {png_path}")
+    except Exception as e:
+        logger.warning(f"  Could not save PNG (requires kaleido): {e}")
 
 def recommend_removals(high_corr_pairs, features):
     """Recommend which features to remove."""
@@ -238,7 +250,7 @@ def main():
         plot_correlation_heatmap(corr_matrix)
     except Exception as e:
         logger.warning(f"Could not generate heatmap: {e}")
-        logger.warning("(matplotlib may not be configured for display)")
+        logger.warning("(plotly may not be configured for display)")
     
     # Recommendations
     recommend_removals(high_corr_pairs, features)

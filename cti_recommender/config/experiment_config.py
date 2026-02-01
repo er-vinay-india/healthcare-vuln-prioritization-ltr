@@ -55,6 +55,17 @@ class ExperimentMeta:
 
 
 @dataclass
+class FeatureEngineeringConfig:
+    """Feature engineering configuration."""
+    audit: bool = True          # Enable missingness auditing
+    plot: bool = True           # Show visualization plots
+    plot_top_missing: int = 25  # Top N columns for missingness bar chart
+    reference_date: str = "2025-01-01"  # Reference date for temporal features
+    cvss_missing_fill: float = 5.0      # Fill value for missing CVSS (0-10)
+    epss_missing_fill: float = 0.0      # Fill value for missing EPSS (0-1)
+
+
+@dataclass
 class DataConfig:
     """Data loading and feature configuration."""
     database_path: str = "data/cve_database.db"
@@ -148,6 +159,7 @@ class ExperimentConfig:
     """
     experiment: ExperimentMeta = field(default_factory=ExperimentMeta)
     data: DataConfig = field(default_factory=DataConfig)
+    feature_engineering: FeatureEngineeringConfig = field(default_factory=FeatureEngineeringConfig)
     sampling: SamplingConfig = field(default_factory=SamplingConfig)
     rgcn: RGCNConfig = field(default_factory=RGCNConfig)
     diffusion: DiffusionConfig = field(default_factory=DiffusionConfig)

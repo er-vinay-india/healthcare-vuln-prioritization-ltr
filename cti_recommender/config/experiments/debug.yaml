@@ -17,6 +17,13 @@ experiment:
   description: "Debug mode - small samples for fast iteration"
 
 # -------------------------------------------------------------
+# Fast Feature Engineering (no plots for speed)
+# -------------------------------------------------------------
+feature_engineering:
+  audit: true   # Keep audit for diagnostics
+  plot: false   # Disable plots for faster iteration
+
+# -------------------------------------------------------------
 # Reduced Sample Sizes for Speed
 # -------------------------------------------------------------
 sampling:

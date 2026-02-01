@@ -31,12 +31,19 @@ def make_temporal_splits(
     Returns:
         Tuple of (train_df, val_df, test_df)
     """
-    split_dt = pd.Timestamp(split_date)
-    val_start = split_dt - timedelta(weeks=val_weeks)
-    
     # Ensure date column is datetime
     df = df.copy()
     df[date_col] = pd.to_datetime(df[date_col])
+    
+    # Check if date column is timezone-aware and match split timestamps accordingly
+    is_tz_aware = df[date_col].dt.tz is not None
+    
+    if is_tz_aware:
+        split_dt = pd.Timestamp(split_date, tz='UTC')
+        val_start = split_dt - timedelta(weeks=val_weeks)
+    else:
+        split_dt = pd.Timestamp(split_date)
+        val_start = split_dt - timedelta(weeks=val_weeks)
     
     # Create splits
     train_df = df[df[date_col] < val_start].copy()
