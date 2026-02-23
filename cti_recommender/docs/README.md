@@ -11,13 +11,13 @@ Visual representations of the system architecture:
 
 | Diagram | Description | View |
 |---------|-------------|------|
-| **Project Architecture** | Complete system with notebooks + modules | [Mermaid](diagrams/project_architecture.mmd) |
-| **Notebook Pipeline** | 5-stage analysis workflow | [Mermaid](diagrams/notebook_pipeline.mmd) |
-| **Data Pipeline** | Data ingestion to evaluation | [Mermaid](diagrams/data_pipeline.mmd) |
-| **Evaluation Strategies** | Three evaluation approaches | [Mermaid](diagrams/evaluation_strategies.mmd) |
-| **LTR Model** | LambdaMART architecture | [Mermaid](diagrams/ltr_model.mmd) |
+| **Project Architecture** | Complete system with notebooks + modules | [SVG](diagrams/project_architecture.svg) |
+| **Notebook Pipeline** | 5-stage analysis workflow | [SVG](diagrams/notebook_pipeline.svg) |
+| **Data Pipeline** | Data ingestion to evaluation | [SVG](diagrams/data_pipeline.svg) |
+| **Evaluation Strategies** | Three evaluation approaches | [SVG](diagrams/evaluation_strategies.svg) |
+| **LTR Model** | LambdaMART architecture | [SVG](diagrams/ltr_model.svg) |
 
-> 📝 All diagrams are Mermaid files (.mmd) that render in GitHub/VS Code
+> 📝 SVG files are the primary view; Mermaid source (.mmd) is kept in the same folder for edits.
 
 ---
 
