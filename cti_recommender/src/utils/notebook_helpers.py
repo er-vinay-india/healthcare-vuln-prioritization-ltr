@@ -43,7 +43,15 @@ def save_plot(fig, name: str, subdir: str = 'plots', show_link: bool = True):
             raise ValueError(f"Cannot save figure of type {fig_type}")
     
     if show_link:
-        rel_path = output_path.relative_to(Path.cwd())
+        # If output_path is already relative, use it; otherwise compute relative path
+        if output_path.is_absolute():
+            try:
+                rel_path = output_path.relative_to(Path.cwd())
+            except ValueError:
+                rel_path = output_path
+        else:
+            rel_path = output_path
+        
         link_html = f'✓ Plot saved: <a href="../{rel_path}" target="_blank">{name}</a>'
         return HTML(link_html)
     
