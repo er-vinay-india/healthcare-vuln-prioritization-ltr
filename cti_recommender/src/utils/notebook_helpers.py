@@ -1,0 +1,121 @@
+"""
+Helper utilities for Jupyter notebooks
+Provides functions for external output management
+"""
+from pathlib import Path
+from typing import Optional
+from IPython.display import HTML, display
+import warnings
+
+def save_plot(fig, name: str, subdir: str = 'plots', show_link: bool = True):
+    """
+    Save Plotly/Matplotlib figure externally and optionally display link
+    
+    Args:
+        fig: Plotly figure object or matplotlib figure
+        name: Filename (without extension)
+        subdir: Subdirectory under outputs/ (default: 'plots')
+        show_link: Whether to display a link to the saved file
+    
+    Returns:
+        HTML link object if show_link=True, else None
+    """
+    output_dir = Path('outputs') / subdir
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Detect figure type and save accordingly
+    fig_type = type(fig).__name__
+    
+    if 'plotly' in fig_type.lower() or hasattr(fig, 'write_html'):
+        # Plotly figure
+        output_path = output_dir / f'{name}.html'
+        fig.write_html(output_path)
+    elif 'matplotlib' in str(type(fig).__module__) or hasattr(fig, 'savefig'):
+        # Matplotlib figure
+        output_path = output_dir / f'{name}.png'
+        fig.savefig(output_path, dpi=150, bbox_inches='tight')
+    else:
+        warnings.warn(f"Unknown figure type: {fig_type}. Attempting HTML export.")
+        output_path = output_dir / f'{name}.html'
+        if hasattr(fig, 'write_html'):
+            fig.write_html(output_path)
+        else:
+            raise ValueError(f"Cannot save figure of type {fig_type}")
+    
+    if show_link:
+        rel_path = output_path.relative_to(Path.cwd())
+        link_html = f'✓ Plot saved: <a href="../{rel_path}" target="_blank">{name}</a>'
+        return HTML(link_html)
+    
+    return None
+
+
+def save_dataframe(df, name: str, subdir: str = 'data', format: str = 'csv'):
+    """
+    Save DataFrame externally
+    
+    Args:
+        df: pandas DataFrame
+        name: Filename (without extension)
+        subdir: Subdirectory under outputs/ (default: 'data')
+        format: 'csv', 'parquet', or 'excel'
+    
+    Returns:
+        Path to saved file
+    """
+    output_dir = Path('outputs') / subdir
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    if format == 'csv':
+        output_path = output_dir / f'{name}.csv'
+        df.to_csv(output_path, index=False)
+    elif format == 'parquet':
+        output_path = output_dir / f'{name}.parquet'
+        df.to_parquet(output_path, index=False)
+    elif format == 'excel':
+        output_path = output_dir / f'{name}.xlsx'
+        df.to_excel(output_path, index=False)
+    else:
+        raise ValueError(f"Unknown format: {format}")
+    
+    print(f"✓ DataFrame saved: {output_path}")
+    return output_path
+
+
+def display_sample(df, n: int = 20, title: Optional[str] = None):
+    """
+    Display sample of DataFrame (limits output size in notebook)
+    
+    Args:
+        df: pandas DataFrame
+        n: Number of rows to display
+        title: Optional title to display
+    """
+    if title:
+        display(HTML(f"<h4>{title}</h4>"))
+    
+    print(f"Showing {n} of {len(df):,} rows")
+    display(df.head(n))
+    
+    if len(df) > n:
+        print(f"... {len(df) - n:,} more rows")
+
+
+def setup_notebook_output():
+    """
+    Configure notebook for clean output display
+    Call this at the start of notebooks
+    """
+    import pandas as pd
+    import warnings
+    
+    # Limit pandas output
+    pd.set_option('display.max_rows', 20)
+    pd.set_option('display.max_columns', 15)
+    pd.set_option('display.width', 120)
+    
+    # Suppress common warnings
+    warnings.filterwarnings('ignore', category=FutureWarning)
+    warnings.filterwarnings('ignore', category=UserWarning)
+    
+    print("✓ Notebook output configured")
