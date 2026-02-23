@@ -1,0 +1,75 @@
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px'}}}%%
+flowchart LR
+    subgraph N1["📘 1. Data Ingestion Pipeline"]
+        direction TB
+        N1A[Fetch from APIs:<br/>NVD, KEV, EPSS, ATT&CK, CHPL]
+        N1B[Store in SQLite DB]
+        N1C[Cache API Responses]
+        N1A --> N1B
+        N1A --> N1C
+    end
+    
+    subgraph N2["📙 2. EDA Analysis"]
+        direction TB
+        N2A[Load CVE Data]
+        N2B[Temporal Distribution]
+        N2C[CVSS/EPSS Analysis]
+        N2D[Healthcare Coverage]
+        N2E[KEV/ATT&CK Statistics]
+        N2A --> N2B
+        N2A --> N2C
+        N2A --> N2D
+        N2A --> N2E
+    end
+    
+    subgraph N3["📗 3. Feature Engineering"]
+        direction TB
+        N3A[Load Raw CVEs]
+        N3B[Extract Features:<br/>CVSS, EPSS, Temporal, ATT&CK]
+        N3C[Build Weak Labels:<br/>KEV + Healthcare + Confidence]
+        N3D[Save: features_with_labels.csv]
+        N3A --> N3B
+        N3B --> N3C
+        N3C --> N3D
+    end
+    
+    subgraph N4["📕 4. Model Training & Evaluation"]
+        direction TB
+        N4A[Load Features]
+        N4B[3 Temporal Splits:<br/>70/15/15, 70/30, K-Fold]
+        N4C[Train LambdaMART<br/>Confidence-Weighted]
+        N4D[Evaluate: NDCG@K, Precision@K]
+        N4E[Save Models + Results]
+        N4A --> N4B
+        N4B --> N4C
+        N4C --> N4D
+        N4D --> N4E
+    end
+    
+    subgraph N5["📓 5. Advanced Models"]
+        direction TB
+        N5A[Load Trained Model]
+        N5B[DiffusionRank<br/>Graph-based Ranking]
+        N5C[RGCN<br/>Graph Neural Network]
+        N5D[Bootstrap Ensemble<br/>Uncertainty Estimation]
+        N5E[Compare All Models]
+        N5A --> N5B
+        N5A --> N5C
+        N5A --> N5D
+        N5B --> N5E
+        N5C --> N5E
+        N5D --> N5E
+    end
+    
+    N1 --> N2
+    N2 --> N3
+    N3 --> N4
+    N4 --> N5
+    
+    style N1 fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
+    style N2 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px
+    style N3 fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+    style N4 fill:#e8f5e9,stroke:#388e3c,stroke-width:3px
+    style N5 fill:#fce4ec,stroke:#c2185b,stroke-width:3px
+```

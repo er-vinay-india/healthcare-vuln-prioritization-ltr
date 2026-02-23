@@ -1,95 +1,149 @@
 # Documentation Index
 
-**Last Updated:** 2026-01-26  
-**CTI Recommender Version:** 2.0.0
+**Last Updated:** February 2026  
+**Project Version:** 3.0.0 (Multi-Notebook Architecture)
 
 ---
 
-## Architecture Diagrams
+## 🏗️ Architecture Diagrams
 
-| Diagram | Description |
-|---------|-------------|
-| [Project Architecture](diagrams/project_architecture.svg) | System components and data flow |
-| [Data Pipeline](diagrams/data_pipeline.svg) | End-to-end processing pipeline |
-| [LTR Model](diagrams/ltr_model.svg) | Learning-to-Rank model structure |
-| [Examiner Flowchart](diagrams/examiner_flowchart.svg) | High-level system overview |
+Visual representations of the system architecture:
 
-> Mermaid source files available in [diagrams/](diagrams/)
+| Diagram | Description | View |
+|---------|-------------|------|
+| **Project Architecture** | Complete system with notebooks + modules | [Mermaid](diagrams/project_architecture.mmd) |
+| **Notebook Pipeline** | 5-stage analysis workflow | [Mermaid](diagrams/notebook_pipeline.mmd) |
+| **Data Pipeline** | Data ingestion to evaluation | [Mermaid](diagrams/data_pipeline.mmd) |
+| **Evaluation Strategies** | Three evaluation approaches | [Mermaid](diagrams/evaluation_strategies.mmd) |
+| **LTR Model** | LambdaMART architecture | [Mermaid](diagrams/ltr_model.mmd) |
+
+> 📝 All diagrams are Mermaid files (.mmd) that render in GitHub/VS Code
 
 ---
 
-## Quick Access
+## 📚 Core Documentation
 
 ### Getting Started
-- **[Quick Start Guide](QUICKSTART.md)** - Installation and basic usage (5-minute setup)
-- **[README](../README.md)** - Project overview, features, and current performance
+- **[Quick Start Guide](QUICKSTART.md)** - Installation and 5-minute setup
+- **[Main README](../README.md)** - Project overview, architecture, results
 
-### Technical Documentation
-- **[API Documentation](API.md)** - REST API endpoints, Docker deployment, and usage examples
-- **[Development Guide](DEVELOPMENT.md)** - Developer setup, coding standards, and contribution guidelines
-- **[Architecture Guide](guides/ARCHITECTURE_GUIDE.md)** - System architecture, completed implementations, and technical stack
+### Technical Guides
+- **[Development Guide](DEVELOPMENT.md)** - Developer setup and contribution
+- **[API Documentation](API.md)** - REST API and deployment (if applicable)
+- **[Scoring Explanation](SCORING_EXPLANATION.md)** - Weak supervision + confidence weighting
 
-### Reference
-- **[Migration Guide](guides/MIGRATION_GUIDE.md)** - Guide for upgrading from Phase 1 to Phase 2
-- **[Research Context](RESEARCH_CONTEXT.md)** - Literature review, research gaps, and academic context
+### Research & Analysis
+- **[Research Context](RESEARCH_CONTEXT.md)** - Literature review and academic background
+- **[Project Review](PROJECT_REVIEW_2026.md)** - Current status and roadmap
+- **[Examiner Brief](EXAMINER_BRIEF.md)** - Project summary for evaluation
 
 ---
 
-## Documentation Structure
+## 📓 Notebook Documentation
+
+The project uses a **5-notebook pipeline** for modularity and clarity:
+
+| Notebook | Purpose | Outputs |
+|----------|---------|---------|
+| **1. Data Ingestion** | Fetch NVD/KEV/EPSS/ATT&CK/CHPL | SQLite DB (176K CVEs) |
+| **2. EDA Analysis** | Exploratory data analysis | Visualizations + insights |
+| **3. Feature Engineering** | Extract 16 features + labels | `features_with_labels.csv` |
+| **4. Model Training** | LambdaMART + 3 eval strategies | Trained models + metrics |
+| **5. Advanced Models** | DiffusionRank, RGCN, ensembles | Advanced comparisons |
+
+**See notebooks in:** [`../notebooks/`](../notebooks/)
+
+---
+
+## 📁 Documentation Structure
 
 ```
 docs/
 ├── README.md                    # This file - documentation index
-├── QUICKSTART.md               # Installation & basic usage
-├── API.md                      # REST API & Docker deployment
-├── DEVELOPMENT.md              # Development guide
-├── RESEARCH_CONTEXT.md         # Research background
-├── diagrams/                   # Architecture diagrams (PNG, SVG, Mermaid)
-│   ├── project_architecture.*
-│   ├── data_pipeline.*
-│   ├── ltr_model.*
-│   └── examiner_flowchart.*
-├── guides/                     # Technical guides
-│   ├── ARCHITECTURE_GUIDE.md
-│   └── MIGRATION_GUIDE.md
-└── reports/                    # Generated analysis reports
-```
+├── QUICKSTART.md               # Installation & setup
+├── DEVELOPMENT.md              # Developer guide
+├── API.md                      # API documentation
+├── SCORING_EXPLANATION.md      # Methodology details
+├── RESEARCH_CONTEXT.md         # Literature review
+├── PROJECT_REVIEW_2026.md      # Project status
+├── EXAMINER_BRIEF.md           # Thesis evaluation summary
+├── EXAMINER_PRESENTATION.md    # Presentation notes
+├── KT_GUIDE.md                 # Knowledge transfer
+├── GPU_SETUP.md                # GPU acceleration setup
+│
+├── diagrams/                   # 🎨 Architecture diagrams (Mermaid)
+│   ├── project_architecture.mmd
+│   ├── notebook_pipeline.mmd
+│   ├── data_pipeline.mmd
+│   ├── evaluation_strategies.mmd
+│   └── ltr_model.mmd
+│
+├── guides/                     # 📖 Detailed guides
+│   └── ARCHITECTURE_GUIDE.md   # System architecture details
+│
 
 ---
 
-## Key Documents by Use Case
+## 🎯 Key Documents by Use Case
 
 ### I want to...
 
-**...get started quickly**
-→ [QUICKSTART.md](QUICKSTART.md) - Step-by-step installation and first run
+**...get started quickly**  
+→ [QUICKSTART.md](QUICKSTART.md) - 5-minute installation and first run
 
-**...use the REST API**
-→ [API.md](API.md) - API endpoints, Docker setup, Swagger UI
+**...understand the project**  
+→ [Main README](../README.md) - Overview, architecture, results
 
-**...contribute code**
-→ [DEVELOPMENT.md](DEVELOPMENT.md) - Dev environment, testing, code style
+**...run the analysis**  
+→ Start with notebooks: `Data_Ingestion` → `EDA` → `Feature_Engineering` → `Model_Training`
 
-**...understand the architecture**
-→ [ARCHITECTURE_GUIDE.md](../ARCHITECTURE_GUIDE.md) - System design, modules, completed implementations
+**...contribute code**  
+→ [DEVELOPMENT.md](DEVELOPMENT.md) - Dev environment, testing, code standards
 
-**...migrate from older version**
-→ [MIGRATION_GUIDE.md](../MIGRATION_GUIDE.md) - Breaking changes, script renames, workflow updates
+**...understand the methodology**  
+→ [SCORING_EXPLANATION.md](SCORING_EXPLANATION.md) - Weak supervision, confidence weighting
 
-**...understand the research**
-→ [RESEARCH_CONTEXT.md](RESEARCH_CONTEXT.md) - Literature review, problem statement, research gaps
+**...see the research background**  
+→ [RESEARCH_CONTEXT.md](RESEARCH_CONTEXT.md) - Literature review, problem statement
+
+**...present to thesis committee**  
+→ [EXAMINER_BRIEF.md](EXAMINER_BRIEF.md) - Project summary and results
 
 ---
 
-## External Resources
+## 📦 Data Sources
 
-### Data Sources
-- **NVD API**: https://nvd.nist.gov/developers
-- **CISA KEV**: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
-- **MITRE ATT&CK**: https://attack.mitre.org/
-- **CHPL**: https://chpl.healthit.gov/
+- **NVD API**: https://nvd.nist.gov/developers - CVE database
+- **CISA KEV**: https://www.cisa.gov/known-exploited-vulnerabilities-catalog - Exploited CVEs
+- **EPSS**: https://www.first.org/epss/ - Exploit prediction scores
+- **MITRE ATT&CK**: https://attack.mitre.org/ - Adversary tactics
+- **CHPL**: https://chpl.healthit.gov/ - Healthcare IT products
 
-### Related Projects
+---
+
+## 📝 Document Updates
+
+**Recent Changes (Feb 2026):**
+- ✅ Updated to multi-notebook architecture (5 notebooks)
+- ✅ Added three evaluation strategies (temporal + K-fold)
+- ✅ Archived migration documents (not production yet)
+- ✅ Created new Mermaid diagrams for current architecture
+- ✅ Updated README with actual project structure
+
+**Archived Documents:**
+- Migration guides (moved to `archive/migration_docs/`)
+- Old single-notebook references
+- Development artifacts not relevant for final submission
+
+---
+
+## 🤝 Contributing
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for contribution guidelines.
+
+---
+
+**Need help?** Open an issue or check existing documentation above.
 - **LightGBM**: https://lightgbm.readthedocs.io/
 - **Learning to Rank**: https://en.wikipedia.org/wiki/Learning_to_rank
 

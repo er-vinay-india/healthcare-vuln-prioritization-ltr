@@ -1,86 +1,67 @@
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e8e8e8', 'primaryTextColor': '#000000', 'primaryBorderColor': '#333333', 'secondaryColor': '#f5f5f5', 'secondaryTextColor': '#000000', 'tertiaryColor': '#ffffff', 'tertiaryTextColor': '#000000', 'lineColor': '#333333', 'textColor': '#000000', 'background': '#ffffff', 'mainBkg': '#f0f0f0', 'nodeBorder': '#333333', 'clusterBkg': '#f8f8f8', 'clusterBorder': '#666666', 'titleColor': '#000000'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e3f2fd', 'primaryTextColor': '#000000', 'primaryBorderColor': '#1976d2', 'secondaryColor': '#f3e5f5', 'secondaryTextColor': '#000000', 'tertiaryColor': '#fff3e0', 'lineColor': '#333333', 'textColor': '#000000', 'background': '#ffffff'}}}%%
 flowchart TB
-    subgraph External["🌐 External Data Sources"]
-        NVD["NVD API<br/>CVE Database"]
-        EPSS["EPSS API<br/>Exploitation Scores"]
-        KEV["CISA KEV<br/>Known Exploited"]
-        ATTACK["MITRE ATT&CK<br/>Threat Mappings"]
-        CHPL["ONC CHPL<br/>Healthcare Products"]
+    subgraph External["🌐 Data Sources"]
+        NVD[NVD API<br/>176K+ CVEs]
+        KEV[CISA KEV<br/>1,460+ Exploited]
+        EPSS[EPSS API<br/>Exploit Probability]
+        ATTACK[MITRE ATT&CK<br/>835 Techniques]
+        CHPL[CHPL API<br/>6,900 Products]
+        BREACH[Healthcare Breaches]
     end
-
-    subgraph Cache["Cache Layer (cache/)"]
-        NVD_C["nvd/"]
-        EPSS_C["epss/"]
-        KEV_C["kev/"]
-        ATTACK_C["attack/"]
-        CHPL_C["chpl/"]
+    
+    subgraph Notebooks["📓 Notebook Pipeline"]
+        N1[1️⃣ Data Ingestion<br/>Load & Cache Data]
+        N2[2️⃣ EDA Analysis<br/>Explore & Visualize]
+        N3[3️⃣ Feature Engineering<br/>Extract & Label]
+        N4[4️⃣ Model Training<br/>LambdaMART + Eval]
+        N5[5️⃣ Advanced Models<br/>DiffusionRank + RGCN]
     end
-
-    subgraph Core["Core Processing (src/core/)"]
-        FETCHER["Data Fetchers<br/>epss_fetcher.py<br/>chpl_fetcher.py"]
-        DB["CVE Database<br/>cve_database.py"]
-        LTR["LTR Engine<br/>ltr.py"]
-        RECOMMENDER["CTI Recommender<br/>cti_recommender.py"]
+    
+    subgraph Core["🔧 Core Modules (src/)"]
+        LOADER[data/loader.py<br/>Database Interface]
+        FEATURES[features/engineering.py<br/>Feature Extraction]
+        LABELING[features/labeling.py<br/>Weak Supervision]
+        LTR[models/ltr.py<br/>LambdaRank Training]
+        METRICS[evaluation/metrics.py<br/>NDCG, Precision@K]
+        ADVANCED[models/ DiffusionRank<br/>RGCN, Bootstrap]
     end
-
-    subgraph Analysis["Analysis (src/analysis/)"]
-        ATTACK_MAP["ATT&CK Mapper<br/>attack_mapper.py"]
-        QUALITY["Data Quality<br/>data_quality.py"]
+    
+    subgraph Storage["💾 Storage"]
+        DB[(SQLite DB<br/>cve_database.db<br/>176,332 CVEs)]
+        CACHE[cache/<br/>API Responses]
     end
-
-    subgraph Utils["Utilities (src/utils/)"]
-        CACHE_MGR["Cache Manager<br/>cache_manager.py"]
-        HEALTHCARE["Healthcare Utils<br/>healthcare.py"]
+    
+    subgraph Outputs["📊 Outputs"]
+        MODELS[models/<br/>ltr_ranker.model<br/>thesis_70_30.model]
+        RESULTS[outputs/evaluation/<br/>Results + Plots]
+        FEATURES_OUT[outputs/features/<br/>Engineered Features]
     end
-
-    subgraph Storage["Data Storage (data/)"]
-        SQLITE[("cve_database.db<br/>226,320 CVEs")]
-        BREACHES["healthcare_breaches.json"]
-    end
-
-    subgraph Models["ML Models (models/)"]
-        LTR_MODEL["ltr_ranker.model<br/>LambdaMART"]
-    end
-
-    subgraph Outputs["Outputs (outputs/)"]
-        TOP20["top20_enriched.csv"]
-        METRICS["ranking_metrics.csv"]
-        REPORTS["Quality Reports"]
-    end
-
-    subgraph Scripts["Scripts (scripts/)"]
-        ENRICH["enrich_cves.py"]
-        TRAIN["train_ltr.py"]
-        RECOMMEND["recommend_cves.py"]
-        VALIDATE["temporal_validation.py"]
-    end
-
-    subgraph Notebook["Research (notebooks/)"]
-        NB["healthcare_cve_<br/>prioritization_ltr.ipynb"]
-    end
-
-    %% Data Flow
-    NVD --> NVD_C
-    EPSS --> EPSS_C
-    KEV --> KEV_C
-    ATTACK --> ATTACK_C
-    CHPL --> CHPL_C
-
-    NVD_C --> FETCHER
-    EPSS_C --> FETCHER
-    KEV_C --> FETCHER
-    CHPL_C --> FETCHER
-    ATTACK_C --> ATTACK_MAP
-
-    FETCHER --> DB
-    DB --> SQLITE
-    CACHE_MGR --> Cache
-
-    SQLITE --> LTR
-    LTR --> LTR_MODEL
-    LTR_MODEL --> RECOMMENDER
-    RECOMMENDER --> Outputs
-
-    Scripts --> Core
-    NB --> Core
-    NB --> Analysis
+    
+    External --> N1
+    N1 --> DB
+    N1 --> CACHE
+    
+    DB --> N2
+    N2 --> N3
+    N3 --> FEATURES_OUT
+    FEATURES_OUT --> N4
+    N4 --> N5
+    
+    N1 -.uses.-> LOADER
+    N3 -.uses.-> FEATURES
+    N3 -.uses.-> LABELING
+    N4 -.uses.-> LTR
+    N4 -.uses.-> METRICS
+    N5 -.uses.-> ADVANCED
+    
+    N4 --> MODELS
+    N4 --> RESULTS
+    N5 --> RESULTS
+    
+    style N1 fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style N2 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style N3 fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style N4 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style N5 fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style MODELS fill:#ffeb3b,stroke:#f57f17,stroke-width:3px
+    style RESULTS fill:#ffeb3b,stroke:#f57f17,stroke-width:3px

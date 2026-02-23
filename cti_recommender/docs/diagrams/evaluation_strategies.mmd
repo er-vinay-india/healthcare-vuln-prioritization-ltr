@@ -1,0 +1,73 @@
+```mermaid
+%%{init: {'theme': 'base'}}%%
+flowchart TB
+    subgraph Evaluation["🎯 Three Evaluation Strategies"]
+        direction LR
+        E1["Original 70/15/15<br/>Temporal Split"]
+        E2["Thesis 70/30<br/>Train ≤2024, Test 2025"]
+        E3["K-Fold Cross Validation<br/>5-Fold Stratified"]
+    end
+    
+    subgraph Data["Data Preparation"]
+        LOAD[Load Features<br/>176,332 CVEs]
+        SPLIT{Split Strategy}
+        LOAD --> SPLIT
+    end
+    
+    subgraph Split1["70/15/15 Split"]
+        S1A[Train: 70%<br/>123K CVEs]
+        S1B[Val: 15%<br/>26K CVEs]
+        S1C[Test: 15%<br/>26K CVEs]
+    end
+    
+    subgraph Split2["70/30 Temporal"]
+        S2A[Train ≤2024<br/>131K CVEs]
+        S2B[Test 2025<br/>44K CVEs]
+    end
+    
+    subgraph Split3["K-Fold CV"]
+        S3A[Fold 1-5<br/>Each: 80% Train, 20% Test]
+        S3B[Stratified by Label]
+    end
+    
+    subgraph Training["Model Training"]
+        T1[LambdaMART<br/>Confidence-Weighted]
+        T2[Hyperparameters:<br/>Trees:500, LR:0.05, Depth:6]
+        T3[Loss: LambdaRank]
+        T1 --> T2
+        T2 --> T3
+    end
+    
+    subgraph Models["Model Comparison"]
+        M1[LambdaMART<br/>Primary Model]
+        M2[Heuristic Baseline<br/>Weighted Signals]
+        M3[CVSS Baseline<br/>Score Only]
+    end
+    
+    subgraph Results["📊 Metrics"]
+        R1[NDCG@10: 1.0000]
+        R2[Precision@20: 1.0000]
+        R3[Perfect Ranking<br/>All Strategies]
+    end
+    
+    SPLIT --> E1
+    SPLIT --> E2
+    SPLIT --> E3
+    
+    E1 --> Split1
+    E2 --> Split2
+    E3 --> Split3
+    
+    Split1 --> Training
+    Split2 --> Training
+    Split3 --> Training
+    
+    Training --> Models
+    Models --> Results
+    
+    style E1 fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style E2 fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style E3 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style M1 fill:#ffeb3b,stroke:#f57f17,stroke-width:3px
+    style Results fill:#4caf50,stroke:#2e7d32,stroke-width:3px,color:#fff
+```

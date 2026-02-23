@@ -1,65 +1,97 @@
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e8e8e8', 'primaryTextColor': '#000000', 'primaryBorderColor': '#333333', 'secondaryColor': '#f5f5f5', 'secondaryTextColor': '#000000', 'tertiaryColor': '#ffffff', 'tertiaryTextColor': '#000000', 'lineColor': '#333333', 'textColor': '#000000', 'background': '#ffffff', 'mainBkg': '#f0f0f0', 'nodeBorder': '#333333', 'clusterBkg': '#f8f8f8', 'clusterBorder': '#666666', 'titleColor': '#000000'}}}%%
+%%{init: {'theme': 'base'}}%%
 flowchart LR
-    subgraph Ingest["1. Data Ingestion"]
+    subgraph Sources["🌐 Data Sources"]
         direction TB
-        A1["Fetch NVD CVEs<br/>(2018-2025)"]
-        A2["Load to SQLite"]
-        A1 --> A2
+        S1[NVD API<br/>176K CVEs]
+        S2[CISA KEV<br/>1.5K Exploited]
+        S3[EPSS<br/>Exploit Prob]
+        S4[MITRE ATT&CK<br/>835 Techniques]
+        S5[CHPL<br/>6.9K Products]
     end
 
-    subgraph Enrich["2. Enrichment Pipeline"]
+    subgraph Ingest["1️⃣ Ingestion"]
         direction TB
-        B1["EPSS Scores"]
-        B2["KEV Lookup"]
-        B3["ATT&CK Mapping"]
-        B4["CHPL Healthcare"]
-        B5["Keyword Matching"]
-        B1 --> B6["Merge Enrichments"]
-        B2 --> B6
-        B3 --> B6
-        B4 --> B6
-        B5 --> B6
+        I1[Fetch & Cache]
+        I2[Store SQLite]
+        I3[176,332 CVEs<br/>2015-2025]
+        I1 --> I2
+        I2 --> I3
     end
 
-    subgraph Features["3. Feature Engineering"]
+    subgraph Features["2️⃣ Features"]
         direction TB
-        C1["14 Features Extracted"]
-        C2["cvss_score"]
-        C3["epss_score"]
-        C4["is_kev"]
-        C5["attack_count"]
-        C6["is_healthcare"]
-        C7["vendor_healthcare"]
-        C1 --> C2
-        C1 --> C3
-        C1 --> C4
-        C1 --> C5
-        C1 --> C6
-        C1 --> C7
+        F1[16 Features]
+        F2[CVSS Score]
+        F3[EPSS Score]
+        F4[KEV Flag]
+        F5[ATT&CK Count]
+        F6[Healthcare Flag]
+        F7[Recency Score]
+        F1 --> F2
+        F1 --> F3
+        F1 --> F4
+        F1 --> F5
+        F1 --> F6
+        F1 --> F7
     end
 
-    subgraph Train["4. Model Training"]
+    subgraph Labels["3️⃣ Weak Labels"]
         direction TB
-        D1["Temporal Split<br/>Train: 2018-2023<br/>Test: 2024"]
-        D2["Create Labels<br/>KEV + High CVSS"]
-        D3["LightGBM<br/>LambdaMART"]
-        D4["Hyperparameter<br/>Tuning"]
-        D1 --> D2 --> D3 --> D4
+        L1[Soft Labels 0-3]
+        L2[KEV: 3.0]
+        L3[Healthcare: +1.0]
+        L4[High CVSS: +0.5]
+        L5[Confidence Scores]
+        L1 --> L2
+        L1 --> L3
+        L1 --> L4
+        L1 --> L5
     end
 
-    subgraph Eval["5. Evaluation"]
+    subgraph Train["4️⃣ Training"]
         direction TB
-        E1["NDCG@K"]
-        E2["Precision@K"]
-        E3["MRR"]
-        E4["Feature Importance"]
+        T1[3 Split Strategies]
+        T2[LambdaMART<br/>Confidence-Weighted]
+        T3[500 Trees<br/>Early Stopping]
+        T4[NDCG Optimization]
+        T1 --> T2
+        T2 --> T3
+        T3 --> T4
     end
 
-    subgraph Output["6. Output"]
+    subgraph Eval["5️⃣ Evaluation"]
         direction TB
-        F1["Ranked CVE List"]
-        F2["Top-20 Healthcare"]
-        F3["Risk Scores"]
+        E1[NDCG@K: 1.0000]
+        E2[Precision@K: 1.0000]
+        E3[Baselines:<br/>Heuristic, CVSS]
+        E4[Statistical Tests]
+        E1 --> E4
+        E2 --> E4
+        E3 --> E4
     end
 
-    Ingest --> Enrich --> Features --> Train --> Eval --> Output
+    subgraph Output["6️⃣ Output"]
+        direction TB
+        F1[Trained Models]
+        F2[Evaluation Results]
+        F3[Visualization Plots]
+        F4[Feature Importance]
+        F1 --> F2
+        F2 --> F3
+        F3 --> F4
+    end
+
+    Sources --> Ingest
+    Ingest --> Features
+    Features --> Labels
+    Labels --> Train
+    Train --> Eval
+    Eval --> Output
+
+    style Ingest fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Features fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Labels fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style Train fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style Eval fill:#4caf50,stroke:#2e7d32,stroke-width:3px,color:#fff
+    style Output fill:#ffeb3b,stroke:#f57f17,stroke-width:3px
+```
