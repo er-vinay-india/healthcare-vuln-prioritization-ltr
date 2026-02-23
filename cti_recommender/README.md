@@ -50,10 +50,10 @@ flowchart LR
 ```
 
 **See full architecture diagrams:**
-- [Project Architecture](docs/diagrams/project_architecture.mmd) - System components
-- [Notebook Pipeline](docs/diagrams/notebook_pipeline.mmd) - Workflow details
-- [Data Pipeline](docs/diagrams/data_pipeline.mmd) - Data flow
-- [Evaluation Strategies](docs/diagrams/evaluation_strategies.mmd) - Three evaluation approaches
+- [Project Architecture](docs/diagrams/project_architecture.svg) - System components
+- [Notebook Pipeline](docs/diagrams/notebook_pipeline.svg) - Workflow details
+- [Data Pipeline](docs/diagrams/data_pipeline.svg) - Data flow
+- [Evaluation Strategies](docs/diagrams/evaluation_strategies.svg) - Three evaluation approaches
 
 ---
 
