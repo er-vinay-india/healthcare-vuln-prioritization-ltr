@@ -1,7 +1,10 @@
 import pandas as pd
 from datetime import datetime, timezone
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from cti_recommender import cti_recommender as cr
+from src.core.cti_recommender import build_healthcare_features
 
 
 def test_chpl_flag_matches_description():
@@ -11,7 +14,7 @@ def test_chpl_flag_matches_description():
     ])
     chpl_df = pd.DataFrame([{"product": "Epic Systems", "developer": "Epic", "raw": {}}])
 
-    out = cr.build_healthcare_features(nvd_df, chpl_df=chpl_df)
+    out = build_healthcare_features(nvd_df, chpl_df=chpl_df)
     assert "chpl_flag" in out.columns
     assert int(out.loc[0, "chpl_flag"]) == 1
 
@@ -23,6 +26,6 @@ def test_chpl_flag_not_set_for_nonmatching():
     ])
     chpl_df = pd.DataFrame([{"product": "Epic Systems", "developer": "Epic", "raw": {}}])
 
-    out = cr.build_healthcare_features(nvd_df, chpl_df=chpl_df)
+    out = build_healthcare_features(nvd_df, chpl_df=chpl_df)
     assert "chpl_flag" in out.columns
     assert int(out.loc[0, "chpl_flag"]) == 0

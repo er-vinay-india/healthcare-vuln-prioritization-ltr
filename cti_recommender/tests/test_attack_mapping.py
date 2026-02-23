@@ -1,5 +1,10 @@
 import pandas as pd
-from cti_recommender import cti_recommender as cr
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.analysis.attack_mapper import AttackMapper
+from src.core.cti_recommender import build_healthcare_features
 
 
 def test_attack_flag_matches_technique_name():
@@ -10,7 +15,7 @@ def test_attack_flag_matches_technique_name():
     attack_df = pd.DataFrame([
         {'id': 'attack-1', 'name': 'Phishing', 'description': '', 'aliases': ['spear-phishing']},
     ])
-    out = cr.build_healthcare_features(nvd, attack_df=attack_df)
+    out = build_healthcare_features(nvd, attack_df=attack_df)
     assert int(out.loc[out['cve_id'] == 'CVE-TEST-1', 'attack_flag'].iloc[0]) == 1
     assert int(out.loc[out['cve_id'] == 'CVE-TEST-2', 'attack_flag'].iloc[0]) == 0
 
@@ -22,5 +27,5 @@ def test_attack_flag_matches_alias():
     attack_df = pd.DataFrame([
         {'id': 'attack-1', 'name': 'Phishing', 'description': '', 'aliases': ['spear-phishing']},
     ])
-    out = cr.build_healthcare_features(nvd, attack_df=attack_df)
+    out = build_healthcare_features(nvd, attack_df=attack_df)
     assert int(out.loc[out['cve_id'] == 'CVE-TEST-3', 'attack_flag'].iloc[0]) == 1

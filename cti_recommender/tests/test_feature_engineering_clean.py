@@ -50,7 +50,7 @@ class TestFeatureEngineering:
         result = create_all_features(sample_df, FEATURE_COLS)
         assert (result['cvss_norm'] >= 0).all()
         assert (result['cvss_norm'] <= 1).all()
-        assert result.loc[0, 'cvss_norm'] == 0.98
+        assert np.isclose(result.loc[0, 'cvss_norm'], 0.98)
     
     def test_temporal_features(self, sample_df, capsys):
         """Test temporal feature creation"""

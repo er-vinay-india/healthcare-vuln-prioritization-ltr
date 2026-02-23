@@ -43,7 +43,8 @@ class CVEDatabase:
         """Connect to SQLite database"""
         self.conn = sqlite3.connect(
             self.db_path,
-            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
+            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
+            check_same_thread=False  # Allow multi-threaded access (FastAPI)
         )
         self.conn.row_factory = sqlite3.Row  # Enable column access by name
         logger.info("Connected to database", extra={"db_path": str(self.db_path)})

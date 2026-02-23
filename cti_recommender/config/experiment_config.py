@@ -90,6 +90,33 @@ class SamplingConfig:
 
 
 @dataclass
+class TemporalSplitsConfig:
+    """Temporal splitting configuration supporting multiple strategies."""
+    strategy: str = 'date'  # 'date' | 'percentage' | 'year_based'
+    
+    # Date-based split
+    date_split: Dict[str, Any] = field(default_factory=lambda: {
+        'split_date': '2024-11-01',
+        'validation_weeks': 12
+    })
+    
+    # Percentage-based split
+    percentage_split: Dict[str, Any] = field(default_factory=lambda: {
+        'train': 0.70,
+        'val': 0.15,
+        'test': 0.15,
+        'shuffle': False
+    })
+    
+    # Year-based split
+    year_split: Dict[str, Any] = field(default_factory=lambda: {
+        'train_years': [2018, 2019, 2020, 2021, 2022, 2023, 2024],
+        'test_years': [2025],
+        'validation_weeks': 12
+    })
+
+
+@dataclass
 class RGCNConfig:
     """RGCN model hyperparameters."""
     hidden_channels: int = 64
@@ -161,6 +188,7 @@ class ExperimentConfig:
     data: DataConfig = field(default_factory=DataConfig)
     feature_engineering: FeatureEngineeringConfig = field(default_factory=FeatureEngineeringConfig)
     sampling: SamplingConfig = field(default_factory=SamplingConfig)
+    temporal_splits: TemporalSplitsConfig = field(default_factory=TemporalSplitsConfig)
     rgcn: RGCNConfig = field(default_factory=RGCNConfig)
     diffusion: DiffusionConfig = field(default_factory=DiffusionConfig)
     similarity: SimilarityConfig = field(default_factory=SimilarityConfig)

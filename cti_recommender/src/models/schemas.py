@@ -228,6 +228,20 @@ class RecommendationRequest(BaseModel):
     )
 
 
+class PredictRequest(BaseModel):
+    """Request for predicting CVE priority scores"""
+    
+    cve_ids: List[str] = Field(..., min_length=1, description="List of CVE IDs to score")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "cve_ids": ["CVE-2024-0001", "CVE-2024-0002"]
+            }
+        }
+    )
+
+
 class HealthStatus(BaseModel):
     """API health check response"""
     

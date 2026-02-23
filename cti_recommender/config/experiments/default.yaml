@@ -20,6 +20,31 @@ data:
   train_test_split_date: "2024-11-01"
 
 # -------------------------------------------------------------
+# Temporal Split Configuration (Flexible Strategies)
+# -------------------------------------------------------------
+temporal_splits:
+  # Strategy: 'date' | 'percentage' | 'year_based'
+  strategy: 'date'
+  
+  # Date-based split (current default)
+  date_split:
+    split_date: '2024-11-01'
+    validation_weeks: 12
+  
+  # Percentage-based split (supervisor requirement: 70/30)
+  percentage_split:
+    train: 0.70
+    val: 0.15
+    test: 0.15
+    shuffle: false  # Maintain temporal order
+  
+  # Year-based split (supervisor requirement: train 2018-2024, test 2025)
+  year_split:
+    train_years: [2018, 2019, 2020, 2021, 2022, 2023, 2024]
+    test_years: [2025]
+    validation_weeks: 12  # Last 12 weeks of train for validation
+
+# -------------------------------------------------------------
 # Feature Engineering Configuration
 # -------------------------------------------------------------
 feature_engineering:

@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from cti_recommender import ltr
+from src.core.ltr import run_end_to_end
 
 
 def test_ltr_smoke(tmp_path: Path):
@@ -12,6 +12,6 @@ def test_ltr_smoke(tmp_path: Path):
     ])
     kev = pd.DataFrame([{'cve_id': 'CVE-1'}])
     # build features and run end-to-end (small)
-    ltr.run_end_to_end(nvd, kev_df=kev, chpl_df=None, attack_df=None, out_dir=tmp_path)
+    run_end_to_end(nvd, kev_df=kev, chpl_df=None, attack_df=None, out_dir=tmp_path)
     assert (tmp_path / 'top_scored_ltr.csv').exists()
     assert (tmp_path / 'ltr_eval_summary.txt').exists()

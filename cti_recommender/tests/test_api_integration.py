@@ -31,20 +31,21 @@ class TestHealthEndpoint:
         response = client.get("/health")
         data = response.json()
         assert "status" in data
-        assert data["status"] in ["healthy", "ok", "running"]
+        # API can return: healthy, degraded, or unhealthy
+        assert data["status"] in ["healthy", "degraded", "unhealthy"]
 
 
 class TestStatisticsEndpoint:
-    """Test /api/v1/statistics endpoint"""
+    """Test /api/v1/stats endpoint"""
     
     def test_statistics_returns_200(self, client):
         """Test statistics endpoint returns 200 OK"""
-        response = client.get("/api/v1/statistics")
+        response = client.get("/api/v1/stats")
         assert response.status_code == 200
     
     def test_statistics_returns_counts(self, client):
         """Test statistics includes expected counts"""
-        response = client.get("/api/v1/statistics")
+        response = client.get("/api/v1/stats")
         data = response.json()
         
         # Check for expected fields
@@ -79,13 +80,14 @@ class TestPredictEndpoint:
         if response.status_code == 200:
             data = response.json()
             assert "predictions" in data
-            assert isinstance(data["predictions"], list)
+            assert "count" in data
+            assert isinstance(data["predictions"], dict)
             
+            # Check format: {"predictions": {"CVE-ID": score}, "count": N}
             if len(data["predictions"]) > 0:
-                pred = data["predictions"][0]
-                assert "cve_id" in pred
-                assert "priority_score" in pred
-                assert isinstance(pred["priority_score"], (int, float))
+                cve_id = list(data["predictions"].keys())[0]
+                score = data["predictions"][cve_id]
+                assert isinstance(score, (int, float))
     
     def test_predict_rejects_empty_list(self, client):
         """Test predict endpoint rejects empty CVE ID list"""
@@ -121,9 +123,9 @@ class TestTopCVEsEndpoint:
         response = client.get("/api/v1/top_cves")
         data = response.json()
         
-        assert "cves" in data or isinstance(data, list)
+        assert "top_cves" in data or isinstance(data, list)
         
-        cve_list = data["cves"] if "cves" in data else data
+        cve_list = data["top_cves"] if "top_cves" in data else data
         assert isinstance(cve_list, list)
     
     def test_top_cves_respects_limit(self, client):
@@ -132,7 +134,7 @@ class TestTopCVEsEndpoint:
         response = client.get(f"/api/v1/top_cves?limit={limit}")
         data = response.json()
         
-        cve_list = data.get("cves", data)
+        cve_list = data.get("top_cves", data)
         assert len(cve_list) <= limit
     
     def test_top_cves_filters_by_min_cvss(self, client):
@@ -141,7 +143,7 @@ class TestTopCVEsEndpoint:
         
         if response.status_code == 200:
             data = response.json()
-            cve_list = data.get("cves", data)
+            cve_list = data.get("top_cves", data)
             
             # All returned CVEs should have CVSS >= 7.0
             for cve in cve_list:
@@ -154,7 +156,7 @@ class TestTopCVEsEndpoint:
         
         if response.status_code == 200:
             data = response.json()
-            cve_list = data.get("cves", data)
+            cve_list = data.get("top_cves", data)
             
             # All returned CVEs should be KEV-listed
             for cve in cve_list:
@@ -167,7 +169,7 @@ class TestTopCVEsEndpoint:
         
         if response.status_code == 200:
             data = response.json()
-            cve_list = data.get("cves", data)
+            cve_list = data.get("top_cves", data)
             
             # All returned CVEs should be healthcare-relevant
             for cve in cve_list:
@@ -181,7 +183,7 @@ class TestTopCVEsEndpoint:
         
         if response.status_code == 200:
             data = response.json()
-            cve_list = data.get("cves", data)
+            cve_list = data.get("top_cves", data)
             
             # All CVEs should be within date range
             for cve in cve_list:
@@ -195,7 +197,7 @@ class TestTopCVEsEndpoint:
         
         if response.status_code == 200:
             data = response.json()
-            cve_list = data.get("cves", data)
+            cve_list = data.get("top_cves", data)
             
             if len(cve_list) > 1:
                 # Check if sorted in descending order by priority_score
@@ -211,7 +213,7 @@ class TestTopCVEsEndpoint:
         
         if response.status_code == 200:
             data = response.json()
-            cve_list = data.get("cves", data)
+            cve_list = data.get("top_cves", data)
             
             assert len(cve_list) <= 5
             
@@ -305,7 +307,7 @@ class TestErrorHandling:
     
     def test_405_for_wrong_method(self, client):
         """Test 405 for wrong HTTP method"""
-        response = client.post("/api/v1/statistics")  # Should be GET
+        response = client.post("/api/v1/stats")  # Should be GET
         assert response.status_code == 405
     
     def test_422_for_invalid_json(self, client):
@@ -370,7 +372,7 @@ class TestResponseFormat:
         """Test that all endpoints return JSON"""
         endpoints = [
             ("/health", "GET"),
-            ("/api/v1/statistics", "GET"),
+            ("/api/v1/stats", "GET"),
             ("/api/v1/top_cves", "GET"),
         ]
         

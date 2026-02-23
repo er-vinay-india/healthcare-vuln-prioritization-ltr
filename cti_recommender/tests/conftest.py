@@ -68,17 +68,26 @@ def test_database(temp_dir):
         )
     """)
     
-    # Insert sample data
+    # Insert sample CVEs
     cursor.execute("""
-        INSERT INTO cves VALUES 
-        ('CVE-2024-1234', '2024-01-15', '2024-01-16', 'Test vulnerability', 9.8, 'CVSS:3.1/...', 'CWE-120'),
-        ('CVE-2024-5678', '2024-01-20', '2024-01-21', 'Another test', 7.5, 'CVSS:3.1/...', 'CWE-79')
+        INSERT INTO cves (cve_id, published, modified, description, cvss, cvss_vector, cwe, raw_json) 
+        VALUES 
+        ('CVE-2024-1234', '2024-01-15 10:00:00', '2024-01-16 10:00:00', 
+         'Test vulnerability in healthcare system', 9.8, 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H', 
+         'CWE-120', '{}'),
+        ('CVE-2024-5678', '2024-01-20 10:00:00', '2024-01-21 10:00:00', 
+         'Another test vulnerability', 7.5, 'CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H', 
+         'CWE-79', '{}')
     """)
     
+    # Insert enrichments with all columns
     cursor.execute("""
-        INSERT INTO enrichments VALUES 
-        ('CVE-2024-1234', 1, 0.78, 1, 0, 2, 4),
-        ('CVE-2024-5678', 0, 0.45, 1, 0, 1, 3)
+        INSERT INTO enrichments (cve_id, kev_flag, epss_score, epss_percentile, epss_date, 
+                                is_healthcare, is_curated, curated_severity, healthcare_score,
+                                attack_flag, attack_technique_count, chpl_flag, label) 
+        VALUES 
+        ('CVE-2024-1234', 1, 0.78, 0.95, '2024-01-15', 1, 1, 'critical', 0.9, 1, 3, 1, 4),
+        ('CVE-2024-5678', 0, 0.45, 0.75, '2024-01-20', 1, 0, NULL, 0.6, 0, 0, 0, 3)
     """)
     
     conn.commit()

@@ -19,6 +19,7 @@ from config import settings
 from src.models.schemas import (
     CVERecommendation,
     RecommendationRequest,
+    PredictRequest,
     HealthStatus,
     ModelMetrics,
     BatchEnrichmentRequest,
@@ -398,14 +399,14 @@ async def get_statistics(db: CVEDatabase = Depends(get_database)):
 
 @app.post("/api/v1/predict", response_model=dict)
 async def predict_scores(
-    cve_ids: List[str],
+    request: PredictRequest,
     db: CVEDatabase = Depends(get_database)
 ):
     """
     Score a list of CVE IDs using the trained LTR model.
     
     Args:
-        cve_ids: List of CVE identifiers
+        request: PredictRequest with list of CVE identifiers
         
     Returns:
         Dictionary mapping CVE IDs to scores
@@ -413,13 +414,15 @@ async def predict_scores(
     try:
         model, scaler = load_model()
         
+        cve_ids = request.cve_ids
+        
         # Query CVEs from database
         placeholders = ','.join('?' * len(cve_ids))
         query = f"""
         SELECT 
             e.cve_id,
             c.cvss,
-            c.published,
+            datetime(c.published) as published,
             e.epss_score,
             e.epss_percentile,
             e.kev_flag,
@@ -509,7 +512,7 @@ async def get_top_cves(
         SELECT 
             e.cve_id,
             c.cvss,
-            c.published,
+            datetime(c.published) as published,
             c.description,
             e.epss_score,
             e.epss_percentile,
@@ -632,7 +635,7 @@ async def explain_prediction(
         SELECT 
             e.cve_id,
             c.cvss,
-            c.published,
+            datetime(c.published) as published,
             c.description,
             e.epss_score,
             e.epss_percentile,
