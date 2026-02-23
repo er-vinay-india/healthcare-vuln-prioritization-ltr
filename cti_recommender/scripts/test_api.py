@@ -5,15 +5,45 @@ Tests the new FastAPI endpoints
 
 import requests
 import json
+from fastapi.testclient import TestClient
+
+from src.api.main import app
 
 BASE_URL = "http://localhost:8000"
+LOCAL_CLIENT = TestClient(app)
+
+
+def _is_ok(response):
+    """Compatibility helper for requests and TestClient responses."""
+    return getattr(response, "ok", response.status_code < 400)
+
+
+def _request_with_fallback(method: str, url: str, **kwargs):
+    """Use localhost API if running; otherwise execute against in-process TestClient."""
+    method_upper = method.upper()
+    path = url.replace(BASE_URL, "", 1)
+
+    try:
+        return requests.request(method, url, **kwargs)
+    except requests.exceptions.ConnectionError:
+        if method_upper == "GET":
+            return LOCAL_CLIENT.get(path, params=kwargs.get("params"), headers=kwargs.get("headers"))
+        if method_upper == "POST":
+            if "json" in kwargs:
+                return LOCAL_CLIENT.post(path, json=kwargs.get("json"), headers=kwargs.get("headers"))
+            if "data" in kwargs:
+                return LOCAL_CLIENT.post(path, content=kwargs.get("data"), headers=kwargs.get("headers"))
+            return LOCAL_CLIENT.post(path, headers=kwargs.get("headers"))
+        if method_upper == "OPTIONS":
+            return LOCAL_CLIENT.options(path, headers=kwargs.get("headers"))
+        raise ValueError(f"Unsupported method: {method}")
 
 def test_health():
     """Test health check endpoint"""
     print("\n1. Testing /health endpoint...")
-    response = requests.get(f"{BASE_URL}/health")
+    response = _request_with_fallback("GET", f"{BASE_URL}/health")
     print(f"   Status: {response.status_code}")
-    if response.ok:
+    if _is_ok(response):
         data = response.json()
         print(f"   ✓ Database: {data.get('database_status')}")
         print(f"   ✓ Total CVEs: {data.get('total_cves')}")
@@ -22,12 +52,12 @@ def test_predict():
     """Test predict endpoint"""
     print("\n2. Testing /api/v1/predict endpoint...")
     test_cves = ["CVE-2024-1234", "CVE-2023-5678"]
-    response = requests.post(
+    response = _request_with_fallback("POST", 
         f"{BASE_URL}/api/v1/predict",
-        json=test_cves
+        json={"cve_ids": test_cves}
     )
     print(f"   Status: {response.status_code}")
-    if response.ok:
+    if _is_ok(response):
         data = response.json()
         print(f"   ✓ Scored {data.get('count')} CVEs")
         print(f"   Sample predictions: {list(data.get('predictions', {}).items())[:2]}")
@@ -35,7 +65,7 @@ def test_predict():
 def test_top_cves():
     """Test top CVEs endpoint"""
     print("\n3. Testing /api/v1/top_cves endpoint...")
-    response = requests.get(
+    response = _request_with_fallback("GET", 
         f"{BASE_URL}/api/v1/top_cves",
         params={
             'limit': 10,
@@ -44,7 +74,7 @@ def test_top_cves():
         }
     )
     print(f"   Status: {response.status_code}")
-    if response.ok:
+    if _is_ok(response):
         data = response.json()
         print(f"   ✓ Returned {data.get('count')} CVEs")
         print(f"   Total candidates: {data.get('total_candidates')}")
@@ -55,12 +85,12 @@ def test_top_cves():
 def test_explain():
     """Test explanation endpoint"""
     print("\n4. Testing /api/v1/explain endpoint...")
-    response = requests.post(
+    response = _request_with_fallback("POST", 
         f"{BASE_URL}/api/v1/explain",
-        params={'cve_id': 'CVE-2024-0001'}
+        json={'cve_id': 'CVE-2024-0001'}
     )
     print(f"   Status: {response.status_code}")
-    if response.ok:
+    if _is_ok(response):
         data = response.json()
         print(f"   ✓ CVE: {data.get('cve_id')}")
         print(f"   Prediction score: {data.get('prediction_score'):.4f}")
@@ -72,9 +102,9 @@ def test_explain():
 def test_stats():
     """Test statistics endpoint"""
     print("\n5. Testing /api/v1/stats endpoint...")
-    response = requests.get(f"{BASE_URL}/api/v1/stats")
+    response = _request_with_fallback("GET", f"{BASE_URL}/api/v1/stats")
     print(f"   Status: {response.status_code}")
-    if response.ok:
+    if _is_ok(response):
         data = response.json()
         print(f"   ✓ Total CVEs: {data.get('total_cves')}")
         print(f"   KEV count: {data.get('kev_count')}")

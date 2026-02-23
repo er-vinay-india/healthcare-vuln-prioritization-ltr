@@ -2,7 +2,7 @@
 Pydantic Data Models and Validation Schemas
 Ensures data integrity throughout the pipeline
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 import re
@@ -247,7 +247,7 @@ class HealthStatus(BaseModel):
     
     status: str = Field(..., description="Service status: healthy, degraded, unhealthy")
     version: str = Field(..., description="API version")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # Component health
     database_connected: bool = True

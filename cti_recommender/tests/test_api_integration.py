@@ -314,7 +314,7 @@ class TestErrorHandling:
         """Test 422 for malformed JSON"""
         response = client.post(
             "/api/v1/predict",
-            data="invalid json",
+            content="invalid json",
             headers={"Content-Type": "application/json"}
         )
         assert response.status_code == 422
@@ -322,8 +322,7 @@ class TestErrorHandling:
 
 class TestRateLimiting:
     """Test rate limiting (if implemented)"""
-    
-    @pytest.mark.skip(reason="Rate limiting not yet implemented")
+
     def test_rate_limit_enforced(self, client):
         """Test that rate limiting is enforced"""
         # Make many rapid requests

@@ -52,7 +52,8 @@ def build_ltr_features(nvd_df: pd.DataFrame, kev_df: pd.DataFrame = None, chpl_d
     df['label'] = _label_from_signals(df)
 
     # group by published date bucket (e.g., YYYY-WW) to create ranking groups
-    df['published_week'] = pd.to_datetime(df['published'], errors='coerce').dt.strftime('%Y-%U').fillna('unknown')
+    published_ts = pd.to_datetime(df['published'], format='mixed', errors='coerce')
+    df['published_week'] = published_ts.dt.strftime('%Y-%U').fillna('unknown')
 
     # features to use
     feature_cols = ['recency_score', 'cvss_norm', 'kev_flag', 'attack_flag', 'is_healthcare', 'chpl_flag']

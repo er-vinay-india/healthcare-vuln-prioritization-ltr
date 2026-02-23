@@ -50,7 +50,6 @@ def test_cache_status(verbose=False):
     print("-" * 70)
     print(f"TOTAL: {total_size:.2f} MB | {total_files} files")
     print("\n✅ Test 1 PASSED: Cache status retrieved successfully\n")
-    return True
 
 
 def test_cache_freshness(max_age_days=7):
@@ -88,7 +87,6 @@ def test_cache_freshness(max_age_days=7):
         print("\n💡 TIP: Run 'python scripts/enrich_cves.py' to refresh cache")
     
     print("\n✅ Test 2 PASSED: Cache freshness checked successfully\n")
-    return True
 
 
 def test_cache_fallback_mock():
@@ -135,7 +133,6 @@ def test_cache_fallback_mock():
     print("ℹ️  This is a DRY RUN - no actual cache modifications made")
     print("ℹ️  Real system implements these fallback patterns automatically")
     print("\n✅ Test 3 PASSED: Fallback logic validated\n")
-    return True
 
 
 def test_cache_operations_dry_run():
@@ -181,7 +178,6 @@ def test_cache_operations_dry_run():
     print("ℹ️  This is a DRY RUN - no actual modifications made")
     print("ℹ️  Use the commands shown above for actual cache operations")
     print("\n✅ Test 4 PASSED: Cache operations simulated\n")
-    return True
 
 
 def main():
@@ -205,14 +201,16 @@ def main():
     
     # Test 1: Cache Status
     try:
-        results.append(("Cache Status", test_cache_status(verbose=args.verbose)))
+        test_cache_status(verbose=args.verbose)
+        results.append(("Cache Status", True))
     except Exception as e:
         print(f"❌ Test 1 FAILED: {e}\n")
         results.append(("Cache Status", False))
     
     # Test 2: Cache Freshness
     try:
-        results.append(("Cache Freshness", test_cache_freshness(max_age_days=args.max_age)))
+        test_cache_freshness(max_age_days=args.max_age)
+        results.append(("Cache Freshness", True))
     except Exception as e:
         print(f"❌ Test 2 FAILED: {e}\n")
         results.append(("Cache Freshness", False))
@@ -220,14 +218,16 @@ def main():
     # Test 3: Fallback Mechanism (if requested)
     if args.test_fallback:
         try:
-            results.append(("Fallback Mechanism", test_cache_fallback_mock()))
+            test_cache_fallback_mock()
+            results.append(("Fallback Mechanism", True))
         except Exception as e:
             print(f"❌ Test 3 FAILED: {e}\n")
             results.append(("Fallback Mechanism", False))
     
     # Test 4: Cache Operations (dry run)
     try:
-        results.append(("Cache Operations", test_cache_operations_dry_run()))
+        test_cache_operations_dry_run()
+        results.append(("Cache Operations", True))
     except Exception as e:
         print(f"❌ Test 4 FAILED: {e}\n")
         results.append(("Cache Operations", False))

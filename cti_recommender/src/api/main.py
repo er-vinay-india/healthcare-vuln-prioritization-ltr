@@ -2,18 +2,21 @@
 FastAPI REST API for CTI Healthcare Recommender
 Provides endpoints for vulnerability recommendations and data enrichment
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 import pickle
 from pathlib import Path
 import sqlite3
+from contextlib import asynccontextmanager
+import warnings
 
-from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi import FastAPI, HTTPException, Query, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from pydantic import BaseModel
 
 from config import settings
 from src.models.schemas import (
@@ -30,13 +33,51 @@ from src.utils.logging_config import get_logger
 
 logger = get_logger(__name__)
 
+# Global state
+_model = None
+_scaler = None
+_db = None
+_rate_limit_state = {}
+
+
+class ExplainRequest(BaseModel):
+    """Request body for explanation endpoint."""
+    cve_id: str
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize and cleanup resources using FastAPI lifespan API."""
+    logger.info("Starting CTI Recommender API...")
+
+    try:
+        load_model()
+        logger.info("✓ Model loaded successfully")
+
+        get_database()
+        logger.info("✓ Database connected successfully")
+        logger.info(f"API server ready at http://{settings.API_HOST}:{settings.API_PORT}")
+    except Exception as e:
+        logger.error(f"Startup failed: {e}", exc_info=True)
+        raise
+
+    yield
+
+    global _db
+    logger.info("Shutting down CTI Recommender API...")
+    if _db:
+        _db.close()
+        logger.info("✓ Database connection closed")
+
+
 # Initialize FastAPI app
 app = FastAPI(
     title=settings.API_TITLE,
     version=settings.API_VERSION,
     description="AI-powered vulnerability prioritization for healthcare organizations",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # CORS middleware
@@ -47,11 +88,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Global state
-_model = None
-_scaler = None
-_db = None
 
 
 def get_database() -> CVEDatabase:
@@ -76,7 +112,9 @@ def load_model():
         try:
             import xgboost as xgb
             _model = xgb.Booster()
-            _model.load_model(str(model_path))
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message=".*Unknown file format.*", category=UserWarning)
+                _model.load_model(str(model_path))
             logger.info(f"Loaded model from {model_path}")
             
             # Try to load scaler if exists
@@ -95,38 +133,6 @@ def load_model():
     return _model, _scaler
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize resources on startup"""
-    logger.info("Starting CTI Recommender API...")
-    
-    try:
-        # Load model
-        load_model()
-        logger.info("✓ Model loaded successfully")
-        
-        # Connect to database
-        db = get_database()
-        logger.info("✓ Database connected successfully")
-        
-        logger.info(f"API server ready at http://{settings.API_HOST}:{settings.API_PORT}")
-        
-    except Exception as e:
-        logger.error(f"Startup failed: {e}", exc_info=True)
-        raise
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    global _db
-    logger.info("Shutting down CTI Recommender API...")
-    
-    if _db:
-        _db.close()
-        logger.info("✓ Database connection closed")
-
-
 @app.get("/", response_model=dict)
 async def root():
     """Root endpoint"""
@@ -140,12 +146,13 @@ async def root():
 
 
 @app.get("/health", response_model=HealthStatus)
-async def health_check(db: CVEDatabase = Depends(get_database)):
+async def health_check():
     """
     Health check endpoint
     Returns service status and statistics
     """
     try:
+        db = get_database()
         # Check database connection
         cursor = db.conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM cves")
@@ -182,6 +189,29 @@ async def health_check(db: CVEDatabase = Depends(get_database)):
             database_connected=False,
             model_loaded=_model is not None
         )
+
+
+def _cors_options_response():
+    """Standard OPTIONS response for endpoints when preflight headers are not provided."""
+    return JSONResponse(
+        status_code=200,
+        content={"ok": True},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        },
+    )
+
+
+@app.options("/api/v1/top_cves")
+async def options_top_cves():
+    return _cors_options_response()
+
+
+@app.options("/api/v1/predict")
+async def options_predict():
+    return _cors_options_response()
 
 
 @app.post("/api/v1/recommendations", response_model=List[CVERecommendation])
@@ -483,11 +513,14 @@ async def predict_scores(
 @app.get("/api/v1/top_cves", response_model=dict)
 async def get_top_cves(
     limit: int = Query(20, ge=1, le=100, description="Number of top CVEs to return"),
+    start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     date_start: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     date_end: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     healthcare_only: bool = Query(False, description="Only healthcare-relevant CVEs"),
     kev_only: bool = Query(False, description="Only KEV CVEs"),
     min_cvss: Optional[float] = Query(None, ge=0.0, le=10.0, description="Minimum CVSS score"),
+    request: Request = None,
     db: CVEDatabase = Depends(get_database)
 ):
     """
@@ -505,7 +538,42 @@ async def get_top_cves(
         Top-K CVEs with scores and details
     """
     try:
+        # Lightweight in-memory rate limiting for this expensive endpoint.
+        # Keeps normal usage unaffected while preventing request storms.
+        if request is not None and limit < 100:
+            client_key = request.client.host if request.client else "unknown"
+            now = datetime.now(timezone.utc).timestamp()
+            window_seconds = 60
+            max_requests = 80
+
+            key = (client_key, "top_cves")
+            history = _rate_limit_state.get(key, [])
+            history = [ts for ts in history if (now - ts) <= window_seconds]
+
+            if len(history) >= max_requests:
+                raise HTTPException(status_code=429, detail="Rate limit exceeded")
+
+            history.append(now)
+            _rate_limit_state[key] = history
+
         model, scaler = load_model()
+
+        # Backward-compatible query param handling
+        effective_start = start_date or date_start
+        effective_end = end_date or date_end
+
+        # Validate date formats explicitly
+        if effective_start:
+            try:
+                datetime.fromisoformat(effective_start)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid start_date format. Use YYYY-MM-DD")
+
+        if effective_end:
+            try:
+                datetime.fromisoformat(effective_end)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid end_date format. Use YYYY-MM-DD")
         
         # Build query with filters
         query = """
@@ -528,13 +596,13 @@ async def get_top_cves(
         
         params = []
         
-        if date_start:
+        if effective_start:
             query += " AND c.published >= ?"
-            params.append(date_start)
+            params.append(effective_start)
         
-        if date_end:
+        if effective_end:
             query += " AND c.published <= ?"
-            params.append(date_end)
+            params.append(effective_end)
         
         if healthcare_only:
             query += " AND e.is_healthcare = 1"
@@ -580,6 +648,12 @@ async def get_top_cves(
         # Build response
         results = []
         for rank, (_, row) in enumerate(top_df.iterrows(), start=1):
+            published_iso = None
+            if pd.notna(row['published']):
+                published_ts = pd.to_datetime(row['published'], errors='coerce', utc=True)
+                if pd.notna(published_ts):
+                    published_iso = published_ts.tz_convert(None).isoformat()
+
             results.append({
                 'rank': rank,
                 'cve_id': row['cve_id'],
@@ -589,7 +663,7 @@ async def get_top_cves(
                 'kev_flag': bool(row['kev_flag']),
                 'is_healthcare': bool(row['is_healthcare']),
                 'label': int(row['label']) if pd.notna(row['label']) else None,
-                'published': row['published'].isoformat() if pd.notna(row['published']) else None,
+                'published': published_iso,
                 'description': row['description'][:200] if pd.notna(row['description']) else None
             })
         
@@ -600,8 +674,8 @@ async def get_top_cves(
             'count': len(results),
             'total_candidates': len(df),
             'filters': {
-                'date_start': date_start,
-                'date_end': date_end,
+                'date_start': effective_start,
+                'date_end': effective_end,
                 'healthcare_only': healthcare_only,
                 'kev_only': kev_only,
                 'min_cvss': min_cvss
@@ -617,7 +691,7 @@ async def get_top_cves(
 
 @app.post("/api/v1/explain", response_model=dict)
 async def explain_prediction(
-    cve_id: str,
+    request: ExplainRequest,
     db: CVEDatabase = Depends(get_database)
 ):
     """
@@ -649,6 +723,7 @@ async def explain_prediction(
         WHERE UPPER(e.cve_id) = ?
         """
         
+        cve_id = request.cve_id
         df = pd.read_sql_query(query, db.conn, params=[cve_id.upper()])
         
         if df.empty:

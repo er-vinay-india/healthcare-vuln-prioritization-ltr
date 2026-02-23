@@ -9,7 +9,11 @@ from logging.handlers import RotatingFileHandler
 from typing import Optional
 
 try:
-    from pythonjsonlogger import jsonlogger
+    try:
+        from pythonjsonlogger.json import JsonFormatter
+    except ImportError:
+        from pythonjsonlogger import jsonlogger
+        JsonFormatter = jsonlogger.JsonFormatter
     JSON_LOGGER_AVAILABLE = True
 except ImportError:
     JSON_LOGGER_AVAILABLE = False
@@ -55,7 +59,7 @@ def setup_logging(
     
     # Determine formatter
     if use_structured and JSON_LOGGER_AVAILABLE:
-        formatter = jsonlogger.JsonFormatter(
+        formatter = JsonFormatter(
             '%(timestamp)s %(level)s %(name)s %(message)s %(pathname)s %(lineno)d',
             rename_fields={
                 'levelname': 'level',

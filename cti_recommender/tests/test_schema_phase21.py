@@ -35,7 +35,7 @@ def test_schema():
     missing_cve = set(expected_cve_cols) - set(cve_columns.keys())
     if missing_cve:
         print(f"   ✗ Missing CVE columns: {missing_cve}")
-        return False
+        assert False, f"Missing CVE columns: {missing_cve}"
     print(f"   ✓ All {len(expected_cve_cols)} CVE columns present")
     
     # Verify enrichments table schema
@@ -52,14 +52,14 @@ def test_schema():
     missing_enrich = set(expected_enrich_cols) - set(enrich_columns.keys())
     if missing_enrich:
         print(f"   ✗ Missing enrichment columns: {missing_enrich}")
-        return False
+        assert False, f"Missing enrichment columns: {missing_enrich}"
     print(f"   ✓ All {len(expected_enrich_cols)} enrichment columns present")
     
     # Verify critical column: attack_technique_count
     print("\n4. Verifying attack_technique_count column...")
     if 'attack_technique_count' not in enrich_columns:
         print("   ✗ ERROR: attack_technique_count missing!")
-        return False
+        assert False, "attack_technique_count missing"
     print("   ✓ attack_technique_count present (no migration needed)")
     
     # Verify fetch_log table
@@ -70,7 +70,7 @@ def test_schema():
         print(f"   ✓ fetch_log table present with {len(log_columns)} columns")
     else:
         print("   ✗ fetch_log table incomplete")
-        return False
+        assert False, "fetch_log table incomplete"
     
     # Verify indexes
     print("\n6. Verifying indexes...")
@@ -115,11 +115,11 @@ def test_schema():
             print("   ✓ Insert/query operations working")
         else:
             print(f"   ✗ Data mismatch: {result}")
-            return False
+            assert False, f"Data mismatch: {result}"
             
     except Exception as e:
         print(f"   ✗ Error during operations: {e}")
-        return False
+        assert False, f"Error during operations: {e}"
     
     # Cleanup
     db.close()
@@ -133,9 +133,10 @@ def test_schema():
     print("  • All columns now in initial CREATE TABLE")
     print("  • No runtime migrations needed")
     print("  • Test fixtures updated to match production schema")
-    
-    return True
 
 if __name__ == "__main__":
-    success = test_schema()
-    sys.exit(0 if success else 1)
+    try:
+        test_schema()
+        sys.exit(0)
+    except AssertionError:
+        sys.exit(1)
