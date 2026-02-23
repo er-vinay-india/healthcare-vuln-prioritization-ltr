@@ -28,7 +28,7 @@
 2. **EPSSFetcher** (`epss_fetcher.py`):
    - Has `_load_persistent_cache()` method
    - Checks cache validity before API
-   - Cache exists → No API calls
+   - Cache exists -> No API calls
 
 3. **LTRModel** (`ltr.py`):
    - Works purely with database data
@@ -46,9 +46,9 @@
 
 ---
 
-## 📋 PHASED EXECUTION PLAN
+##  PHASED EXECUTION PLAN
 
-### **PHASE 1: Setup & Validation** (Cells 1-6) ⚡ Fast (~30 sec)
+### **PHASE 1: Setup & Validation** (Cells 1-6)  Fast (~30 sec)
 **Goal:** Verify environment, imports, cache status
 
 **Cells:**
@@ -69,7 +69,7 @@ git push
 
 ---
 
-### **PHASE 2: Data Loading** (Cells 8, 10) ⚡ Fast (~10-20 sec)
+### **PHASE 2: Data Loading** (Cells 8, 10)  Fast (~10-20 sec)
 **Goal:** Load CVE data from database
 
 **Cells:**
@@ -92,7 +92,7 @@ git push
 
 ---
 
-### **PHASE 3: EDA Visualizations** (Cells 13-17) ⚡ Medium (~1-2 min)
+### **PHASE 3: EDA Visualizations** (Cells 13-17)  Medium (~1-2 min)
 **Goal:** Generate exploratory plots
 
 **Cells:**
@@ -146,7 +146,7 @@ git push
 
 ---
 
-### **PHASE 5: Train/Test Split** (Cell 22) ⚡ Fast (~5 sec)
+### **PHASE 5: Train/Test Split** (Cell 22)  Fast (~5 sec)
 **Goal:** Temporal split (2018-2023 train, 2024+ test)
 
 **Cell:**
@@ -202,7 +202,7 @@ git push
 
 ---
 
-### **PHASE 7: Evaluation** (Cells 26, 28, 30-31, 33-34) ⚡ Fast (~30 sec)
+### **PHASE 7: Evaluation** (Cells 26, 28, 30-31, 33-34)  Fast (~30 sec)
 **Goal:** Evaluate model performance
 
 **Cells:**
@@ -249,7 +249,7 @@ git push
 
 ---
 
-### **PHASE 9: Cache Management** (Cells 41, 43, 45, 47) ⚡ Fast (~10 sec)
+### **PHASE 9: Cache Management** (Cells 41, 43, 45, 47)  Fast (~10 sec)
 **Goal:** Demonstrate cache operations (OPTIONAL)
 
 **Cells:**
@@ -264,7 +264,7 @@ git push
 
 ---
 
-## 🚨 RISK MITIGATION
+##  RISK MITIGATION
 
 ### Timeout Strategy:
 ```python
@@ -315,10 +315,10 @@ callbacks = [
 |-------|-------------|------|------|
 | 1 | Setup & Validation | 30s | - Low |
 | 2 | Data Loading | 20s | - Low |
-| 3 | EDA Visualizations | 1-2 min | ⚡ Medium |
+| 3 | EDA Visualizations | 1-2 min |  Medium |
 | 4 | Feature Engineering | 2-3 min | - Medium-High |
 | 5 | Train/Test Split | 5s | - Low |
-| 6 | Model Training | 5-10 min | 🔴 HIGH |
+| 6 | Model Training | 5-10 min |  HIGH |
 | 7 | Evaluation | 30s | - Low |
 | 8 | Ablation Study | 3-5 min | - Medium-High |
 | 9 | Cache Management | 10s | - Low |
@@ -356,7 +356,7 @@ After full execution, verify:
 
 ---
 
-## 🐛 TROUBLESHOOTING
+##  TROUBLESHOOTING
 
 ### If Cell 24 (Training) Hangs:
 1. Check if labels are properly distributed (not all zeros)
@@ -396,4 +396,4 @@ for i in range(0, len(df), chunk_size):
 4. **Model Training is Local:** No external services
 5. **Visualizations are Lightweight:** Plotly handles aggregations well
 
-**READY TO EXECUTE! 🚀**
+**READY TO EXECUTE! [RUN]**

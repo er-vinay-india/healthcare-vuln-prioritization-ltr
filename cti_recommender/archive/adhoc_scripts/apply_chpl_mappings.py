@@ -33,7 +33,7 @@ def apply_chpl_mappings(dry_run=True, limit=100):
     mapper = CHPLMapper()
     
     if mapper.products_df is None or len(mapper.products_df) == 0:
-        print("\n❌ No CHPL data available - cannot proceed")
+        print("\n[FAIL] No CHPL data available - cannot proceed")
         return None
     
     # Get CVEs to process
@@ -84,14 +84,14 @@ def apply_chpl_mappings(dry_run=True, limit=100):
         
         if not dry_run:
             db.conn.commit()
-            print("\n✓ Database updated successfully")
+            print("\n[OK] Database updated successfully")
         else:
-            print("\n✓ Dry run completed (no database changes)")
+            print("\n[OK] Dry run completed (no database changes)")
     
     except Exception as e:
         if not dry_run:
             db.conn.rollback()
-        print(f"\n❌ Error during processing: {e}")
+        print(f"\n[FAIL] Error during processing: {e}")
         raise
     
     # Print statistics
@@ -136,7 +136,7 @@ def main():
     args = parser.parse_args()
     
     if args.live:
-        print("\n🚀 LIVE MODE - Will update database")
+        print("\n[RUN] LIVE MODE - Will update database")
         response = input("Continue? (yes/no): ")
         if response.lower() != 'yes':
             print("Cancelled.")
@@ -145,7 +145,7 @@ def main():
         apply_chpl_mappings(dry_run=False, limit=None)
     else:
         limit = args.limit or 100
-        print(f"\n🧪 DRY RUN MODE - Testing on {limit} CVEs (no database changes)")
+        print(f"\n[TEST] DRY RUN MODE - Testing on {limit} CVEs (no database changes)")
         apply_chpl_mappings(dry_run=True, limit=limit)
 
 if __name__ == '__main__':

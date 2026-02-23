@@ -52,10 +52,10 @@ async def lifespan(app: FastAPI):
 
     try:
         load_model()
-        logger.info("✓ Model loaded successfully")
+        logger.info("[OK] Model loaded successfully")
 
         get_database()
-        logger.info("✓ Database connected successfully")
+        logger.info("[OK] Database connected successfully")
         logger.info(f"API server ready at http://{settings.API_HOST}:{settings.API_PORT}")
     except Exception as e:
         logger.error(f"Startup failed: {e}", exc_info=True)
@@ -67,7 +67,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down CTI Recommender API...")
     if _db:
         _db.close()
-        logger.info("✓ Database connection closed")
+        logger.info("[OK] Database connection closed")
 
 
 # Initialize FastAPI app

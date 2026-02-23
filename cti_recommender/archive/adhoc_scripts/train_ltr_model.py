@@ -265,7 +265,7 @@ def main():
     save_model(model, feature_names, metrics, scaler)
     
     print("\n" + "="*70)
-    print("✅ Training complete!")
+    print("[OK] Training complete!")
     print("="*70)
 
 if __name__ == "__main__":

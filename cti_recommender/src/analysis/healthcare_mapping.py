@@ -356,7 +356,7 @@ if __name__ == "__main__":
     # Export default mappings
     output_path = Path("data/config/healthcare_mapping.csv")
     mapper.export_mapping_csv(output_path)
-    print(f"✅ Exported healthcare mappings to {output_path}")
+    print(f"[OK] Exported healthcare mappings to {output_path}")
     
     # Test examples
     test_cases = [
@@ -367,7 +367,7 @@ if __name__ == "__main__":
         "Microsoft Windows kernel vulnerability"
     ]
     
-    print("\n🧪 Testing healthcare detection:")
+    print("\n[TEST] Testing healthcare detection:")
     for test in test_cases:
         score = mapper.get_healthcare_score(test)
         vendor = mapper.check_vendor_match(test)

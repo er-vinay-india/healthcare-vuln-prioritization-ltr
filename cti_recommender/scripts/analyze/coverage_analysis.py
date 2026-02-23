@@ -31,14 +31,14 @@ def analyze_coverage():
     chpl_df = fetcher.get_chpl_data()
     
     unique_vendors = chpl_df['developer'].apply(lambda x: x.get('name', '') if isinstance(x, dict) else str(x)).nunique()
-    logger.info("✅ CURRENT DATA (CHPL ONC-Certified Products):")
+    logger.info("[OK] CURRENT DATA (CHPL ONC-Certified Products):")
     logger.info(f"   Total Products: {len(chpl_df):,}", extra={'product_count': len(chpl_df)})
     logger.info(f"   Unique Vendors: {unique_vendors}", extra={'vendor_count': unique_vendors})
     logger.info("   Coverage: EHR systems, certified health IT")
     logger.info("   Examples: Epic, Cerner, MEDITECH, athenahealth")
     
     # What's missing
-    logger.info("❌ MISSING DATA (Not in CHPL):")
+    logger.info("[FAIL] MISSING DATA (Not in CHPL):")
     logger.info("")
     logger.info("1. FDA-Registered Medical Devices (~10,000+ products):")
     logger.info("   - Patient monitors (Philips, GE, Medtronic)")
@@ -94,7 +94,7 @@ def analyze_coverage():
     logger.info("RECOMMENDATIONS FOR BETTER COVERAGE:")
     logger.info("="*70)
     logger.info("")
-    logger.info("1. ✅ CHPL Data (DONE):")
+    logger.info("1. [OK] CHPL Data (DONE):")
     logger.info("   Source: ONC Certified Health IT Product List API")
     logger.info("   Status: 706 products cached")
     

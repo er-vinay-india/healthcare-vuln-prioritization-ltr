@@ -4,7 +4,7 @@
 
 ---
 
-## 🎯 Objective Alignment
+## [TARGET] Objective Alignment
 
 **Research Goal:** Build a healthcare-focused vulnerability recommender that combines NVD, CISA KEV, MITRE ATT&CK, and CHPL to answer: *"Which vulnerabilities should healthcare security teams patch first?"*
 
@@ -12,7 +12,7 @@
 
 ---
 
-## ✅ Completed Tasks
+## [OK] Completed Tasks
 
 ### 1. Data Quality Module (`data_quality.py`)
 **Created:** Comprehensive data validation framework with 447 lines
@@ -77,15 +77,15 @@ is_healthcare = 1 if healthcare_score > 0.3 else 0
 
 ---
 
-## 📊 Key Insights
+## [STATS] Key Insights
 
-### ✅ Strengths
+### [OK] Strengths
 1. **Data volume is good:** 2,000 recent CVEs, 1,488 KEV entries, 835 ATT&CK techniques
 2. **CVSS coverage:** 65.6% have scores (mean: 7.03, median: 7.30)
 3. **Healthcare mapping works:** Successfully flagged 66.6% of NVD dataset
 4. **ATT&CK integration:** 835 techniques available for mapping
 
-### ⚠️ Issues Identified
+### [WARN] Issues Identified
 
 #### **High Priority:**
 1. **Healthcare precision lower than claimed**
@@ -100,7 +100,7 @@ is_healthcare = 1 if healthcare_score > 0.3 else 0
 
 3. **ATT&CK CAPEC mapping sparse**
    - Only 4.3% (36/835) techniques have CAPEC IDs
-   - Limits CVE→ATT&CK precision
+   - Limits CVE->ATT&CK precision
    - Solution: Use technique names/aliases (already implemented)
 
 #### **Medium Priority:**
@@ -120,7 +120,7 @@ is_healthcare = 1 if healthcare_score > 0.3 else 0
 
 ---
 
-## 🔧 Recommended Fixes
+##  Recommended Fixes
 
 ### Immediate (Before Phase 2):
 1. **Fix CHPL fetcher** - Debug `header_variants` error
@@ -142,7 +142,7 @@ is_healthcare = 1 if healthcare_score > 0.3 else 0
 
 ---
 
-## 📁 New Files Created
+##  New Files Created
 
 ```
 cti_recommender/
@@ -159,7 +159,7 @@ cti_recommender/
 
 ---
 
-## 🎯 Phase 1 Status: **80% Complete**
+## [TARGET] Phase 1 Status: **80% Complete**
 
 **Remaining Work:**
 - [ ] Fix CHPL data fetcher
@@ -167,11 +167,11 @@ cti_recommender/
 - [ ] Re-run audit with corrected CHPL data
 - [ ] Adjust scoring weights based on audit results
 
-**Ready to Proceed:** ⚠️ Recommend completing remaining 20% before Phase 2
+**Ready to Proceed:** [WARN] Recommend completing remaining 20% before Phase 2
 
 ---
 
-## 📈 Next Steps (Phase 2)
+##  Next Steps (Phase 2)
 
 **Focus:** Improve labeling strategy beyond weak supervision
 
@@ -186,7 +186,7 @@ cti_recommender/
 
 ---
 
-## 💡 Key Takeaway
+## [TIP] Key Takeaway
 
 **Current system over-relies on recency + CVSS severity, producing generic high-severity recommendations rather than healthcare-specific ones.** 
 

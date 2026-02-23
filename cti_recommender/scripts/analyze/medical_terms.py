@@ -32,7 +32,7 @@ def analyze_medical_terms():
         if vendor_name:
             chpl_vendors.add(vendor_name)
     
-    print(f"\n✅ CHPL Vendors: {len(chpl_vendors)} vendors")
+    print(f"\n[OK] CHPL Vendors: {len(chpl_vendors)} vendors")
     
     # Get CVE descriptions
     db = CVEDatabase()
@@ -52,7 +52,7 @@ def analyze_medical_terms():
     ''')
     
     descriptions = [row[0] for row in cursor.fetchall() if row[0]]
-    print(f"\n📋 Analyzing {len(descriptions)} CVE descriptions...")
+    print(f"\n Analyzing {len(descriptions)} CVE descriptions...")
     
     # Known medical device vendors (NOT in CHPL typically)
     device_vendors = [
@@ -92,7 +92,7 @@ def analyze_medical_terms():
                 term_count[term] += 1
     
     print("\n" + "="*70)
-    print("🏥 MEDICAL DEVICE VENDORS (Not in CHPL):")
+    print(" MEDICAL DEVICE VENDORS (Not in CHPL):")
     print("="*70)
     if vendor_count:
         for vendor, count in vendor_count.most_common(15):
@@ -122,19 +122,19 @@ def analyze_medical_terms():
     print(f"   CVEs mentioning devices:      {gap_percentage:.1f}%")
     
     print("\n" + "="*70)
-    print("💡 RECOMMENDATION:")
+    print("[TIP] RECOMMENDATION:")
     print("="*70)
     
     if sum(vendor_count.values()) > 50:
-        print("   ⚠️  SIGNIFICANT GAP - Should create supplementary vendor list")
-        print("   → Create data/medical_device_vendors.json with top vendors")
-        print("   → Add ~30-50 major device manufacturers")
-        print("   → Augment CHPL matching with device vendor keywords")
+        print("   [WARN]  SIGNIFICANT GAP - Should create supplementary vendor list")
+        print("   -> Create data/medical_device_vendors.json with top vendors")
+        print("   -> Add ~30-50 major device manufacturers")
+        print("   -> Augment CHPL matching with device vendor keywords")
     else:
-        print("   ✅ CHPL Coverage Sufficient")
-        print("   → Most CVEs reference EHR/IT systems (covered by CHPL)")
-        print("   → Device vendor mentions are minimal")
-        print("   → Current approach is research-valid")
+        print("   [OK] CHPL Coverage Sufficient")
+        print("   -> Most CVEs reference EHR/IT systems (covered by CHPL)")
+        print("   -> Device vendor mentions are minimal")
+        print("   -> Current approach is research-valid")
     
     print("="*70)
     

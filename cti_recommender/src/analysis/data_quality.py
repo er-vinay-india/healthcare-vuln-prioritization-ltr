@@ -63,17 +63,17 @@ class DataQualityReport:
         print("DATA QUALITY REPORT")
         print("="*70)
         
-        print("\n📊 STATISTICS:")
+        print("\n[STATS] STATISTICS:")
         for key, value in self.stats.items():
             print(f"  • {key}: {value}")
         
         if self.errors:
-            print(f"\n❌ ERRORS ({len(self.errors)}):")
+            print(f"\n[FAIL] ERRORS ({len(self.errors)}):")
             for err in self.errors:
                 print(f"  • {err}")
         
         if self.warnings:
-            print(f"\n⚠️  WARNINGS ({len(self.warnings)}):")
+            print(f"\n[WARN]  WARNINGS ({len(self.warnings)}):")
             for warn in self.warnings:
                 print(f"  • {warn}")
         
@@ -326,7 +326,7 @@ def generate_quality_report(
 ) -> Dict:
     """Generate comprehensive data quality report for all datasets"""
     
-    print("\n🔍 Running comprehensive data quality checks...\n")
+    print("\n Running comprehensive data quality checks...\n")
     
     reports = {}
     
@@ -371,9 +371,9 @@ def generate_quality_report(
         print(f"High CVSS (≥9.0): {audit['high_cvss_count']}")
         print(f"Healthcare keywords detected: {audit['healthcare_keywords_count']} ({audit.get('healthcare_keyword_precision', 0):.1%})")
         
-        print("\n📋 Manual Review Checklist (Top 10):")
+        print("\n Manual Review Checklist (Top 10):")
         for rec in audit['recommendations'][:10]:
-            priority_emoji = "🔴" if rec['review_priority'] == 'HIGH' else "🟡" if rec['review_priority'] == 'MEDIUM' else "🟢"
+            priority_emoji = "" if rec['review_priority'] == 'HIGH' else "" if rec['review_priority'] == 'MEDIUM' else ""
             kev_badge = " [KEV]" if rec['kev'] else ""
             health_badge = " [HC]" if rec['has_healthcare_keyword'] else ""
             print(f"  {priority_emoji} #{rec['rank']:2d} {rec['cve_id']} (CVSS: {rec['cvss']:.1f}){kev_badge}{health_badge}")
@@ -418,7 +418,7 @@ def generate_quality_report(
                     f.write(f"High CVSS: {report['high_cvss_count']}\n")
                     f.write(f"Healthcare keywords: {report['healthcare_keywords_count']}\n")
         
-        print(f"✅ Report saved to: {output_path}")
+        print(f"[OK] Report saved to: {output_path}")
     
     return reports
 

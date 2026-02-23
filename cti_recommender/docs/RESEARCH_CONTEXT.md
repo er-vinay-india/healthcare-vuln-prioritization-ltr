@@ -59,7 +59,7 @@ Saved: 2026-01-13
 
 ## Recent engineering actions (snapshot)
 - CHPL fetcher implemented and run (6,900 products). Artifacts: `cache/chpl/chpl_products.pkl.gz`, `data/processed/CHPL_products.parquet`.
-- ATT&CK integration implemented (techniques fetched from MITRE CTI and cached). Simple CVE→ATT&CK mapping added via substring matching (technique names/aliases) -> `attack_flag`.
+- ATT&CK integration implemented (techniques fetched from MITRE CTI and cached). Simple CVE->ATT&CK mapping added via substring matching (technique names/aliases) -> `attack_flag`.
 - Grid tuning performed:
   - `w_chpl` fine-tuned; **best found: 0.08** (precision@20 improvement recorded in `outputs/weight_fine_grid_chpl.csv` and `outputs/chpl_finetune_report.txt`).
   - `w_attack` fine-tuned; **best found: 0.05** (results in `outputs/weight_fine_grid_attack.csv` and `outputs/attack_finetune_report.txt`).

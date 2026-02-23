@@ -50,7 +50,7 @@ class HealthcareCVERecommender:
         if self.scaler is not None:
             logger.info("Feature scaler loaded for inference")
         else:
-            logger.warning("⚠️  Warning: No scaler found in metadata (old model?)")
+            logger.warning("[WARN]  Warning: No scaler found in metadata (old model?)")
     
     def prepare_features(self, df):
         """Extract features from CVE dataframe (same as training)."""

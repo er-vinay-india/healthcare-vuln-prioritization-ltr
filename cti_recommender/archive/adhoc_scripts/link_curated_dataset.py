@@ -57,9 +57,9 @@ def link_curated_dataset():
     db.conn.commit()
     db.close()
     
-    print(f"\n✅ Updated {updated} CVEs with curated flags")
+    print(f"\n[OK] Updated {updated} CVEs with curated flags")
     if not_found:
-        print(f"⚠️  {len(not_found)} CVEs not found in database:")
+        print(f"[WARN]  {len(not_found)} CVEs not found in database:")
         for cve in not_found[:10]:
             print(f"    {cve}")
         if len(not_found) > 10:

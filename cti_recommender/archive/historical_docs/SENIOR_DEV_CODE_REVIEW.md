@@ -1,26 +1,26 @@
-# 🔍 SENIOR AI DEVELOPER CODE REVIEW
+#  SENIOR AI DEVELOPER CODE REVIEW
 **Project:** CTI Healthcare Vulnerability Recommender  
 **Review Date:** 2026-01-17  
 **Reviewer:** Senior AI/ML Engineer  
-**Overall Rating:** ⭐⭐⭐⭐ (4/5 - Production-Ready with Improvements Needed)
+**Overall Rating:** **** (4/5 - Production-Ready with Improvements Needed)
 
 ---
 
-## 📊 EXECUTIVE SUMMARY
+## [STATS] EXECUTIVE SUMMARY
 
-### Strengths 💪
+### Strengths 
 1. **Solid Research Foundation**: Multi-source integration (6 authoritative sources) with cache-first strategy
 2. **Good ML Pipeline**: Feature engineering, LTR model, ablation study showing +27.5% improvement
 3. **Clean Architecture**: Separation of concerns (core, analysis, scripts)
 4. **Comprehensive Coverage**: 226K CVEs with 23 features, NDCG@10=0.75, P@100=100%
 
-### Critical Issues 🚨
+### Critical Issues 
 1. **Missing attack_technique_count column** in database schema (line 78 of cve_database.py)
 2. **No feature scaling/scaler persistence** in model training/inference
 3. **SQL injection vulnerability** in recommend_cves.py (line 109-111)
 4. **Insufficient test coverage** - only 1 smoke test for entire system
 
-### Medium Improvements Needed ⚠️
+### Medium Improvements Needed [WARN]
 1. ATT&CK mapping too naive (keyword-only, no synonyms/descriptions)
 2. Healthcare mapping false positives (substring matching vs word boundaries)
 3. No hyperparameter tuning or cross-validation
@@ -29,27 +29,27 @@
 
 ---
 
-## 📁 FILE-BY-FILE ANALYSIS
+##  FILE-BY-FILE ANALYSIS
 
-### 1. [src/core/cve_database.py](../src/core/cve_database.py) - ⭐⭐⭐⭐ (4/5)
+### 1. [src/core/cve_database.py](../src/core/cve_database.py) - **** (4/5)
 
 **Purpose:** SQLite database manager for CVE storage and enrichment.
 
 **Strengths:**
-- ✅ Well-designed schema with separation (cves, enrichments, fetch_log)
-- ✅ Proper indexing on published, cvss, kev_flag, is_healthcare
-- ✅ Context manager support for resource cleanup
-- ✅ Flexible upsert logic with ON CONFLICT handling
-- ✅ Type hints and logging integration
+- [OK] Well-designed schema with separation (cves, enrichments, fetch_log)
+- [OK] Proper indexing on published, cvss, kev_flag, is_healthcare
+- [OK] Context manager support for resource cleanup
+- [OK] Flexible upsert logic with ON CONFLICT handling
+- [OK] Type hints and logging integration
 
 **Critical Issues:**
 ```python
-# 🔴 MISSING COLUMN in enrichments table (line 78):
+#  MISSING COLUMN in enrichments table (line 78):
 CREATE TABLE IF NOT EXISTS enrichments (
     ...
     attack_flag INTEGER DEFAULT 0,
     chpl_flag INTEGER DEFAULT 0,
-    # ❌ MISSING: attack_technique_count INTEGER DEFAULT 0,
+    # [FAIL] MISSING: attack_technique_count INTEGER DEFAULT 0,
     label INTEGER DEFAULT 0,
     ...
 )
@@ -66,10 +66,10 @@ self.conn.commit()
 ```
 
 **Medium Issues:**
-- 🟡 SQL injection in query_cves() line 291: `query += f" LIMIT {limit}"`
-- 🟡 No connection pooling (single connection, not thread-safe)
-- 🟡 Missing transaction management with batch size for large upserts
-- 🟢 No backup/restore functionality
+-  SQL injection in query_cves() line 291: `query += f" LIMIT {limit}"`
+-  No connection pooling (single connection, not thread-safe)
+-  Missing transaction management with batch size for large upserts
+-  No backup/restore functionality
 
 **Recommendations:**
 1. Add attack_technique_count column migration
@@ -80,20 +80,20 @@ self.conn.commit()
 
 ---
 
-### 2. [src/core/chpl_fetcher.py](../src/core/chpl_fetcher.py) - ⭐⭐⭐⭐½ (4.5/5)
+### 2. [src/core/chpl_fetcher.py](../src/core/chpl_fetcher.py) - ****½ (4.5/5)
 
 **Purpose:** CHPL API fetcher with smart caching.
 
 **Strengths:**
-- ✅ Excellent cache-first implementation
-- ✅ Dual format caching (pickle + JSON)
-- ✅ Graceful degradation to mock data
-- ✅ python-dotenv for API key management
-- ✅ Pagination handling (fetched 706 products)
+- [OK] Excellent cache-first implementation
+- [OK] Dual format caching (pickle + JSON)
+- [OK] Graceful degradation to mock data
+- [OK] python-dotenv for API key management
+- [OK] Pagination handling (fetched 706 products)
 
 **Low Priority Issues:**
-- 🟢 Cache validation could check API for updates
-- 🟢 API error codes should be more specific (401 vs 429)
+-  Cache validation could check API for updates
+-  API error codes should be more specific (401 vs 429)
 
 **Recommendations:**
 1. Add Last-Modified header check for cache invalidation
@@ -101,19 +101,19 @@ self.conn.commit()
 
 ---
 
-### 3. [src/core/epss_fetcher.py](../src/core/epss_fetcher.py) - ⭐⭐⭐⭐½ (4.5/5)
+### 3. [src/core/epss_fetcher.py](../src/core/epss_fetcher.py) - ****½ (4.5/5)
 
 **Purpose:** EPSS score fetcher with batch processing.
 
 **Strengths:**
-- ✅ Batch processing (100 CVEs per request)
-- ✅ Session reuse for connection pooling
-- ✅ 90% cache hit threshold logic
-- ✅ Daily cache expiry matching EPSS updates
+- [OK] Batch processing (100 CVEs per request)
+- [OK] Session reuse for connection pooling
+- [OK] 90% cache hit threshold logic
+- [OK] Daily cache expiry matching EPSS updates
 
 **Medium Issues:**
-- 🟡 Synchronous rate limiting (time.sleep blocks)
-- 🟢 No retry logic for transient failures
+-  Synchronous rate limiting (time.sleep blocks)
+-  No retry logic for transient failures
 
 **Recommendations:**
 ```python
@@ -137,22 +137,22 @@ def _fetch_batch(self, cve_batch):
 
 ---
 
-### 4. [src/analysis/healthcare_mapping.py](../src/analysis/healthcare_mapping.py) - ⭐⭐⭐⭐ (4/5)
+### 4. [src/analysis/healthcare_mapping.py](../src/analysis/healthcare_mapping.py) - **** (4/5)
 
 **Purpose:** Healthcare-specific vendor/product mapping.
 
 **Strengths:**
-- ✅ Comprehensive taxonomy (50+ vendors, 7 categories, 35+ keywords)
-- ✅ Configurable scoring weights (vendor 0.5, product 0.3, keyword 0.2)
-- ✅ CSV export/import for pattern management
-- ✅ Multiple matching strategies
+- [OK] Comprehensive taxonomy (50+ vendors, 7 categories, 35+ keywords)
+- [OK] Configurable scoring weights (vendor 0.5, product 0.3, keyword 0.2)
+- [OK] CSV export/import for pattern management
+- [OK] Multiple matching strategies
 
 **Medium Issues:**
-- 🟡 **False positives from substring matching:**
+-  **False positives from substring matching:**
 ```python
-# Line 182: "epic fail" → matches "Epic Systems"
+# Line 182: "epic fail" -> matches "Epic Systems"
 for pattern in patterns:
-    if pattern in text_lower:  # ❌ Too naive
+    if pattern in text_lower:  # [FAIL] Too naive
         return vendor_key
 
 # Fix: Use word boundaries
@@ -162,8 +162,8 @@ if re.search(regex, text_lower):
 ```
 
 **Low Priority:**
-- 🟢 No stemming/lemmatization ("patient" vs "patients")
-- 🟢 Hardcoded weights (should be configurable via JSON)
+-  No stemming/lemmatization ("patient" vs "patients")
+-  Hardcoded weights (should be configurable via JSON)
 
 **Recommendations:**
 1. Replace substring with regex word boundaries
@@ -172,22 +172,22 @@ if re.search(regex, text_lower):
 
 ---
 
-### 5. [src/analysis/attack_mapper.py](../src/analysis/attack_mapper.py) - ⭐⭐⭐⭐ (4/5)
+### 5. [src/analysis/attack_mapper.py](../src/analysis/attack_mapper.py) - **** (4/5)
 
 **Purpose:** Map CVEs to MITRE ATT&CK techniques.
 
 **Strengths:**
-- ✅ Cache-first (uses pre-downloaded techniques)
-- ✅ Regex word boundaries prevent false positives
-- ✅ Set-based deduplication
-- ✅ Clean return structure
+- [OK] Cache-first (uses pre-downloaded techniques)
+- [OK] Regex word boundaries prevent false positives
+- [OK] Set-based deduplication
+- [OK] Clean return structure
 
 **Critical Issues:**
-- 🔴 **Pattern matching too naive** - only technique names, missing descriptions:
+-  **Pattern matching too naive** - only technique names, missing descriptions:
 ```python
 # CVE: "remote command execution"
 # ATT&CK: "Command and Scripting Interpreter"
-# Result: ❌ No match (should match!)
+# Result: [FAIL] No match (should match!)
 
 # Fix: Extract key phrases from technique descriptions
 def _build_lookups(self):
@@ -204,8 +204,8 @@ def _build_lookups(self):
 ```
 
 **Medium Issues:**
-- 🟡 No synonym handling (RCE → remote code execution, DDoS → denial of service)
-- 🟡 No confidence scoring (all matches treated equally)
+-  No synonym handling (RCE -> remote code execution, DDoS -> denial of service)
+-  No confidence scoring (all matches treated equally)
 
 **Recommendations:**
 1. Extract key phrases from technique descriptions
@@ -214,19 +214,19 @@ def _build_lookups(self):
 
 ---
 
-### 6. [src/core/multi_level_labels.py](../src/core/multi_level_labels.py) - ⭐⭐⭐⭐½ (4.5/5)
+### 6. [src/core/multi_level_labels.py](../src/core/multi_level_labels.py) - ****½ (4.5/5)
 
 **Purpose:** Multi-level labeling (0-5 scale) for CVE prioritization.
 
 **Strengths:**
-- ✅ Clear label hierarchy with documentation
-- ✅ Multi-signal combination (7 signals)
-- ✅ Defense-in-depth prioritization
-- ✅ Robust null handling
-- ✅ Incremental labeling (respects higher labels)
+- [OK] Clear label hierarchy with documentation
+- [OK] Multi-signal combination (7 signals)
+- [OK] Defense-in-depth prioritization
+- [OK] Robust null handling
+- [OK] Incremental labeling (respects higher labels)
 
 **Medium Issues:**
-- 🟡 **Complex boolean logic hard to test:**
+-  **Complex boolean logic hard to test:**
 ```python
 # Better: Named conditions for readability
 def _is_critical_breach(row):
@@ -237,7 +237,7 @@ def _is_critical_breach(row):
 mask_5 = df.apply(_is_critical_breach, axis=1) | df.apply(_is_critical_attack, axis=1)
 ```
 
-- 🟡 **Threshold magic numbers** (0.5, 0.6, 0.4, 0.3, 0.2, 0.1 hardcoded):
+-  **Threshold magic numbers** (0.5, 0.6, 0.4, 0.3, 0.2, 0.1 hardcoded):
 ```python
 # Define at module level:
 EPSS_THRESHOLDS = {'critical': 0.5, 'high': 0.4, 'medium': 0.3, 'low': 0.1}
@@ -245,7 +245,7 @@ CVSS_THRESHOLDS = {'critical': 9.0, 'high': 7.0, 'medium': 4.0}
 ```
 
 **Low Priority:**
-- 🟢 No label validation after assignment
+-  No label validation after assignment
 
 **Recommendations:**
 1. Extract conditions into named functions
@@ -254,19 +254,19 @@ CVSS_THRESHOLDS = {'critical': 9.0, 'high': 7.0, 'medium': 4.0}
 
 ---
 
-### 7. [scripts/train_ltr_model.py](../scripts/train_ltr_model.py) - ⭐⭐⭐⭐½ (4.5/5)
+### 7. [scripts/train_ltr_model.py](../scripts/train_ltr_model.py) - ****½ (4.5/5)
 
 **Purpose:** Train Learning-to-Rank model.
 
 **Strengths:**
-- ✅ Clean pipeline (load → prepare → train → evaluate → save)
-- ✅ 23 features with good engineering
-- ✅ 80/20 split with stratification
-- ✅ Early stopping (10 rounds)
-- ✅ Comprehensive evaluation (NDCG, Precision@K)
+- [OK] Clean pipeline (load -> prepare -> train -> evaluate -> save)
+- [OK] 23 features with good engineering
+- [OK] 80/20 split with stratification
+- [OK] Early stopping (10 rounds)
+- [OK] Comprehensive evaluation (NDCG, Precision@K)
 
 **Critical Issues:**
-- 🔴 **No feature scaling/normalization:**
+-  **No feature scaling/normalization:**
 ```python
 # Features have different scales: cvss (0-10), epss (0-1), days_since_2018 (0-3000+)
 # XGBoost less sensitive, but best practice:
@@ -281,20 +281,20 @@ def prepare_features(df):
     scaler = StandardScaler()
     features[continuous_cols] = scaler.fit_transform(features[continuous_cols])
     
-    return features, df['label'], scaler  # ✅ Return scaler
+    return features, df['label'], scaler  # [OK] Return scaler
 
 # CRITICAL: Save scaler in metadata
 metadata = {
-    'scaler': scaler,  # ✅ Required for inference
+    'scaler': scaler,  # [OK] Required for inference
     'feature_names': feature_names,
     ...
 }
 ```
 
 **Medium Issues:**
-- 🟡 **No hyperparameter tuning** (fixed eta=0.1, max_depth=6)
-- 🟡 **No cross-validation** (single split)
-- 🟢 **No model versioning** (overwrites ltr_ranker.model)
+-  **No hyperparameter tuning** (fixed eta=0.1, max_depth=6)
+-  **No cross-validation** (single split)
+-  **No model versioning** (overwrites ltr_ranker.model)
 
 **Recommendations:**
 1. **ADD FEATURE SCALING** (critical for production)
@@ -304,37 +304,37 @@ metadata = {
 
 ---
 
-### 8. [scripts/recommend_cves.py](../scripts/recommend_cves.py) - ⭐⭐⭐⭐ (4/5)
+### 8. [scripts/recommend_cves.py](../scripts/recommend_cves.py) - **** (4/5)
 
 **Purpose:** Production recommender system.
 
 **Strengths:**
-- ✅ Clean API (recommend, recommend_from_db)
-- ✅ Feature parity with training
-- ✅ Model metadata loading
-- ✅ Flexible querying
+- [OK] Clean API (recommend, recommend_from_db)
+- [OK] Feature parity with training
+- [OK] Model metadata loading
+- [OK] Flexible querying
 
 **Critical Issues:**
-- 🔴 **No scaler loaded** (if training used StandardScaler):
+-  **No scaler loaded** (if training used StandardScaler):
 ```python
 def __init__(self, model_path=None, metadata_path=None):
     ...
     with open(metadata_path, 'rb') as f:
         self.metadata = pickle.load(f)
     
-    # ❌ MISSING:
-    self.scaler = self.metadata.get('scaler', None)  # ✅ Load scaler
+    # [FAIL] MISSING:
+    self.scaler = self.metadata.get('scaler', None)  # [OK] Load scaler
 
 def prepare_features(self, df):
     features = pd.DataFrame({...})
     
-    # ✅ Apply same scaling as training
+    # [OK] Apply same scaling as training
     if self.scaler is not None:
         continuous_cols = [...]
         features[continuous_cols] = self.scaler.transform(features[continuous_cols])
 ```
 
-- 🔴 **SQL injection vulnerability:**
+-  **SQL injection vulnerability:**
 ```python
 # Line 109: String formatting in SQL
 query = f"WHERE c.published >= '{cutoff_date}' AND c.cvss >= {min_cvss}"
@@ -345,7 +345,7 @@ df = pd.read_sql_query(query, db.conn, params=[cutoff_date, min_cvss])
 ```
 
 **Low Priority:**
-- 🟢 No batch processing for large datasets
+-  No batch processing for large datasets
 
 **Recommendations:**
 1. **Load and apply scaler** (critical)
@@ -354,16 +354,16 @@ df = pd.read_sql_query(query, db.conn, params=[cutoff_date, min_cvss])
 
 ---
 
-### 9. [tests/test_ltr_smoke.py](../tests/test_ltr_smoke.py) - ⭐⭐ (2/5)
+### 9. [tests/test_ltr_smoke.py](../tests/test_ltr_smoke.py) - ** (2/5)
 
 **Purpose:** Basic smoke test.
 
 **Strengths:**
-- ✅ Uses pytest fixtures (tmp_path)
-- ✅ End-to-end validation
+- [OK] Uses pytest fixtures (tmp_path)
+- [OK] End-to-end validation
 
 **Critical Issues:**
-- 🔴 **Insufficient test coverage** (only 1 test):
+-  **Insufficient test coverage** (only 1 test):
 
 ```
 tests/
@@ -375,7 +375,7 @@ tests/
 │   └── test_features.py           # MISSING: Feature engineering
 ├── integration/
 │   ├── test_enrichment_pipeline.py  # MISSING: E2E flow
-│   └── test_model_inference.py      # MISSING: Training → inference
+│   └── test_model_inference.py      # MISSING: Training -> inference
 └── performance/
     └── test_recommender_latency.py  # MISSING: Benchmarks
 ```
@@ -388,36 +388,36 @@ tests/
 
 ---
 
-### 10. [README.md](../README.md) - ⭐⭐⭐½ (3.5/5)
+### 10. [README.md](../README.md) - ***½ (3.5/5)
 
 **Purpose:** Project documentation.
 
 **Strengths:**
-- ✅ Comprehensive structure
-- ✅ Clear objectives
-- ✅ Detailed roadmap (7 phases)
-- ✅ Data source documentation
+- [OK] Comprehensive structure
+- [OK] Clear objectives
+- [OK] Detailed roadmap (7 phases)
+- [OK] Data source documentation
 
 **Medium Issues:**
-- 🟡 **Outdated information:**
+-  **Outdated information:**
 ```markdown
 # Current says Phase 1, actually Phase 4 complete
-**Current Performance (Phase 4):**  # ✅ Update
-- ✅ Model: NDCG@10=0.75, P@100=100%
-- ✅ Database: 226,320 CVEs (2018-2025)
-- ✅ Multi-source: 6 sources (NVD, KEV, EPSS, Healthcare, ATT&CK, CHPL)
-- ✅ Ablation study: +27.5% NDCG vs baseline
+**Current Performance (Phase 4):**  # [OK] Update
+- [OK] Model: NDCG@10=0.75, P@100=100%
+- [OK] Database: 226,320 CVEs (2018-2025)
+- [OK] Multi-source: 6 sources (NVD, KEV, EPSS, Healthcare, ATT&CK, CHPL)
+- [OK] Ablation study: +27.5% NDCG vs baseline
 ```
 
-- 🟡 **Missing critical sections:**
+-  **Missing critical sections:**
   - Architecture diagrams (database schema, pipeline flowchart)
   - API reference (CVEDatabase, HealthcareCVERecommender)
   - Research methodology (feature rationale, evaluation)
   - Known limitations (CHPL scope, ATT&CK matching, EPSS coverage)
 
 **Low Priority:**
-- 🟢 requirements.txt lists lightgbm (not used, using xgboost)
-- 🟢 Missing xgboost, python-dotenv, pytest
+-  requirements.txt lists lightgbm (not used, using xgboost)
+-  Missing xgboost, python-dotenv, pytest
 
 **Recommendations:**
 1. Update to Phase 4 metrics
@@ -426,9 +426,9 @@ tests/
 
 ---
 
-## 🏗️ ARCHITECTURE ASSESSMENT
+##  ARCHITECTURE ASSESSMENT
 
-### System Design: ⭐⭐⭐⭐ (4/5)
+### System Design: **** (4/5)
 
 **Layered Architecture:**
 ```
@@ -444,96 +444,96 @@ tests/
 ```
 
 **Strengths:**
-- ✅ Clear separation of concerns
-- ✅ Reusable core modules
-- ✅ Cache-first data strategy
-- ✅ Modular feature engineering
+- [OK] Clear separation of concerns
+- [OK] Reusable core modules
+- [OK] Cache-first data strategy
+- [OK] Modular feature engineering
 
 **Weaknesses:**
-- ⚠️ No API/service layer (only scripts)
-- ⚠️ No async processing (all synchronous)
-- ⚠️ No monitoring/logging infrastructure
-- ⚠️ No automated testing in CI/CD
+- [WARN] No API/service layer (only scripts)
+- [WARN] No async processing (all synchronous)
+- [WARN] No monitoring/logging infrastructure
+- [WARN] No automated testing in CI/CD
 
 ---
 
-### Data Pipeline: ⭐⭐⭐⭐½ (4.5/5)
+### Data Pipeline: ****½ (4.5/5)
 
 **Flow:**
 ```
-NVD API → backfill_cves.py → Database
+NVD API -> backfill_cves.py -> Database
          ↓
-CISA KEV → enrich_cves.py → Database
+CISA KEV -> enrich_cves.py -> Database
 EPSS API ↗
          ↓
-Healthcare Mapper → apply_*_mappings.py → Database
+Healthcare Mapper -> apply_*_mappings.py -> Database
 ATT&CK Cache ↗
 CHPL API ↗
          ↓
-Labels → train_ltr_model.py → Model
+Labels -> train_ltr_model.py -> Model
          ↓
-Model → recommend_cves.py → Recommendations
+Model -> recommend_cves.py -> Recommendations
 ```
 
 **Strengths:**
-- ✅ Incremental enrichment (can re-run mappings)
-- ✅ Cache-first (no duplicate API calls)
-- ✅ Transaction-based updates
-- ✅ Dry-run support for testing
+- [OK] Incremental enrichment (can re-run mappings)
+- [OK] Cache-first (no duplicate API calls)
+- [OK] Transaction-based updates
+- [OK] Dry-run support for testing
 
 **Weaknesses:**
-- ⚠️ No automated scheduling (cron/Airflow)
-- ⚠️ No data validation between stages
-- ⚠️ No rollback mechanism for failed enrichments
+- [WARN] No automated scheduling (cron/Airflow)
+- [WARN] No data validation between stages
+- [WARN] No rollback mechanism for failed enrichments
 
 ---
 
-### Machine Learning Pipeline: ⭐⭐⭐⭐ (4/5)
+### Machine Learning Pipeline: **** (4/5)
 
 **Strengths:**
-- ✅ Clean feature engineering (23 features)
-- ✅ Proper train/test split with stratification
-- ✅ Ablation study validates feature utility
-- ✅ Multiple evaluation metrics (NDCG, Precision)
-- ✅ Perfect precision (100% P@100)
+- [OK] Clean feature engineering (23 features)
+- [OK] Proper train/test split with stratification
+- [OK] Ablation study validates feature utility
+- [OK] Multiple evaluation metrics (NDCG, Precision)
+- [OK] Perfect precision (100% P@100)
 
 **Weaknesses:**
-- 🔴 **No feature scaling** (critical fix needed)
-- 🟡 **No hyperparameter tuning**
-- 🟡 **No cross-validation**
-- ⚠️ No model monitoring/drift detection
-- ⚠️ No A/B testing framework
+-  **No feature scaling** (critical fix needed)
+-  **No hyperparameter tuning**
+-  **No cross-validation**
+- [WARN] No model monitoring/drift detection
+- [WARN] No A/B testing framework
 
 ---
 
-### Security: ⭐⭐⭐½ (3.5/5)
+### Security: ***½ (3.5/5)
 
 **Strengths:**
-- ✅ API keys in .env (not committed)
-- ✅ Parameterized queries in most places
-- ✅ No hardcoded credentials
+- [OK] API keys in .env (not committed)
+- [OK] Parameterized queries in most places
+- [OK] No hardcoded credentials
 
 **Weaknesses:**
-- 🔴 **SQL injection** in recommend_cves.py line 109
-- ⚠️ No input validation on user parameters
-- ⚠️ No rate limiting on API calls
-- ⚠️ Database has no encryption at rest
-- ⚠️ No audit logs for model predictions
+-  **SQL injection** in recommend_cves.py line 109
+- [WARN] No input validation on user parameters
+- [WARN] No rate limiting on API calls
+- [WARN] Database has no encryption at rest
+- [WARN] No audit logs for model predictions
 
 ---
 
-### Scalability: ⭐⭐⭐ (3/5)
+### Scalability: *** (3/5)
 
 **Current Scale:**
-- ✅ 226K CVEs handled efficiently
-- ✅ Batch processing for API calls
-- ✅ Indexes on common queries
+- [OK] 226K CVEs handled efficiently
+- [OK] Batch processing for API calls
+- [OK] Indexes on common queries
 
 **Limitations:**
-- ⚠️ Single SQLite database (no replication)
-- ⚠️ Synchronous processing only
-- ⚠️ No distributed computing (for 1M+ CVEs)
-- ⚠️ In-memory model loading (no serving infrastructure)
+- [WARN] Single SQLite database (no replication)
+- [WARN] Synchronous processing only
+- [WARN] No distributed computing (for 1M+ CVEs)
+- [WARN] In-memory model loading (no serving infrastructure)
 
 **Recommendations:**
 1. For 1M+ CVEs: Migrate to PostgreSQL with partitioning
@@ -543,27 +543,27 @@ Model → recommend_cves.py → Recommendations
 
 ---
 
-### Maintainability: ⭐⭐⭐⭐ (4/5)
+### Maintainability: **** (4/5)
 
 **Strengths:**
-- ✅ Modular code structure
-- ✅ Type hints throughout
-- ✅ Logging integration
-- ✅ Clear file naming
-- ✅ Docstrings for main functions
+- [OK] Modular code structure
+- [OK] Type hints throughout
+- [OK] Logging integration
+- [OK] Clear file naming
+- [OK] Docstrings for main functions
 
 **Weaknesses:**
-- ⚠️ Test coverage < 10%
-- ⚠️ No CI/CD pipeline
-- ⚠️ No pre-commit hooks (linting, formatting)
-- ⚠️ Magic numbers scattered (thresholds)
-- ⚠️ Complex boolean logic hard to debug
+- [WARN] Test coverage < 10%
+- [WARN] No CI/CD pipeline
+- [WARN] No pre-commit hooks (linting, formatting)
+- [WARN] Magic numbers scattered (thresholds)
+- [WARN] Complex boolean logic hard to debug
 
 ---
 
-## 🎯 PRIORITIZED ACTION ITEMS
+## [TARGET] PRIORITIZED ACTION ITEMS
 
-### 🔴 CRITICAL (Fix Before Production)
+###  CRITICAL (Fix Before Production)
 
 1. **Add attack_technique_count column to database schema**
    - File: [src/core/cve_database.py](../src/core/cve_database.py) line 78
@@ -587,7 +587,7 @@ Model → recommend_cves.py → Recommendations
 
 ---
 
-### 🟡 HIGH PRIORITY (Improve Quality)
+###  HIGH PRIORITY (Improve Quality)
 
 5. **Improve ATT&CK mapping**
    - File: [src/analysis/attack_mapper.py](../src/analysis/attack_mapper.py)
@@ -596,7 +596,7 @@ Model → recommend_cves.py → Recommendations
 
 6. **Fix healthcare mapping false positives**
    - File: [src/analysis/healthcare_mapping.py](../src/analysis/healthcare_mapping.py)
-   - Change: Substring → word boundary regex
+   - Change: Substring -> word boundary regex
    - Effort: 1 hour
 
 7. **Add hyperparameter tuning**
@@ -611,7 +611,7 @@ Model → recommend_cves.py → Recommendations
 
 ---
 
-### 🟢 MEDIUM PRIORITY (Nice to Have)
+###  MEDIUM PRIORITY (Nice to Have)
 
 9. **Update README to Phase 4**
    - File: [README.md](../README.md)
@@ -635,7 +635,7 @@ Model → recommend_cves.py → Recommendations
 
 ---
 
-### 🔵 LOW PRIORITY (Future Enhancements)
+###  LOW PRIORITY (Future Enhancements)
 
 13. **Async API fetching**
     - Files: [src/core/epss_fetcher.py](../src/core/epss_fetcher.py)
@@ -659,7 +659,7 @@ Model → recommend_cves.py → Recommendations
 
 ---
 
-## 📈 RECOMMENDED IMPROVEMENTS BY CATEGORY
+##  RECOMMENDED IMPROVEMENTS BY CATEGORY
 
 ### Code Quality
 ```python
@@ -699,7 +699,7 @@ pytest --cov=src --cov-report=term --cov-fail-under=80
 # 3. Add integration tests
 # tests/integration/test_full_pipeline.py
 def test_backfill_to_recommendations():
-    # Test entire pipeline: backfill → enrich → train → recommend
+    # Test entire pipeline: backfill -> enrich -> train -> recommend
     pass
 ```
 
@@ -734,27 +734,27 @@ jobs:
 
 ---
 
-## 🏆 FINAL VERDICT
+##  FINAL VERDICT
 
-### Overall Assessment: ⭐⭐⭐⭐ (4/5)
+### Overall Assessment: **** (4/5)
 
 **This is a high-quality research project with production potential.**
 
-### What Works Well ✅
+### What Works Well [OK]
 1. **Solid research foundation** - Multi-source integration, ablation study
 2. **Good ML methodology** - Feature engineering, LTR, proper evaluation
 3. **Clean architecture** - Separation of concerns, reusable modules
 4. **Cache-first strategy** - No duplicate API calls, reproducible
 5. **Comprehensive coverage** - 226K CVEs, 6 sources, 23 features
 
-### What Needs Fixing 🔧
+### What Needs Fixing 
 1. **Critical bugs** - Missing column, no scaling, SQL injection
 2. **Test coverage** - Only 1 test, need comprehensive suite
 3. **Documentation** - Outdated README, missing architecture docs
 4. **ML pipeline** - No hyperparameter tuning, no cross-validation
 5. **Production readiness** - No API, no monitoring, no CI/CD
 
-### Recommended Next Steps 🚀
+### Recommended Next Steps [RUN]
 
 **Week 1: Critical Fixes**
 - [ ] Day 1: Add attack_technique_count column migration
@@ -782,7 +782,7 @@ jobs:
 
 ---
 
-## 📝 CONCLUSION
+## [NOTE] CONCLUSION
 
 This project demonstrates **strong research capabilities and solid engineering practices**. The multi-source integration, ablation study, and perfect precision (100% P@100) are impressive achievements.
 
@@ -802,4 +802,4 @@ With these fixes and the recommended improvements, this system would be **produc
 
 **Review Completed:** 2026-01-17  
 **Reviewer:** Senior AI/ML Engineer  
-**Status:** ✅ Comprehensive Review Complete
+**Status:** [OK] Comprehensive Review Complete

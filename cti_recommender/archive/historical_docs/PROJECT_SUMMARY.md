@@ -1,13 +1,13 @@
 # Healthcare CVE Recommender - Project Summary
 
-## 🎯 Achievement: Phase 2 Complete
+## [TARGET] Achievement: Phase 2 Complete
 
 **Goal:** Build healthcare vulnerability recommender achieving 80%+ precision  
-**Status:** ✅ **ACHIEVED - 100% precision @ K=100**
+**Status:** [OK] **ACHIEVED - 100% precision @ K=100**
 
 ---
 
-## 📊 Final Results
+## [STATS] Final Results
 
 ### Database
 - **Total CVEs:** 226,320 (2018-01 to 2025-12-31)
@@ -32,7 +32,7 @@
 
 ---
 
-## 🚀 Key Innovations
+## [RUN] Key Innovations
 
 ### 1. Smart Data Management (Your Suggestion)
 **Problem:** Healthcare detection not persisting to database  
@@ -67,7 +67,7 @@
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 cti_recommender/
@@ -100,7 +100,7 @@ cti_recommender/
 
 ---
 
-## 🔧 Usage Examples
+##  Usage Examples
 
 ### 1. Get Recent Healthcare CVE Recommendations
 ```bash
@@ -127,7 +127,7 @@ python scripts/train_ltr_model.py
 
 ---
 
-## 🎓 Lessons Learned
+##  Lessons Learned
 
 ### 1. Always Cache Raw Data
 - Store `raw_json` from NVD API responses
@@ -151,7 +151,7 @@ python scripts/train_ltr_model.py
 
 ---
 
-## 📈 Comparison to Phase 1
+##  Comparison to Phase 1
 
 | Metric | Phase 1 | Phase 2 | Improvement |
 |--------|---------|---------|-------------|
@@ -164,7 +164,7 @@ python scripts/train_ltr_model.py
 
 ---
 
-## 🔮 Future Enhancements
+##  Future Enhancements
 
 ### Near-term
 1. **Weekly auto-update:** Cron job for new CVEs
@@ -186,7 +186,7 @@ python scripts/train_ltr_model.py
 
 ---
 
-## 📝 Citation
+## [NOTE] Citation
 
 ```bibtex
 @software{healthcare_cve_recommender,
@@ -199,17 +199,17 @@ python scripts/train_ltr_model.py
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - **NVD:** CVE database and API
 - **CISA:** Known Exploited Vulnerabilities catalog
 - **FIRST.org:** EPSS exploit prediction scores
 - **XGBoost:** Fast gradient boosting framework
-- **Your Insight:** "Why call APIs when we have cached data?" 🎯
+- **Your Insight:** "Why call APIs when we have cached data?" [TARGET]
 
 ---
 
 **Last Updated:** 2026-01-17  
 **Model Version:** v1.0  
 **Database:** 226,320 CVEs (2018-01 to 2025-12-31)  
-**Status:** Production Ready ✅
+**Status:** Production Ready [OK]

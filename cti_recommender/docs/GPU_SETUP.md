@@ -23,10 +23,10 @@ python src/utils/device_manager.py
 
 Expected output:
 ```
-✓ Using Apple Silicon GPU (MPS) for acceleration
+[OK] Using Apple Silicon GPU (MPS) for acceleration
   - Metal Performance Shaders enabled
   - Unified memory architecture
-✓ GPU acceleration is working!
+[OK] GPU acceleration is working!
 ```
 
 ### 2. Using GPU in Your Code
@@ -221,14 +221,14 @@ else:
 
 ## Next Steps
 
-1. ✅ PyTorch installed with MPS support
-2. ✅ Device manager created for cross-platform support
-3. ✅ RGCN model updated to use device manager
-4. 🔲 Update other models (DiffusionRank, Bootstrap) to use device manager
-5. 🔲 Update Jupyter notebook cells to use device manager
-6. 🔲 Profile RGCN on M5 with various graph sizes
-7. 🔲 Implement caching for preprocessed features
-8. 🔲 Add progress bars and memory monitoring
+1. [OK] PyTorch installed with MPS support
+2. [OK] Device manager created for cross-platform support
+3. [OK] RGCN model updated to use device manager
+4.  Update other models (DiffusionRank, Bootstrap) to use device manager
+5.  Update Jupyter notebook cells to use device manager
+6.  Profile RGCN on M5 with various graph sizes
+7.  Implement caching for preprocessed features
+8.  Add progress bars and memory monitoring
 
 ## Contact & Support
 

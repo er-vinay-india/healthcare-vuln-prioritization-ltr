@@ -84,15 +84,15 @@ def generate_mapping_markdown(advanced_map: Dict, final_map: Dict) -> str:
           "",
           "---",
           "",
-          "## CVE_Prioritization_Advanced.ipynb → New Notebooks",
+          "## CVE_Prioritization_Advanced.ipynb -> New Notebooks",
           "",
-          "| Cell # | Type | Purpose | Content | → Destination | Status |",
+          "| Cell # | Type | Purpose | Content | -> Destination | Status |",
           "|--------|------|---------|---------|---------------|--------|"]
     
     # Categorize cells for Advanced notebook
     for cell in advanced_map['cells']:
         dest = categorize_cell_destination(cell)
-        status = "✅" if cell['type'] in ['code', 'markdown'] else "⚠️"
+        status = "[OK]" if cell['type'] in ['code', 'markdown'] else "[WARN]"
         
         md.append(
             f"| {cell['cell_num']} | {cell['type'][:4]} | "
@@ -100,14 +100,14 @@ def generate_mapping_markdown(advanced_map: Dict, final_map: Dict) -> str:
             f"{dest} | {status} |"
         )
     
-    md.extend(["", "", "## CVE_Prioritization_Final.ipynb → New Notebooks", "",
-               "| Cell # | Type | Purpose | Content | → Destination | Status |",
+    md.extend(["", "", "## CVE_Prioritization_Final.ipynb -> New Notebooks", "",
+               "| Cell # | Type | Purpose | Content | -> Destination | Status |",
                "|--------|------|---------|---------|---------------|--------|"])
     
     # Categorize cells for Final notebook
     for cell in final_map['cells']:
         dest = categorize_cell_destination(cell)
-        status = "✅" if cell['type'] in ['code', 'markdown'] else "⚠️"
+        status = "[OK]" if cell['type'] in ['code', 'markdown'] else "[WARN]"
         
         md.append(
             f"| {cell['cell_num']} | {cell['type'][:4]} | "
@@ -117,7 +117,7 @@ def generate_mapping_markdown(advanced_map: Dict, final_map: Dict) -> str:
     
     md.extend(["", "", "---", "",
                "## Destination Notebooks", "",
-               "1. **Data_Ingestion_Pipeline.ipynb** ✅ Already created",
+               "1. **Data_Ingestion_Pipeline.ipynb** [OK] Already created",
                "2. **EDA_Analysis.ipynb** - Data loading, visualizations, quality checks",
                "3. **Feature_Engineering.ipynb** - Feature extraction, label construction",
                "4. **Model_Training_And_Evaluation.ipynb** - Training, evaluation, comparison", "",
@@ -169,7 +169,7 @@ def categorize_cell_destination(cell: Dict) -> str:
     elif purpose == 'function_definition':
         # Check if it should go to module instead
         if cell['has_functions']:
-            return "→ src/module (refactor)"
+            return "-> src/module (refactor)"
         return "3_Feature_Engineering"
     else:
         return "2_EDA_Analysis"  # Default
@@ -193,7 +193,7 @@ if __name__ == '__main__':
     output_path = Path('docs/NOTEBOOK_MIGRATION_MAP.md')
     output_path.write_text(mapping_md)
     
-    print(f"✓ Migration mapping created: {output_path}")
+    print(f"[OK] Migration mapping created: {output_path}")
     print(f"\nSummary:")
     print(f"  Advanced: {advanced_map['total_cells']} cells")
     print(f"  Final: {final_map['total_cells']} cells")

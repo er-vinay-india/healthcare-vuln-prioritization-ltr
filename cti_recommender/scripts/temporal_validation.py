@@ -174,7 +174,7 @@ def main():
     results = evaluate_temporal(model, X_test, y_test, X_train.columns.tolist())
     
     print("\n" + "="*70)
-    print("✅ Temporal validation complete!")
+    print("[OK] Temporal validation complete!")
     print("="*70)
     print(f"\nPruned model NDCG@10 on 2025: {results['ndcg_10']:.4f}")
     print("Original model NDCG@10 on 2025: 1.0000")

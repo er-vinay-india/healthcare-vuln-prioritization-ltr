@@ -386,8 +386,8 @@ This work establishes a foundation for continuous improvement in healthcare cybe
     # Save document
     output_path = 'outputs/CTI_Healthcare_Vulnerability_Recommender_Report.docx'
     doc.save(output_path)
-    print(f'✅ Report generated successfully: {output_path}')
-    print(f'📄 File size: {os.path.getsize(output_path) / 1024:.1f} KB')
+    print(f'[OK] Report generated successfully: {output_path}')
+    print(f' File size: {os.path.getsize(output_path) / 1024:.1f} KB')
 
 if __name__ == '__main__':
     create_report()

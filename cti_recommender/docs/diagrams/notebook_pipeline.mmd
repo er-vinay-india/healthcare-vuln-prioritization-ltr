@@ -1,6 +1,6 @@
 %%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px'}}}%%
 flowchart LR
-    subgraph N1["📘 1. Data Ingestion Pipeline"]
+    subgraph N1[" 1. Data Ingestion Pipeline"]
         direction TB
         N1A[Fetch from APIs:<br/>NVD, KEV, EPSS, ATT&CK, CHPL]
         N1B[Store in SQLite DB]
@@ -9,7 +9,7 @@ flowchart LR
         N1A --> N1C
     end
     
-    subgraph N2["📙 2. EDA Analysis"]
+    subgraph N2[" 2. EDA Analysis"]
         direction TB
         N2A[Load CVE Data]
         N2B[Temporal Distribution]
@@ -22,7 +22,7 @@ flowchart LR
         N2A --> N2E
     end
     
-    subgraph N3["📗 3. Feature Engineering"]
+    subgraph N3[" 3. Feature Engineering"]
         direction TB
         N3A[Load Raw CVEs]
         N3B[Extract Features:<br/>CVSS, EPSS, Temporal, ATT&CK]
@@ -33,7 +33,7 @@ flowchart LR
         N3C --> N3D
     end
     
-    subgraph N4["📕 4. Model Training & Evaluation"]
+    subgraph N4[" 4. Model Training & Evaluation"]
         direction TB
         N4A[Load Features]
         N4B[3 Temporal Splits:<br/>70/15/15, 70/30, K-Fold]
@@ -46,7 +46,7 @@ flowchart LR
         N4D --> N4E
     end
     
-    subgraph N5["📓 5. Advanced Models"]
+    subgraph N5[" 5. Advanced Models"]
         direction TB
         N5A[Load Trained Model]
         N5B[DiffusionRank<br/>Graph-based Ranking]

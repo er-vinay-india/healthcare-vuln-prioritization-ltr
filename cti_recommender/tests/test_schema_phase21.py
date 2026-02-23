@@ -22,7 +22,7 @@ def test_schema():
     # Create database
     print("\n1. Creating fresh database...")
     db = CVEDatabase(test_db)
-    print(f"   ✓ Database created: {test_db}")
+    print(f"   [OK] Database created: {test_db}")
     
     # Verify CVE table schema
     print("\n2. Verifying cves table...")
@@ -34,9 +34,9 @@ def test_schema():
     
     missing_cve = set(expected_cve_cols) - set(cve_columns.keys())
     if missing_cve:
-        print(f"   ✗ Missing CVE columns: {missing_cve}")
+        print(f"   [X] Missing CVE columns: {missing_cve}")
         assert False, f"Missing CVE columns: {missing_cve}"
-    print(f"   ✓ All {len(expected_cve_cols)} CVE columns present")
+    print(f"   [OK] All {len(expected_cve_cols)} CVE columns present")
     
     # Verify enrichments table schema
     print("\n3. Verifying enrichments table...")
@@ -51,25 +51,25 @@ def test_schema():
     
     missing_enrich = set(expected_enrich_cols) - set(enrich_columns.keys())
     if missing_enrich:
-        print(f"   ✗ Missing enrichment columns: {missing_enrich}")
+        print(f"   [X] Missing enrichment columns: {missing_enrich}")
         assert False, f"Missing enrichment columns: {missing_enrich}"
-    print(f"   ✓ All {len(expected_enrich_cols)} enrichment columns present")
+    print(f"   [OK] All {len(expected_enrich_cols)} enrichment columns present")
     
     # Verify critical column: attack_technique_count
     print("\n4. Verifying attack_technique_count column...")
     if 'attack_technique_count' not in enrich_columns:
-        print("   ✗ ERROR: attack_technique_count missing!")
+        print("   [X] ERROR: attack_technique_count missing!")
         assert False, "attack_technique_count missing"
-    print("   ✓ attack_technique_count present (no migration needed)")
+    print("   [OK] attack_technique_count present (no migration needed)")
     
     # Verify fetch_log table
     print("\n5. Verifying fetch_log table...")
     cursor.execute("PRAGMA table_info(fetch_log)")
     log_columns = {col[1]: col[2] for col in cursor.fetchall()}
     if 'fetch_date' in log_columns and 'cve_count' in log_columns:
-        print(f"   ✓ fetch_log table present with {len(log_columns)} columns")
+        print(f"   [OK] fetch_log table present with {len(log_columns)} columns")
     else:
-        print("   ✗ fetch_log table incomplete")
+        print("   [X] fetch_log table incomplete")
         assert False, "fetch_log table incomplete"
     
     # Verify indexes
@@ -80,10 +80,10 @@ def test_schema():
                         'idx_enrichments_kev', 'idx_enrichments_healthcare']
     
     if all(idx in indexes for idx in expected_indexes):
-        print(f"   ✓ All {len(expected_indexes)} indexes created")
+        print(f"   [OK] All {len(expected_indexes)} indexes created")
     else:
         missing_idx = set(expected_indexes) - set(indexes)
-        print(f"   ⚠ Missing indexes: {missing_idx}")
+        print(f"   [WARN] Missing indexes: {missing_idx}")
     
     # Test basic operations
     print("\n7. Testing basic operations...")
@@ -112,13 +112,13 @@ def test_schema():
         result = cursor.fetchone()
         
         if result and result[1] == 3 and result[2] == 2:
-            print("   ✓ Insert/query operations working")
+            print("   [OK] Insert/query operations working")
         else:
-            print(f"   ✗ Data mismatch: {result}")
+            print(f"   [X] Data mismatch: {result}")
             assert False, f"Data mismatch: {result}"
             
     except Exception as e:
-        print(f"   ✗ Error during operations: {e}")
+        print(f"   [X] Error during operations: {e}")
         assert False, f"Error during operations: {e}"
     
     # Cleanup
@@ -126,7 +126,7 @@ def test_schema():
     test_db.unlink()
     
     print("\n" + "="*70)
-    print("✅ ALL SCHEMA VALIDATION TESTS PASSED")
+    print("[OK] ALL SCHEMA VALIDATION TESTS PASSED")
     print("="*70)
     print("\nChanges:")
     print("  • Removed ALTER TABLE migration code")

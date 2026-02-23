@@ -82,7 +82,7 @@ def refresh_cves(api_key: str = None, days_back: int = None):
         )
         
         if df.empty:
-            logger.info("✓ No new CVEs found")
+            logger.info("[OK] No new CVEs found")
             db.log_fetch(
                 start_date=start_str,
                 end_date=end_str,
@@ -102,7 +102,7 @@ def refresh_cves(api_key: str = None, days_back: int = None):
                 status='success'
             )
             
-            logger.info(f"✓ Successfully added/updated {count} CVEs", extra={'upserted_count': count})
+            logger.info(f"[OK] Successfully added/updated {count} CVEs", extra={'upserted_count': count})
         
         logger.info("="*70)
         logger.info("REFRESH COMPLETE")
@@ -112,7 +112,7 @@ def refresh_cves(api_key: str = None, days_back: int = None):
         db.print_summary()
         
     except Exception as e:
-        logger.error(f"✗ ERROR: {e}")
+        logger.error(f"[X] ERROR: {e}")
         db.log_fetch(
             start_date=start_str,
             end_date=end_str,
@@ -137,9 +137,9 @@ if __name__ == "__main__":
     # Check for API key
     api_key = os.environ.get("NVD_API_KEY")
     if api_key:
-        logger.info(f"✓ NVD API Key: {'*' * 20}{api_key[-4:]}")
+        logger.info(f"[OK] NVD API Key: {'*' * 20}{api_key[-4:]}")
     else:
-        logger.warning("⚠️  NVD API Key: Not found (rate limited to 5 req/30s)")
+        logger.warning("[WARN]  NVD API Key: Not found (rate limited to 5 req/30s)")
     
     # Parse command line args
     days_back = None

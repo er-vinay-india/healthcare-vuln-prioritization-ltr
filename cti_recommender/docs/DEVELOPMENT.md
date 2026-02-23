@@ -375,7 +375,7 @@ open htmlcov/index.html
 
 - **Line length:** 100 characters max
 - **Indentation:** 4 spaces (no tabs)
-- **Imports:** Standard library → Third-party → Local
+- **Imports:** Standard library -> Third-party -> Local
 - **Naming:**
   - Classes: `PascalCase`
   - Functions/variables: `snake_case`
@@ -687,4 +687,4 @@ docker tag cti-recommender:2.0.0 cti-recommender:latest
 
 ---
 
-Happy coding! 🚀
+Happy coding! [RUN]

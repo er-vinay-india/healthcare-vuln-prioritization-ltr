@@ -33,7 +33,7 @@ print('Strategy 1: DATE-BASED (current default)')
 print('='*70)
 train, val, test = make_temporal_splits_flexible(df, cfg.temporal_splits, 'published')
 assert len(train) + len(val) + len(test) == len(df)
-print('✅ Date-based split works!\n')
+print('[OK] Date-based split works!\n')
 
 # Test 2: Percentage-based (70/15/15)
 print('='*70)
@@ -45,7 +45,7 @@ temp_config['strategy'] = 'percentage'
 train, val, test = make_temporal_splits_flexible(df, temp_config, 'published')
 assert len(train) + len(val) + len(test) == len(df)
 assert abs(len(train)/len(df) - 0.70) < 0.01  # Within 1%
-print('✅ Percentage-based split works!\n')
+print('[OK] Percentage-based split works!\n')
 
 # Test 3: Year-based (2018-2024 train, 2025 test)
 print('='*70)
@@ -57,10 +57,10 @@ train, val, test = make_temporal_splits_flexible(df, temp_config, 'published')
 test_years = pd.to_datetime(test['published']).dt.year.unique()
 train_years = pd.to_datetime(train['published']).dt.year.unique()
 assert 2025 in test_years and 2025 not in train_years
-print('✅ Year-based split works!\n')
+print('[OK] Year-based split works!\n')
 
 print('='*70)
-print('✅ ALL 3 TEMPORAL SPLIT STRATEGIES VALIDATED!')
+print('[OK] ALL 3 TEMPORAL SPLIT STRATEGIES VALIDATED!')
 print('='*70)
 print('\nUsage in notebooks:')
 print('  from src.utils.temporal import make_temporal_splits_flexible')

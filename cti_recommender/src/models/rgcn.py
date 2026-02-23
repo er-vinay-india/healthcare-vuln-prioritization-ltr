@@ -487,7 +487,7 @@ class CVERGCNTrainer:
             next(iter(test_loader))  # Try to get one batch
         except (ImportError, RuntimeError) as e:
             if verbose:
-                print(f"⚠ NeighborLoader not available ({type(e).__name__}), using full-batch", flush=True)
+                print(f"[WARN] NeighborLoader not available ({type(e).__name__}), using full-batch", flush=True)
             return self._fit_fullbatch(
                 x, edge_index, edge_type, y, train_mask, val_mask,
                 epochs, early_stopping_patience, verbose
@@ -509,7 +509,7 @@ class CVERGCNTrainer:
             val_mask=val_mask if val_mask is not None else torch.zeros_like(train_mask)
         )
         if verbose:
-            print(" ✓", flush=True)
+            print(" [OK]", flush=True)
         
         # Get training node indices
         train_nodes = train_mask.nonzero(as_tuple=True)[0]
@@ -520,7 +520,7 @@ class CVERGCNTrainer:
         train_loader = self._create_neighbor_loader(data, train_nodes, shuffle=True)
         num_batches = len(train_loader)
         if verbose:
-            print(f" ✓ ({num_batches} batches)", flush=True)
+            print(f" [OK] ({num_batches} batches)", flush=True)
         
         history = {
             'train_loss': [],
@@ -599,7 +599,7 @@ class CVERGCNTrainer:
             print(f"] Done!")
         
         if verbose:
-            print(f"\n✓ Training completed in {elapsed:.1f}s ({elapsed/60:.1f} min)")
+            print(f"\n[OK] Training completed in {elapsed:.1f}s ({elapsed/60:.1f} min)")
             print(f"  Final train_loss: {train_loss:.4f}")
             if history['val_loss']:
                 print(f"  Best val_loss: {best_val_loss:.4f}")
@@ -714,7 +714,7 @@ def prepare_rgcn_data(
         scaler = StandardScaler()
         cve_features = scaler.fit_transform(cve_features)
         if verbose:
-            print(" ✓", flush=True)
+            print(" [OK]", flush=True)
     
     # Build edge list with types
     if verbose:
@@ -740,7 +740,7 @@ def prepare_rgcn_data(
             edge_types.append(1)
     
     if verbose:
-        print(f" ✓ ({len(edges):,} edges)", flush=True)
+        print(f" [OK] ({len(edges):,} edges)", flush=True)
     
     # Convert to tensors
     if len(edges) == 0:
@@ -757,7 +757,7 @@ def prepare_rgcn_data(
     y = torch.tensor(cve_labels, dtype=torch.float32)
     
     if verbose:
-        print(" ✓", flush=True)
+        print(" [OK]", flush=True)
     
     # Create masks
     if verbose:
@@ -775,8 +775,8 @@ def prepare_rgcn_data(
         test_mask[test_idx] = True
     
     if verbose:
-        print(" ✓", flush=True)
-        print(f"  → Nodes: {num_cves:,}, Edges: {edge_index.shape[1]:,}, Train/Val: {train_mask.sum()}/{val_mask.sum()}", flush=True)
+        print(" [OK]", flush=True)
+        print(f"  -> Nodes: {num_cves:,}, Edges: {edge_index.shape[1]:,}, Train/Val: {train_mask.sum()}/{val_mask.sum()}", flush=True)
     
     return x, edge_index, edge_type, y, train_mask, val_mask, test_mask
 
@@ -860,13 +860,13 @@ def train_rgcn_model(
         else:
             device = 'cpu'
             if verbose:
-                print(f"  → Using CPU (faster than MPS for sparse ops)", flush=True)
+                print(f"  -> Using CPU (faster than MPS for sparse ops)", flush=True)
     
     # Auto-enable mini-batch for large graphs
     if num_nodes > 5000 and use_minibatch:
         if verbose:
-            print(f"  → Mini-batch enabled ({num_nodes:,} nodes > 5K)", flush=True)
-            print(f"  → Batch size: {batch_size}", flush=True)
+            print(f"  -> Mini-batch enabled ({num_nodes:,} nodes > 5K)", flush=True)
+            print(f"  -> Batch size: {batch_size}", flush=True)
     
     # Create model
     if verbose:
@@ -881,7 +881,7 @@ def train_rgcn_model(
     )
     
     if verbose:
-        print(f"  → Model: {num_features} → {hidden_channels} → 1", flush=True)
+        print(f"  -> Model: {num_features} -> {hidden_channels} -> 1", flush=True)
     
     # Create trainer
     trainer = CVERGCNTrainer(
@@ -1075,6 +1075,6 @@ if __name__ == "__main__":
         verbose=True
     )
     
-    print("\n✓ Training complete!")
+    print("\n[OK] Training complete!")
     print(f"Final train loss: {history['train_loss'][-1]:.4f}")
     print(f"Final val loss: {history['val_loss'][-1]:.4f}")

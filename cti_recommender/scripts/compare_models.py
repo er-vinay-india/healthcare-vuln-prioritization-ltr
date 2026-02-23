@@ -40,11 +40,11 @@ def execute_notebook(notebook_path: Path, output_path: Path = None, timeout: int
     Returns:
         Executed notebook object
     """
-    print(f"📖 Reading notebook: {notebook_path}")
+    print(f" Reading notebook: {notebook_path}")
     with open(notebook_path, 'r') as f:
         nb = nbformat.read(f, as_version=4)
     
-    print(f"🏃 Executing notebook (timeout={timeout}s)...")
+    print(f" Executing notebook (timeout={timeout}s)...")
     print(f"   Total cells: {len(nb.cells)}")
     
     ep = ExecutePreprocessor(timeout=timeout, kernel_name='python3')
@@ -53,9 +53,9 @@ def execute_notebook(notebook_path: Path, output_path: Path = None, timeout: int
     try:
         ep.preprocess(nb, {'metadata': {'path': str(notebook_path.parent)}})
         execution_time = time.time() - start_time
-        print(f"✅ Notebook executed successfully in {execution_time:.1f}s")
+        print(f"[OK] Notebook executed successfully in {execution_time:.1f}s")
     except Exception as e:
-        print(f"❌ Notebook execution failed: {e}")
+        print(f"[FAIL] Notebook execution failed: {e}")
         raise
     
     # Save executed notebook
@@ -63,7 +63,7 @@ def execute_notebook(notebook_path: Path, output_path: Path = None, timeout: int
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, 'w') as f:
             nbformat.write(nb, f)
-        print(f"💾 Saved executed notebook to: {output_path}")
+        print(f" Saved executed notebook to: {output_path}")
     
     return nb
 
@@ -127,7 +127,7 @@ def generate_comparison_report(results: dict, output_path: Path):
         results: Performance metrics dictionary
         output_path: Path to save report
     """
-    print(f"📊 Generating comparison report...")
+    print(f"[STATS] Generating comparison report...")
     
     report = f"""# Model Comparison Results
 
@@ -167,7 +167,7 @@ def generate_comparison_report(results: dict, output_path: Path):
     with open(output_path, 'w') as f:
         f.write(report)
     
-    print(f"✅ Report saved to: {output_path}")
+    print(f"[OK] Report saved to: {output_path}")
 
 
 def format_metrics_table(metrics: dict) -> str:
@@ -227,23 +227,23 @@ def main():
         
         # Extract results
         print()
-        print("📈 Extracting performance metrics...")
+        print(" Extracting performance metrics...")
         results = extract_results_from_notebook(nb)
         
         # Save results as JSON
         results_json_path = args.output_dir / 'model_comparison_results.json'
         with open(results_json_path, 'w') as f:
             json.dump(results, f, indent=2)
-        print(f"💾 Results saved to: {results_json_path}")
+        print(f" Results saved to: {results_json_path}")
     else:
-        print("⏭️  Skipping notebook execution (--skip-execution)")
+        print("⏭  Skipping notebook execution (--skip-execution)")
         # Load existing results
         results_json_path = args.output_dir / 'model_comparison_results.json'
         if results_json_path.exists():
             with open(results_json_path, 'r') as f:
                 results = json.load(f)
         else:
-            print("❌ No existing results found")
+            print("[FAIL] No existing results found")
             return 1
     
     # Generate report
@@ -253,10 +253,10 @@ def main():
     
     print()
     print("=" * 70)
-    print("✅ MODEL COMPARISON COMPLETE")
+    print("[OK] MODEL COMPARISON COMPLETE")
     print("=" * 70)
     print()
-    print(f"📁 Outputs:")
+    print(f" Outputs:")
     print(f"   - Executed notebook: {executed_nb_path}")
     print(f"   - Results JSON: {results_json_path}")
     print(f"   - Comparison report: {report_path}")

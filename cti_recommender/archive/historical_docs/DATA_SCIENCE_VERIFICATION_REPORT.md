@@ -7,14 +7,14 @@
 
 ## Executive Summary
 
-After fixing the critical EPSS data quality issue (0% → 94.7% coverage), the model achieved **NDCG@10 = 1.0** on random test split and **NDCG@10 = 1.0** on temporal validation (2025 data). While these results appear exceptional, **deeper analysis reveals concerns about label separation and overfitting.**
+After fixing the critical EPSS data quality issue (0% -> 94.7% coverage), the model achieved **NDCG@10 = 1.0** on random test split and **NDCG@10 = 1.0** on temporal validation (2025 data). While these results appear exceptional, **deeper analysis reveals concerns about label separation and overfitting.**
 
 ### Key Findings
-- ✅ **EPSS fix successful:** 214,316/226,320 CVEs (94.7%) now have EPSS scores
-- ✅ **Model generalizes well:** Perfect scores on unseen 2025 data
-- ⚠️ **High label separability:** 100% of L4 CVEs have "perfect indicators"
-- ⚠️ **Cross-validation variance:** CV shows 14.6% coefficient of variation
-- ⚠️ **Feature redundancy:** 9 features are highly correlated or zero-variance
+- [OK] **EPSS fix successful:** 214,316/226,320 CVEs (94.7%) now have EPSS scores
+- [OK] **Model generalizes well:** Perfect scores on unseen 2025 data
+- [WARN] **High label separability:** 100% of L4 CVEs have "perfect indicators"
+- [WARN] **Cross-validation variance:** CV shows 14.6% coefficient of variation
+- [WARN] **Feature redundancy:** 9 features are highly correlated or zero-variance
 
 ---
 
@@ -24,7 +24,7 @@ After fixing the critical EPSS data quality issue (0% → 94.7% coverage), the m
 | Metric | Count | Percentage |
 |--------|-------|------------|
 | Total CVEs | 226,320 | 100% |
-| With EPSS | 214,316 | 94.7% ✅ |
+| With EPSS | 214,316 | 94.7% [OK] |
 | KEV-flagged | 1,161 | 0.5% |
 | Healthcare | 124,753 | 55.1% |
 
@@ -55,8 +55,8 @@ After fixing the critical EPSS data quality issue (0% → 94.7% coverage), the m
 |---------|----------|---------|--------|----------------|
 | V1: Baseline (CVSS) | 3 | 0.6675 | - | CVSS alone = 66.8% |
 | V2: +KEV | 4 | 0.6555 | **-1.8%** | KEV hurts (overfitting?) |
-| V3: +EPSS | 8 | 0.9278 | **+41.6%** | 🔥 EPSS is dominant |
-| V4: +Healthcare | 12 | 1.0000 | **+7.8%** | Healthcare → perfect |
+| V3: +EPSS | 8 | 0.9278 | **+41.6%** |  EPSS is dominant |
+| V4: +Healthcare | 12 | 1.0000 | **+7.8%** | Healthcare -> perfect |
 | V5-V7: +Curated/ATT&CK/CHPL | 13-23 | 1.0000 | 0% | No further improvement |
 
 **Critical Insight:** EPSS contributes 41.6% improvement (largest single feature). Healthcare detection pushes to perfect 1.0.
@@ -83,7 +83,7 @@ Fold 5: 0.7565
 | Metric | Value |
 |--------|-------|
 | Test CVEs | 44,364 (2025) |
-| NDCG@10 | **1.0000** ✅ |
+| NDCG@10 | **1.0000** [OK] |
 | P@100 | 98% (L3+) |
 | Top 100 | 79 L4, 19 L3, 2 L2 |
 
@@ -105,12 +105,12 @@ Fold 5: 0.7565
 ### 3.1 Perfect Indicators Test
 | Check | Result |
 |-------|--------|
-| **L4 Perfect Indicators** | **100%** 🚨 |
+| **L4 Perfect Indicators** | **100%**  |
 | (KEV=1 OR EPSS>0.5 OR Healthcare+CVSS≥9) | |
 | **L0 Perfect Indicators** | 81.7% |
 | (KEV=0 AND EPSS<0.01 AND Healthcare=0 AND CVSS<5) | |
 
-**🚨 Critical Finding:** 100% of L4 CVEs have at least one "perfect indicator". This means:
+** Critical Finding:** 100% of L4 CVEs have at least one "perfect indicator". This means:
 1. **Model has perfect signal:** Every L4 CVE is trivially identifiable
 2. **No ambiguous cases:** No L4 CVEs require complex reasoning
 3. **Potential label leakage:** Labels may have been derived from features (KEV, healthcare, EPSS)
@@ -144,16 +144,16 @@ Top features by gain:
 
 ### 4.2 Feature Redundancy
 **Highly correlated pairs (r > 0.8):**
-1. `kev_x_epss` ↔ `kev_flag` (r=1.000) → Interaction adds nothing
-2. `epss_percentile` ↔ `epss_score` (r=1.000) → Perfect correlation
-3. `healthcare_x_cvss` ↔ `is_healthcare` (r=0.914) → Nearly redundant
-4. `cvss_high` ↔ `cvss` (r=0.868) → Derived feature adds little
+1. `kev_x_epss` ↔ `kev_flag` (r=1.000) -> Interaction adds nothing
+2. `epss_percentile` ↔ `epss_score` (r=1.000) -> Perfect correlation
+3. `healthcare_x_cvss` ↔ `is_healthcare` (r=0.914) -> Nearly redundant
+4. `cvss_high` ↔ `cvss` (r=0.868) -> Derived feature adds little
 
 **Zero-variance features (useless):**
 - `chpl_flag`, `chpl_x_attack`, `chpl_healthcare`: 0 variance (no data)
 - `attack_flag`, `attack_healthcare`: 0 variance (no data)
 
-**Recommendation:** Remove 9 features → 14 useful features remain
+**Recommendation:** Remove 9 features -> 14 useful features remain
 
 ---
 
@@ -162,11 +162,11 @@ Top features by gain:
 ### 5.1 Overfitting Indicators
 | Indicator | Evidence | Risk Level |
 |-----------|----------|------------|
-| **Perfect test score** | NDCG@10 = 1.0 | ⚠️ Medium |
-| **Perfect label separation** | 100% L4 identifiable | 🚨 High |
-| **CV variance** | 14.6% CoV | ⚠️ Medium |
-| **Feature redundancy** | 9/23 features redundant | ⚠️ Medium |
-| **Temporal generalization** | 1.0 on 2025 data | ✅ Good |
+| **Perfect test score** | NDCG@10 = 1.0 | [WARN] Medium |
+| **Perfect label separation** | 100% L4 identifiable |  High |
+| **CV variance** | 14.6% CoV | [WARN] Medium |
+| **Feature redundancy** | 9/23 features redundant | [WARN] Medium |
+| **Temporal generalization** | 1.0 on 2025 data | [OK] Good |
 
 ### 5.2 Potential Data Leakage
 **Concern:** Labels may be partially derived from features:
@@ -184,7 +184,7 @@ Top features by gain:
 ## 6. Recommendations
 
 ### 6.1 Immediate Actions
-1. **Remove redundant features** (9 features → 14 useful)
+1. **Remove redundant features** (9 features -> 14 useful)
 2. **Retrain with pruned features** (faster, less overfitting risk)
 3. **Add regularization** (increase `min_child_weight`, lower `max_depth`)
 
@@ -207,19 +207,19 @@ Top features by gain:
 
 ## 7. Final Verdict
 
-### ✅ Strengths
+### [OK] Strengths
 - EPSS integration successful (+41.6% improvement)
 - Excellent temporal generalization (1.0 on 2025)
 - Strong feature importance (EPSS, healthcare, CVSS)
 - Production-ready performance
 
-### ⚠️ Concerns
+### [WARN] Concerns
 - **Perfect label separability** suggests labels may be too easy to predict
 - **100% L4 identification** indicates no hard cases
 - **KEV only in L3+L4** suggests potential label leakage
 - **Feature redundancy** (9/23 features can be removed)
 
-### 🎯 Conclusion
+### [TARGET] Conclusion
 **Model is production-ready but may be overfit to current labeling scheme.**
 
 The perfect NDCG@10 = 1.0 is achievable because:

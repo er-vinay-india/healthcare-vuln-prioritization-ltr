@@ -45,8 +45,8 @@ def test_health():
     print(f"   Status: {response.status_code}")
     if _is_ok(response):
         data = response.json()
-        print(f"   ✓ Database: {data.get('database_status')}")
-        print(f"   ✓ Total CVEs: {data.get('total_cves')}")
+        print(f"   [OK] Database: {data.get('database_status')}")
+        print(f"   [OK] Total CVEs: {data.get('total_cves')}")
 
 def test_predict():
     """Test predict endpoint"""
@@ -59,7 +59,7 @@ def test_predict():
     print(f"   Status: {response.status_code}")
     if _is_ok(response):
         data = response.json()
-        print(f"   ✓ Scored {data.get('count')} CVEs")
+        print(f"   [OK] Scored {data.get('count')} CVEs")
         print(f"   Sample predictions: {list(data.get('predictions', {}).items())[:2]}")
 
 def test_top_cves():
@@ -76,7 +76,7 @@ def test_top_cves():
     print(f"   Status: {response.status_code}")
     if _is_ok(response):
         data = response.json()
-        print(f"   ✓ Returned {data.get('count')} CVEs")
+        print(f"   [OK] Returned {data.get('count')} CVEs")
         print(f"   Total candidates: {data.get('total_candidates')}")
         if data.get('top_cves'):
             top = data['top_cves'][0]
@@ -92,7 +92,7 @@ def test_explain():
     print(f"   Status: {response.status_code}")
     if _is_ok(response):
         data = response.json()
-        print(f"   ✓ CVE: {data.get('cve_id')}")
+        print(f"   [OK] CVE: {data.get('cve_id')}")
         print(f"   Prediction score: {data.get('prediction_score'):.4f}")
         if 'top_3_features' in data:
             print("   Top 3 features:")
@@ -106,7 +106,7 @@ def test_stats():
     print(f"   Status: {response.status_code}")
     if _is_ok(response):
         data = response.json()
-        print(f"   ✓ Total CVEs: {data.get('total_cves')}")
+        print(f"   [OK] Total CVEs: {data.get('total_cves')}")
         print(f"   KEV count: {data.get('kev_count')}")
         print(f"   Healthcare count: {data.get('healthcare_count')}")
 
@@ -127,12 +127,12 @@ if __name__ == "__main__":
         test_explain()
         
         print("\n" + "=" * 60)
-        print("✓ All tests completed!")
+        print("[OK] All tests completed!")
         print("=" * 60)
         
     except requests.exceptions.ConnectionError:
-        print("\n❌ ERROR: Could not connect to API server")
+        print("\n[FAIL] ERROR: Could not connect to API server")
         print("   Please start the server with:")
         print("   uvicorn src.api.main:app --reload")
     except Exception as e:
-        print(f"\n❌ ERROR: {e}")
+        print(f"\n[FAIL] ERROR: {e}")

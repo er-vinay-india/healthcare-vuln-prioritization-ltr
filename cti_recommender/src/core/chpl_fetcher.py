@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 CHPL (Certified Health IT Product List) fetcher with smart caching.
-Strategy: Check cache first → If empty, fetch from API once → Save to cache → Use cached data
+Strategy: Check cache first -> If empty, fetch from API once -> Save to cache -> Use cached data
 Never calls API twice for same data.
 """
 import sys
@@ -52,17 +52,17 @@ class CHPLFetcher:
         """
         # Step 1: Check cache
         if not force_refresh and self._cache_exists() and self._cache_valid():
-            logger.info("✓ Loading CHPL data from cache (no API call)")
+            logger.info("[OK] Loading CHPL data from cache (no API call)")
             return self._load_cache()
         
         # Step 2: Cache empty/invalid - fetch from API
-        logger.info("⚠ Cache empty/invalid - fetching from CHPL API (ONE TIME)")
+        logger.info("[WARN] Cache empty/invalid - fetching from CHPL API (ONE TIME)")
         df = self._fetch_from_api()
         
         # Step 3: Save to cache immediately
         if df is not None and len(df) > 0:
             self._save_cache(df)
-            logger.info(f"✓ Cached {len(df)} products for future use", extra={'product_count': len(df)})
+            logger.info(f"[OK] Cached {len(df)} products for future use", extra={'product_count': len(df)})
         
         return df
     
@@ -100,7 +100,7 @@ class CHPLFetcher:
     def _fetch_from_api(self):
         """Fetch CHPL data from API."""
         if not self.api_key:
-            logger.warning("  ❌ No CHPL API key found (set CHPL_API_KEY env var)")
+            logger.warning("  [FAIL] No CHPL API key found (set CHPL_API_KEY env var)")
             logger.info("  Using mock data for testing...")
             return self._create_mock_data()
         
@@ -185,9 +185,9 @@ class CHPLFetcher:
             # Also save as JSON for inspection
             df.to_json(self.json_cache, orient='records', indent=2)
             
-            logger.info(f"  ✓ Saved to cache: {self.cache_file}")
+            logger.info(f"  [OK] Saved to cache: {self.cache_file}")
         except Exception as e:
-            logger.warning(f"  ⚠ Cache save error: {e}")
+            logger.warning(f"  [WARN] Cache save error: {e}")
 
 if __name__ == "__main__":
     logger.info("="*70)
@@ -206,4 +206,4 @@ if __name__ == "__main__":
     df2 = fetcher.get_chpl_data()
     logger.info(f"Result: {len(df2) if df2 is not None else 0} products", extra={'product_count': len(df2) if df2 is not None else 0})
     
-    logger.info("✓ Demonstrated: Check cache first → Fetch once → Use cached data")
+    logger.info("[OK] Demonstrated: Check cache first -> Fetch once -> Use cached data")

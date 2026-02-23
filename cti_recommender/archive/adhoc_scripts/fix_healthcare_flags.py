@@ -59,7 +59,7 @@ def fix_healthcare_flags(batch_size=10000):
     
     db.close()
     
-    print(f"\n✅ Complete! Updated {updated_count:,} CVEs")
+    print(f"\n[OK] Complete! Updated {updated_count:,} CVEs")
     print(f"Healthcare-relevant CVEs: {healthcare_count:,} ({100*healthcare_count/total:.2f}%)")
 
 if __name__ == "__main__":

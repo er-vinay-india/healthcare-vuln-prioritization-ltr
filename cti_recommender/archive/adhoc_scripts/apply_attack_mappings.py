@@ -89,7 +89,7 @@ def apply_attack_mappings(dry_run=True, limit=100):
     if dry_run:
         print(f"DRY RUN: Would map {mapped_count:,} / {len(df):,} CVEs ({100*mapped_count/len(df):.1f}%)")
     else:
-        print(f"✅ Mapped {mapped_count:,} / {len(df):,} CVEs ({100*mapped_count/len(df):.1f}%)")
+        print(f"[OK] Mapped {mapped_count:,} / {len(df):,} CVEs ({100*mapped_count/len(df):.1f}%)")
     
     # Top techniques
     print(f"\nTop 10 most matched techniques:")

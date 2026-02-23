@@ -8,7 +8,7 @@
 
 ---
 
-## 🎯 Project Overview
+## [TARGET] Project Overview
 
 Traditional vulnerability management relies solely on CVSS scores, which don't account for exploitation likelihood, threat intelligence, or healthcare-specific risks. This system addresses that gap by:
 
@@ -29,7 +29,7 @@ Traditional vulnerability management relies solely on CVSS scores, which don't a
 
 ---
 
-## 📊 Architecture
+## [STATS] Architecture
 
 ### Multi-Notebook Pipeline
 
@@ -37,10 +37,10 @@ The project uses a modular notebook architecture for clear separation of concern
 
 ```mermaid
 flowchart LR
-    N1[📘 1. Data Ingestion] --> N2[📙 2. EDA Analysis]
-    N2 --> N3[📗 3. Feature Engineering]
-    N3 --> N4[📕 4. Model Training]
-    N4 --> N5[📓 5. Advanced Models]
+    N1[ 1. Data Ingestion] --> N2[ 2. EDA Analysis]
+    N2 --> N3[ 3. Feature Engineering]
+    N3 --> N4[ 4. Model Training]
+    N4 --> N5[ 5. Advanced Models]
     
     style N1 fill:#e3f2fd
     style N2 fill:#f3e5f5
@@ -57,7 +57,7 @@ flowchart LR
 
 ---
 
-## 🚀 Quick Start
+## [RUN] Quick Start
 
 ### Prerequisites
 
@@ -101,19 +101,19 @@ jupyter notebook
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 cti_recommender/
 │
-├── notebooks/                          # 🎓 Analysis Pipeline
+├── notebooks/                          #  Analysis Pipeline
 │   ├── Data_Ingestion_Pipeline.ipynb   # Step 1: Fetch NVD/KEV/EPSS/ATT&CK
 │   ├── EDA_Analysis.ipynb               # Step 2: Exploratory analysis
 │   ├── Feature_Engineering.ipynb        # Step 3: Feature extraction + labeling
 │   ├── Model_Training_And_Evaluation.ipynb  # Step 4: LambdaMART + 3 eval strategies
 │   └── Advanced_Models_GraphBased.ipynb # Step 5: Graph models + ensembles
 │
-├── src/                                # 🔧 Core Modules
+├── src/                                #  Core Modules
 │   ├── data/
 │   │   ├── loader.py                   # Database interface
 │   │   └── preprocessing.py            # Data cleaning
@@ -136,50 +136,50 @@ cti_recommender/
 │       └── healthcare_mapper.py        # CHPL/breach mapping
 │
 ├── data/
-│   └── cve_database.db                 # 💾 SQLite (176,332 CVEs)
+│   └── cve_database.db                 #  SQLite (176,332 CVEs)
 │
-├── cache/                              # 📦 API Response Cache
+├── cache/                              #  API Response Cache
 │   ├── nvd/
 │   ├── epss/
 │   ├── kev/
 │   ├── attack/
 │   └── chpl/
 │
-├── models/                             # 🤖 Trained Models
+├── models/                             #  Trained Models
 │   ├── ltr_ranker.model                # Original 70/15/15 model
 │   └── ltr_ranker_thesis_70_30.model   # Thesis 70/30 temporal model
 │
-├── outputs/                            # 📊 Results
+├── outputs/                            # [STATS] Results
 │   ├── features/                       # Engineered features
 │   ├── evaluation/                     # Metrics + comparisons
 │   └── plots/                          # Visualizations (HTML/PNG)
 │
-├── scripts/                            # 🛠️ Utility Scripts
+├── scripts/                            #  Utility Scripts
 │   ├── enrich_cves.py                  # Enrich CVE data
 │   ├── train_ltr.py                    # Standalone training
 │   ├── recommend_cves.py               # Generate recommendations
 │   └── temporal_validation.py          # Temporal evaluation
 │
-├── tests/                              # ✅ Unit Tests
+├── tests/                              # [OK] Unit Tests
 │   ├── test_feature_engineering.py
 │   ├── test_api_endpoints.py
 │   └── ...
 │
-├── docs/                               # 📚 Documentation
+├── docs/                               #  Documentation
 │   ├── QUICKSTART.md                   # Getting started guide
 │   ├── API.md                          # API documentation
 │   ├── DEVELOPMENT.md                  # Development guide
 │   ├── SCORING_EXPLANATION.md          # Scoring methodology
 │   └── diagrams/                       # Architecture diagrams (Mermaid)
 │
-└── archive/                            # 🗄️ Archived Files
+└── archive/                            #  Archived Files
     ├── migration_docs/                 # Development artifacts
     └── unused_files/                   # Retired resources
 ```
 
 ---
 
-## 🔬 Methodology
+##  Methodology
 
 ### Data Sources
 
@@ -245,7 +245,7 @@ elif cvss >= 9.0:
 
 ---
 
-## 📈 Results
+##  Results
 
 ### Model Comparison
 
@@ -276,7 +276,7 @@ elif cvss >= 9.0:
 
 ---
 
-## 🧪 Advanced Models
+## [TEST] Advanced Models
 
 Beyond LambdaMART, the system includes:
 
@@ -288,7 +288,7 @@ See [`Advanced_Models_GraphBased.ipynb`](notebooks/Advanced_Models_GraphBased.ip
 
 ---
 
-## 📚 Documentation
+##  Documentation
 
 - **[Quick Start Guide](docs/QUICKSTART.md)** - Installation and basic usage
 - **[API Documentation](docs/API.md)** - REST API and deployment
@@ -298,7 +298,7 @@ See [`Advanced_Models_GraphBased.ipynb`](notebooks/Advanced_Models_GraphBased.ip
 
 ---
 
-## 🧑‍💻 Development
+## ‍ Development
 
 ### Running Tests
 
@@ -329,7 +329,7 @@ mypy src/
 
 ---
 
-## 📊 Outputs
+## [STATS] Outputs
 
 After running the pipeline, find results in:
 
@@ -346,7 +346,7 @@ After running the pipeline, find results in:
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions welcome! Please:
 
@@ -358,13 +358,13 @@ Contributions welcome! Please:
 
 ---
 
-## 📄 License
+##  License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 **Data Sources:**
 - [NVD](https://nvd.nist.gov/) - National Vulnerability Database
@@ -381,10 +381,10 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-## 📞 Contact
+##  Contact
 
 For questions or issues, please open a GitHub issue or contact the maintainers.
 
-**Project Status**: ✅ Active Development
+**Project Status**: [OK] Active Development
 
 Last Updated: February 2026

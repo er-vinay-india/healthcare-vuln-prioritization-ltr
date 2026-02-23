@@ -4,9 +4,9 @@
 
 ---
 
-## ✅ Issues Fixed
+## [OK] Issues Fixed
 
-### 1. **CHPL Fetcher Bug** ✅
+### 1. **CHPL Fetcher Bug** [OK]
 **Problem:** `NameError: name 'header_variants' is not defined`
 
 **Root Cause:** Fallback mechanism variables (`header_variants`, `endpoints`, `param_variants`) were referenced but never defined.
@@ -19,11 +19,11 @@ header_variants = [{"Accept": "application/json"}, ...]
 param_variants = [lambda p: {"page": p, "pageSize": page_size}, ...]
 ```
 
-**Status:** Code fixed ✅ | API returning 400 errors (external issue) ⚠️
+**Status:** Code fixed [OK] | API returning 400 errors (external issue) [WARN]
 
 ---
 
-### 2. **Datetime Comparison Bug** ✅
+### 2. **Datetime Comparison Bug** [OK]
 **Problem:** `Invalid comparison between dtype=datetime64[ns] and datetime`
 
 **Root Cause:** Comparing timezone-naive `pd.to_datetime()` result with timezone-aware `datetime.now(timezone.utc)`
@@ -35,12 +35,12 @@ param_variants = [lambda p: {"page": p, "pageSize": page_size}, ...]
 now = pd.Timestamp.now(tz='UTC')  # Use pandas Timestamp for consistency
 ```
 
-**Result:** Data quality errors reduced from 3 to 2 ✅
+**Result:** Data quality errors reduced from 3 to 2 [OK]
 
 ---
 
-### 3. **Scoring Weight Calibration** ✅
-**Problem:** Over-reliance on recency + CVSS → generic high-severity CVEs dominating top-20
+### 3. **Scoring Weight Calibration** [OK]
+**Problem:** Over-reliance on recency + CVSS -> generic high-severity CVEs dominating top-20
 
 **Old Weights (Pre-Phase 1):**
 ```python
@@ -69,27 +69,27 @@ Total     = 1.00  # Perfect normalization
 
 ---
 
-## 📊 Recalibration Results
+## [STATS] Recalibration Results
 
 ### Top-20 Transformation
 
 | Metric | Old (Pre-Phase 1) | New (Calibrated) | Change |
 |--------|------------------|------------------|--------|
 | **Healthcare Precision** | 12/20 (60%) | 10/20 (50%) | -2 CVEs |
-| **KEV-flagged** | 1/20 (5%) | 3/20 (15%) | +2 CVEs ✅ |
-| **Epic Systems CVEs** | 0/20 | 1/20 | +1 CVE ✅ |
+| **KEV-flagged** | 1/20 (5%) | 3/20 (15%) | +2 CVEs [OK] |
+| **Epic Systems CVEs** | 0/20 | 1/20 | +1 CVE [OK] |
 | **Top-20 Overlap** | - | 0/20 (0%) | Complete turnover |
 
 ### Key Observations
 
-**✅ Improvements:**
-1. **3x more KEV-flagged CVEs** (1→3) - Better exploit validation
+**[OK] Improvements:**
+1. **3x more KEV-flagged CVEs** (1->3) - Better exploit validation
 2. **Epic Systems entry** (CVE-2021-47739) - Actual healthcare vendor
 3. **Diverse CVSS range** (6.6-10.0 vs 9.8-10.0) - Less severity bias
 4. **Lower recency bias** - Includes 2018/2019 CVEs if healthcare-relevant
 
-**⚠️ Trade-offs:**
-1. **Precision decreased** (60%→50%) - Likely due to:
+**[WARN] Trade-offs:**
+1. **Precision decreased** (60%->50%) - Likely due to:
    - CHPL unavailable (0 products vs expected 6,900)
    - Enhanced healthcare mapping may have higher false-positive rate
    - Need more curated positive examples (Phase 2)
@@ -97,30 +97,30 @@ Total     = 1.00  # Perfect normalization
 2. **Complete top-20 turnover** (0% overlap) - Indicates:
    - Old weights heavily favored recency
    - New weights prioritize healthcare relevance over timeliness
-   - May need balance adjustment (e.g., w_recency: 0.25→0.27)
+   - May need balance adjustment (e.g., w_recency: 0.25->0.27)
 
 ---
 
-## 🎯 Phase 1 Final Status
+## [TARGET] Phase 1 Final Status
 
-### Completion: **85%** ✅
+### Completion: **85%** [OK]
 
 **Completed:**
-- ✅ Data quality validation framework
-- ✅ Healthcare mapping system (142 patterns)
-- ✅ Bug fixes (datetime, CHPL fallback)
-- ✅ Weight calibration
-- ✅ Automated audit pipeline
-- ✅ Comprehensive documentation
+- [OK] Data quality validation framework
+- [OK] Healthcare mapping system (142 patterns)
+- [OK] Bug fixes (datetime, CHPL fallback)
+- [OK] Weight calibration
+- [OK] Automated audit pipeline
+- [OK] Comprehensive documentation
 
 **Remaining 15%:**
-- ⚠️ CHPL API issue (external, uncontrollable)
-- ⚠️ Weight fine-tuning (may need w_recency: 0.25→0.27)
-- ⚠️ Validation of precision decrease (investigate false positives)
+- [WARN] CHPL API issue (external, uncontrollable)
+- [WARN] Weight fine-tuning (may need w_recency: 0.25->0.27)
+- [WARN] Validation of precision decrease (investigate false positives)
 
 ---
 
-## 📈 Before vs After Comparison
+##  Before vs After Comparison
 
 ### Example CVE Changes
 
@@ -130,13 +130,13 @@ Total     = 1.00  # Perfect normalization
 - CVE-2025-12515 (BLU-IC2) - Generic server errors
 
 **Added to Top-20:**
-- **CVE-2025-14847** (KEV-flagged, healthcare keywords) ✅
-- **CVE-2025-14733** (KEV-flagged, healthcare keywords) ✅
-- **CVE-2021-47739** (Epic Systems - major EHR vendor) ✅
+- **CVE-2025-14847** (KEV-flagged, healthcare keywords) [OK]
+- **CVE-2025-14733** (KEV-flagged, healthcare keywords) [OK]
+- **CVE-2021-47739** (Epic Systems - major EHR vendor) [OK]
 
 ---
 
-## 🔍 Remaining Data Quality Issues
+##  Remaining Data Quality Issues
 
 ### 1. CHPL API Unavailable (External)
 **Impact:** Missing 6,900 healthcare product signals  
@@ -157,7 +157,7 @@ Total     = 1.00  # Perfect normalization
 
 ---
 
-## 🎉 Phase 1 Achievements
+##  Phase 1 Achievements
 
 ### New Capabilities
 1. **Comprehensive data quality framework** - Detects format errors, duplicates, missing data
@@ -173,7 +173,7 @@ Total     = 1.00  # Perfect normalization
 
 ---
 
-## 🚀 Ready for Phase 2
+## [RUN] Ready for Phase 2
 
 ### Next Steps (Improved Labeling Strategy)
 
@@ -206,7 +206,7 @@ if CHPL: label += 1
 
 ---
 
-## 📁 Deliverables
+##  Deliverables
 
 ### Code Files
 - [data_quality.py](data_quality.py) - Validation framework
@@ -226,7 +226,7 @@ if CHPL: label += 1
 
 ---
 
-## ✅ Recommendation
+## [OK] Recommendation
 
 **PROCEED TO PHASE 2** with caveat:
 
@@ -237,7 +237,7 @@ if CHPL: label += 1
 - Phase 2 activities (EPSS, curated examples) will address precision
 
 **Option 2:** Optional weight fine-tuning
-- Increase `w_recency: 0.25→0.27` to balance healthcare vs timeliness
+- Increase `w_recency: 0.25->0.27` to balance healthcare vs timeliness
 - Run A/B test with domain experts
 - **Time cost:** 1-2 days
 
@@ -245,6 +245,6 @@ if CHPL: label += 1
 
 ---
 
-**Phase 1 Status: COMPLETE ✅**  
-**Phase 2 Ready: YES ✅**  
+**Phase 1 Status: COMPLETE [OK]**  
+**Phase 2 Ready: YES [OK]**  
 **Next Action: Implement EPSS integration**

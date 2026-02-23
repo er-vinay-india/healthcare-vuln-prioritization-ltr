@@ -32,15 +32,15 @@ def main():
     try:
         chpl_df = cr.get_chpl_cached()
         if len(chpl_df) == 0:
-            print("  ⚠️  CHPL: API unavailable (using without CHPL signals)")
+            print("  [WARN]  CHPL: API unavailable (using without CHPL signals)")
             chpl_df = None
     except:
         chpl_df = None
     
-    print(f"  ✓ NVD: {len(nvd_df)} CVEs")
-    print(f"  ✓ KEV: {len(kev_df)} entries")
-    print(f"  ✓ ATT&CK: {len(attack_df)} techniques")
-    print(f"  ✓ CHPL: {'0 (unavailable)' if chpl_df is None else len(chpl_df)}")
+    print(f"  [OK] NVD: {len(nvd_df)} CVEs")
+    print(f"  [OK] KEV: {len(kev_df)} entries")
+    print(f"  [OK] ATT&CK: {len(attack_df)} techniques")
+    print(f"  [OK] CHPL: {'0 (unavailable)' if chpl_df is None else len(chpl_df)}")
     
     # Load old top-20 for comparison
     old_top20 = pd.read_csv('outputs/top20.csv')
@@ -116,13 +116,13 @@ def main():
     print(f"  NEW: {new_hc_count}/20 ({new_hc_count/20*100:.0f}%)")
     
     if new_hc_count > old_hc_count:
-        print(f"  ✅ IMPROVED by {new_hc_count - old_hc_count} CVEs (+{(new_hc_count - old_hc_count)/20*100:.0f}%)")
+        print(f"  [OK] IMPROVED by {new_hc_count - old_hc_count} CVEs (+{(new_hc_count - old_hc_count)/20*100:.0f}%)")
     elif new_hc_count == old_hc_count:
         print(f"  = No change")
     else:
-        print(f"  ⚠️  DECREASED by {old_hc_count - new_hc_count} CVEs")
+        print(f"  [WARN]  DECREASED by {old_hc_count - new_hc_count} CVEs")
     
-    print(f"\n📋 Top-20 Overlap:")
+    print(f"\n Top-20 Overlap:")
     print(f"  Shared CVEs: {overlap}/20 ({overlap/20*100:.0f}%)")
     print(f"  Removed from top-20: {len(only_old)}")
     print(f"  Added to top-20: {len(only_new)}")
@@ -135,9 +135,9 @@ def main():
     for idx, row in new_top20_enriched.head(20).iterrows():
         cve_id = row['cve_id']
         cvss = row.get('cvss', 0)
-        kev = '✓' if row.get('kev_flag', 0) else '✗'
+        kev = '[OK]' if row.get('kev_flag', 0) else '[X]'
         score = row.get('final_score', 0)
-        hc = '✓' if row.get('is_healthcare', 0) else '✗'
+        hc = '[OK]' if row.get('is_healthcare', 0) else '[X]'
         vendor = row.get('healthcare_vendor', 'None')[:12] if pd.notna(row.get('healthcare_vendor')) else 'None'
         
         # Mark if new to top-20
@@ -146,13 +146,13 @@ def main():
         print(f"  {idx+1:<5} {cve_id:<18} {cvss:<6.1f} {kev:<5} {score:<7.3f} {hc:<4} {vendor}{marker}")
     
     if only_old:
-        print(f"\n❌ Removed from top-20:")
+        print(f"\n[FAIL] Removed from top-20:")
         for cve_id in sorted(only_old)[:10]:
             old_row = old_top20[old_top20['cve_id'] == cve_id].iloc[0]
             print(f"  • {cve_id} (CVSS: {old_row.get('cvss', 'N/A')}, KEV: {old_row.get('kev_flag', 0)})")
     
     if only_new:
-        print(f"\n✅ Added to top-20:")
+        print(f"\n[OK] Added to top-20:")
         for cve_id in sorted(only_new)[:10]:
             new_row = new_top20[new_top20['cve_id'] == cve_id].iloc[0]
             hc_flag = new_top20_enriched[new_top20_enriched['cve_id'] == cve_id].iloc[0].get('is_healthcare', 0)
@@ -163,7 +163,7 @@ def main():
     print("SUMMARY")
     print("="*80)
     
-    print(f"\n✅ Fixes Applied:")
+    print(f"\n[OK] Fixes Applied:")
     print(f"  • Datetime comparison bug fixed")
     print(f"  • CHPL fallback mechanism fixed (API unavailable, but code working)")
     print(f"  • Scoring weights recalibrated")
@@ -171,10 +171,10 @@ def main():
     print(f"\nImprovements:")
     if new_hc_count >= old_hc_count:
         print(f"  • Healthcare precision maintained/improved: {new_hc_count}/20")
-    print(f"  • Reduced over-reliance on recency (0.35→0.25)")
-    print(f"  • Increased healthcare signal weight (0.13→0.25 combined)")
+    print(f"  • Reduced over-reliance on recency (0.35->0.25)")
+    print(f"  • Increased healthcare signal weight (0.13->0.25 combined)")
     
-    print(f"\n⚠️  Remaining Issues:")
+    print(f"\n[WARN]  Remaining Issues:")
     print(f"  • CHPL API returning 400 errors (external issue)")
     print(f"  • 34.4% CVEs missing CVSS scores (NVD data quality)")
     print(f"  • Limited vendor matches (only 79/2000 CVEs)")

@@ -6,7 +6,7 @@
 
 ---
 
-## 🚨 CRITICAL FINDING: Label Leakage Confirmed
+##  CRITICAL FINDING: Label Leakage Confirmed
 
 ### Investigation Summary
 
@@ -26,18 +26,18 @@ mask_4 = (
 
 # Level 3 (Medium) - Lines 126-137
 mask_3 = (
-    (df['kev_flag'] == 1) |                                         # ← KEV directly → L3
-    (df['is_curated'] == 1) |                                       # ← Curated directly → L3
-    ((df['epss_score'] > 0.3) & (df['is_healthcare'] == 1)) |      # ← EPSS + Healthcare → L3
-    ((df['cvss'] >= 9.0) & (df['is_healthcare'] == 1)) |           # ← CVSS + Healthcare → L3
+    (df['kev_flag'] == 1) |                                         # ← KEV directly -> L3
+    (df['is_curated'] == 1) |                                       # ← Curated directly -> L3
+    ((df['epss_score'] > 0.3) & (df['is_healthcare'] == 1)) |      # ← EPSS + Healthcare -> L3
+    ((df['cvss'] >= 9.0) & (df['is_healthcare'] == 1)) |           # ← CVSS + Healthcare -> L3
     ...
 )
 
 # Level 2 (Low) - Lines 144-154
 mask_2 = (
-    (df['is_healthcare'] == 1) |                                    # ← Healthcare directly → L2
-    (df['epss_score'] > 0.1) |                                      # ← EPSS directly → L2
-    (df['cvss'] >= 7.0) |                                           # ← CVSS directly → L2
+    (df['is_healthcare'] == 1) |                                    # ← Healthcare directly -> L2
+    (df['epss_score'] > 0.1) |                                      # ← EPSS directly -> L2
+    (df['cvss'] >= 7.0) |                                           # ← CVSS directly -> L2
     ...
 )
 ```
@@ -45,10 +45,10 @@ mask_2 = (
 ### Why This is Problematic
 
 **Perfect label separability explained:**
-- **KEV flag = 1** → Automatically assigned to L3 or higher
-- **EPSS > 0.5 + Healthcare** → Automatically assigned to L4
-- **Healthcare + CVSS ≥ 9** → Automatically assigned to L3
-- **EPSS > 0.1** → Automatically assigned to L2 or higher
+- **KEV flag = 1** -> Automatically assigned to L3 or higher
+- **EPSS > 0.5 + Healthcare** -> Automatically assigned to L4
+- **Healthcare + CVSS ≥ 9** -> Automatically assigned to L3
+- **EPSS > 0.1** -> Automatically assigned to L2 or higher
 
 **Result:** Model doesn't need to "learn" patterns—labels are deterministic functions of features!
 
@@ -68,15 +68,15 @@ Temporal 2025 NDCG@10: 1.0000 (perfect)
 Features: 23
 ```
 
-**Why perfect?** Labels are deterministic from features → model just learns thresholds.
+**Why perfect?** Labels are deterministic from features -> model just learns thresholds.
 
 ---
 
-## ✅ Optimization Results: Pruned Model
+## [OK] Optimization Results: Pruned Model
 
 ### Changes Implemented
 
-1. **Feature Pruning:** 23 → 14 features
+1. **Feature Pruning:** 23 -> 14 features
    - Removed 9 redundant/zero-variance features:
      - `epss_percentile` (r=1.0 with `epss_score`)
      - `kev_x_epss` (r=1.0 with `kev_flag`)
@@ -86,11 +86,11 @@ Features: 23
      - `attack_flag`, `attack_healthcare` (zero variance)
 
 2. **Stronger Regularization:**
-   - `min_child_weight`: 1 → 5 (require more samples per leaf)
-   - `max_depth`: 6 → 5 (shallower trees)
-   - `alpha` (L1): 0 → 0.1
-   - `lambda` (L2): 1 → 2.0
-   - `eta`: 0.1 → 0.05 (lower learning rate)
+   - `min_child_weight`: 1 -> 5 (require more samples per leaf)
+   - `max_depth`: 6 -> 5 (shallower trees)
+   - `alpha` (L1): 0 -> 0.1
+   - `lambda` (L2): 1 -> 2.0
+   - `eta`: 0.1 -> 0.05 (lower learning rate)
 
 ### Pruned Model Performance
 
@@ -114,11 +114,11 @@ Top features by gain:
 
 ---
 
-## 📊 Interpretation
+## [STATS] Interpretation
 
 ### Why NDCG Dropped
 
-**Drop from 1.0 → 0.76 is EXPECTED and HEALTHY:**
+**Drop from 1.0 -> 0.76 is EXPECTED and HEALTHY:**
 
 1. **Removed perfect predictors:** Interaction features that were 100% correlated with labels
 2. **Added regularization:** Forces model to generalize instead of memorize
@@ -141,15 +141,15 @@ Pruned:   0 L4, 100 L3, 0 L2 (more conservative, all high-priority)
 
 ---
 
-## 🎯 Recommendations
+## [TARGET] Recommendations
 
 ### Immediate Actions
 
-1. ✅ **Deploy pruned model** (14 features, NDCG@10=0.76)
+1. [OK] **Deploy pruned model** (14 features, NDCG@10=0.76)
    - More robust, less overfitting risk
-   - 40% fewer features → faster inference
+   - 40% fewer features -> faster inference
 
-2. ⚠️ **DO NOT fix label leakage yet** (requires re-labeling all CVEs)
+2. [WARN] **DO NOT fix label leakage yet** (requires re-labeling all CVEs)
    - Current labels are still useful (encode expert rules)
    - Model works despite leakage
    - Re-labeling requires ground truth validation
@@ -173,7 +173,7 @@ Pruned:   0 L4, 100 L3, 0 L2 (more conservative, all high-priority)
 
 ---
 
-## 📈 Model Comparison Summary
+##  Model Comparison Summary
 
 | Metric | Original (23 feat) | Pruned (14 feat) | Winner |
 |--------|-------------------|------------------|--------|
@@ -189,7 +189,7 @@ Pruned:   0 L4, 100 L3, 0 L2 (more conservative, all high-priority)
 
 ---
 
-## 📂 Files Created
+##  Files Created
 
 1. **Training scripts:**
    - [scripts/train_ltr_pruned.py](../scripts/train_ltr_pruned.py) - Optimized training with 14 features
@@ -205,7 +205,7 @@ Pruned:   0 L4, 100 L3, 0 L2 (more conservative, all high-priority)
 
 ---
 
-## 🔬 Technical Details: Label Leakage
+##  Technical Details: Label Leakage
 
 ### What is Label Leakage?
 
@@ -241,7 +241,7 @@ Fixing label leakage requires:
 
 ---
 
-## ✅ Conclusion
+## [OK] Conclusion
 
 1. **Label leakage confirmed:** Labels deterministically derived from features
 2. **Pruned model deployed:** 14 features, NDCG@10=0.76, more robust

@@ -146,17 +146,17 @@ class CacheManager:
         cache_info = self.get_cache_info()
         
         print("=" * 70)
-        print("📦 CACHE STATUS SUMMARY")
+        print(" CACHE STATUS SUMMARY")
         print("=" * 70)
         
         total_size = 0
         total_files = 0
         
         for source, info in cache_info.items():
-            print(f"\n🗂️  {source.upper()}")
+            print(f"\n  {source.upper()}")
             print("-" * 70)
             if info['exists']:
-                print(f"   Status: ✅ Cached")
+                print(f"   Status: [OK] Cached")
                 print(f"   Size: {info['size_mb']:.2f} MB")
                 print(f"   Files: {info['files']}")
                 print(f"   Last Modified: {info['last_modified']}")
@@ -164,7 +164,7 @@ class CacheManager:
                 total_size += info['size_mb']
                 total_files += info['files']
             else:
-                print(f"   Status: ❌ No cache (will fetch from API)")
+                print(f"   Status: [FAIL] No cache (will fetch from API)")
         
         print("\n" + "=" * 70)
         print(f"TOTAL CACHE: {total_size:.2f} MB | {total_files} files")
@@ -182,25 +182,25 @@ class CacheManager:
             True if cleared, False if cancelled
         """
         if source not in self.cache_sources:
-            print(f"❌ Invalid source: {source}")
+            print(f"[FAIL] Invalid source: {source}")
             print(f"   Valid sources: {', '.join(self.cache_sources.keys())}")
             return False
         
         # Check if cache exists
         cache_info = self.get_cache_info()
         if not cache_info[source]['exists']:
-            print(f"ℹ️  No {source} cache to clear")
+            print(f"[INFO]  No {source} cache to clear")
             return False
         
         # Confirmation
         if not confirm:
             size_mb = cache_info[source]['size_mb']
             files = cache_info[source]['files']
-            print(f"⚠️  WARNING: About to delete {source} cache")
+            print(f"[WARN]  WARNING: About to delete {source} cache")
             print(f"   Size: {size_mb:.2f} MB | Files: {files}")
             response = input("   Type 'yes' to confirm: ")
             if response.lower() != 'yes':
-                print("❌ Cancelled")
+                print("[FAIL] Cancelled")
                 return False
         
         # Delete files
@@ -230,13 +230,13 @@ class CacheManager:
                 f.unlink()
                 deleted_count += 1
         
-        print(f"✅ Cleared {source} cache ({deleted_count} files deleted)")
+        print(f"[OK] Cleared {source} cache ({deleted_count} files deleted)")
         print(f"   Next run will fetch fresh data from API")
         return True
     
     def clear_all_cache(self, confirm: bool = False) -> bool:
         """
-        🔥 DANGER: Clear ALL cache data
+         DANGER: Clear ALL cache data
         
         Args:
             confirm: If False, will prompt for confirmation
@@ -251,12 +251,12 @@ class CacheManager:
         total_files = sum(info['files'] for info in cache_info.values() if info['exists'])
         
         if total_files == 0:
-            print("ℹ️  No cache to clear")
+            print("[INFO]  No cache to clear")
             return False
         
         # Confirmation
         if not confirm:
-            print("🔥 WARNING: NUCLEAR OPTION - About to delete ALL cache!")
+            print(" WARNING: NUCLEAR OPTION - About to delete ALL cache!")
             print(f"   Total Size: {total_size:.2f} MB")
             print(f"   Total Files: {total_files}")
             print("\n   Sources to be cleared:")
@@ -266,25 +266,25 @@ class CacheManager:
             print("\n   This will force fresh API downloads on next run.")
             response = input("\n   Type 'DELETE ALL' to confirm: ")
             if response != 'DELETE ALL':
-                print("❌ Cancelled")
+                print("[FAIL] Cancelled")
                 return False
         
         # Clear all sources
         for source in self.cache_sources.keys():
             self.clear_specific_cache(source, confirm=True)
         
-        print("\n🔥 ALL CACHE CLEARED!")
+        print("\n ALL CACHE CLEARED!")
         print("   Next enrichment run will fetch everything fresh from APIs")
         return True
     
     def test_cache_fallback(self, sample_cve_ids: Optional[List[str]] = None) -> Dict:
         """
-        🧪 Test cache fallback mechanism with sample data
+        [TEST] Test cache fallback mechanism with sample data
         
         This is a SAFE test that uses a few sample CVEs to verify:
-        1. Cache miss → API call → cache save
-        2. Cache hit → load from cache (no API call)
-        3. Cache clear → cache miss again
+        1. Cache miss -> API call -> cache save
+        2. Cache hit -> load from cache (no API call)
+        3. Cache clear -> cache miss again
         
         Args:
             sample_cve_ids: List of CVE IDs to test (default: 5 recent CVEs)
@@ -302,7 +302,7 @@ class CacheManager:
                 'CVE-2024-0005'
             ]
         
-        print("🧪 Testing Cache Fallback Mechanism")
+        print("[TEST] Testing Cache Fallback Mechanism")
         print("=" * 70)
         print(f"Sample CVEs: {', '.join(sample_cve_ids)}")
         print()
@@ -313,7 +313,7 @@ class CacheManager:
         }
         
         # This is a mock test - in real implementation, you'd call actual fetcher
-        print("✅ Test 1: Cache Miss → API Call")
+        print("[OK] Test 1: Cache Miss -> API Call")
         print("   (Would call API if no cache exists)")
         results['tests'].append({
             'test': 'cache_miss',
@@ -321,7 +321,7 @@ class CacheManager:
             'status': 'mock'
         })
         
-        print("\n✅ Test 2: Cache Hit → Load from Cache")
+        print("\n[OK] Test 2: Cache Hit -> Load from Cache")
         print("   (Would load from cache without API call)")
         results['tests'].append({
             'test': 'cache_hit',
@@ -329,7 +329,7 @@ class CacheManager:
             'status': 'mock'
         })
         
-        print("\n✅ Test 3: Cache Clear → Cache Miss")
+        print("\n[OK] Test 3: Cache Clear -> Cache Miss")
         print("   (Would call API again after cache clear)")
         results['tests'].append({
             'test': 'cache_clear',
@@ -338,7 +338,7 @@ class CacheManager:
         })
         
         print("\n" + "=" * 70)
-        print("ℹ️  This is a mock test. Real implementation would:")
+        print("[INFO]  This is a mock test. Real implementation would:")
         print("   1. Import EPSSFetcher")
         print("   2. Fetch sample CVEs with cache enabled")
         print("   3. Clear cache for those CVEs")

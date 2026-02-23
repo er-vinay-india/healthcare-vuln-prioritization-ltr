@@ -38,7 +38,7 @@ class TestCHPLFetcher:
         assert df is not None, "CHPLFetcher returned None - cache load failed"
         assert isinstance(df, pd.DataFrame), "Expected DataFrame"
         assert len(df) > 0, "CHPL cache is empty"
-        print(f"✓ Loaded {len(df):,} CHPL products from cache")
+        print(f"[OK] Loaded {len(df):,} CHPL products from cache")
     
     def test_cache_structure(self):
         """Verify CHPL data has expected columns"""
@@ -74,7 +74,7 @@ class TestCHPLMapper:
         assert len(mapper.vendor_names) > 0, "No vendors in lookup"
         assert len(mapper.product_names) > 0, "No products in lookup"
         
-        print(f"✓ {len(mapper.vendor_names)} vendors, {len(mapper.product_names)} products")
+        print(f"[OK] {len(mapper.vendor_names)} vendors, {len(mapper.product_names)} products")
     
     def test_known_vendor_match(self, mapper):
         """Test matching against known healthcare vendor"""
@@ -93,7 +93,7 @@ class TestCHPLMapper:
         
         # At least one should match if CHPL has major vendors
         if len(matches) > 0:
-            print(f"✓ Matched {len(matches)}/{len(descriptions)} known vendors")
+            print(f"[OK] Matched {len(matches)}/{len(descriptions)} known vendors")
     
     def test_no_match_on_generic_description(self, mapper):
         """Test no false positives on generic CVE"""
@@ -166,14 +166,14 @@ class TestCHPLEnrichmentPipeline:
         total, chpl_count = cursor.fetchone()
         conn.close()
         
-        print(f"\n📊 CHPL Enrichment Status:")
+        print(f"\n[STATS] CHPL Enrichment Status:")
         print(f"   Total CVEs: {total:,}")
         print(f"   CHPL matches: {chpl_count:,} ({chpl_count/total*100:.2f}%)")
         
         # Warning if no CHPL enrichment
         if chpl_count == 0 and total > 0:
             pytest.fail(
-                f"🔴 CRITICAL: Database has {total:,} CVEs but 0 CHPL enrichments!\n"
+                f" CRITICAL: Database has {total:,} CVEs but 0 CHPL enrichments!\n"
                 "   This matches the architecture review finding.\n"
                 "   Action: Run 'python scripts/enrich_cves.py' without --skip-chpl"
             )

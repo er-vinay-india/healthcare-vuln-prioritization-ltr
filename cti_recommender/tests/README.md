@@ -11,11 +11,11 @@
 ```
 tests/
 ├── conftest.py                          # Shared fixtures (temp_dir, test_db, test_settings)
-├── test_config.py                       # ✅ Configuration & settings (10 tests)
-├── test_schemas.py                      # ✅ Pydantic data models (19 tests)
-├── test_feature_engineering_clean.py    # ✅ Feature engineering (5 tests)
-├── test_chpl_integration.py             # ⚠️  CHPL enrichment (10/12 passing)
-├── test_temporal_splits.py              # ✅ Temporal splitting (9/11 passing)
+├── test_config.py                       # [OK] Configuration & settings (10 tests)
+├── test_schemas.py                      # [OK] Pydantic data models (19 tests)
+├── test_feature_engineering_clean.py    # [OK] Feature engineering (5 tests)
+├── test_chpl_integration.py             # [WARN]  CHPL enrichment (10/12 passing)
+├── test_temporal_splits.py              # [OK] Temporal splitting (9/11 passing)
 ├── test_api_*.py                        # API endpoint tests
 └── test_*.py                            # Legacy/additional tests
 ```
@@ -24,7 +24,7 @@ tests/
 
 ## Current Test Status
 
-### ✅ Passing Test Suites (53 tests)
+### [OK] Passing Test Suites (53 tests)
 
 **Configuration & Settings** (10/10 passing)
 - Settings initialization
@@ -57,11 +57,11 @@ tests/
 
 ---
 
-## ⚠️ Critical Test Failures
+## [WARN] Critical Test Failures
 
 ### 1. CHPL Integration (2/12 tests failing)
 
-**Status:** 🔴 **BLOCKS THESIS DEFENSE**
+**Status:**  **BLOCKS THESIS DEFENSE**
 
 **Failure:**
 ```
@@ -108,19 +108,19 @@ pytest tests/test_chpl_integration.py -v
 
 | Component | Coverage | Status |
 |-----------|----------|--------|
-| Configuration | 100% | ✅ Excellent |
-| Data Schemas | 100% | ✅ Excellent |
-| Feature Engineering | 90% | ✅ Good |
-| **CHPL Integration** | **83%** | ⚠️ **CRITICAL ISSUE FOUND** |
-| Temporal Splits | 82% | ✅ Good |
-| API Endpoints | ~60% | 🟡 Partial |
-| Data Pipeline | 0% | ❌ Missing |
+| Configuration | 100% | [OK] Excellent |
+| Data Schemas | 100% | [OK] Excellent |
+| Feature Engineering | 90% | [OK] Good |
+| **CHPL Integration** | **83%** | [WARN] **CRITICAL ISSUE FOUND** |
+| Temporal Splits | 82% | [OK] Good |
+| API Endpoints | ~60% |  Partial |
+| Data Pipeline | 0% | [FAIL] Missing |
 
 ---
 
 ## Missing Test Coverage (Priority Order)
 
-### 🔴 HIGH PRIORITY
+###  HIGH PRIORITY
 
 **1. Data Pipeline Integration Tests**
 ```python
@@ -137,7 +137,7 @@ def test_database_enrichment_consistency()
 pytest tests/test_chpl_integration.py::test_chpl_enrichment_coverage
 ```
 
-### 🟡 MEDIUM PRIORITY
+###  MEDIUM PRIORITY
 
 **3. Model Training Tests**
 ```python
@@ -155,7 +155,7 @@ def test_enrichment_upsert()
 def test_query_performance()
 ```
 
-### 🟢 LOW PRIORITY
+###  LOW PRIORITY
 
 **5. API Integration Tests**
 - Expand test_api_*.py coverage
@@ -210,30 +210,30 @@ pytest tests/ -v -m "not slow"
 
 ## Architecture Review Findings Validated by Tests
 
-### ✅ Confirmed by Tests:
+### [OK] Confirmed by Tests:
 
 1. **CHPL Enrichment Not Working**
    - Test: `test_chpl_enrichment_coverage`
    - Finding: 0 CHPL flags in 226,320 CVEs
-   - Status: 🔴 CRITICAL - matches documentation review
+   - Status:  CRITICAL - matches documentation review
 
 2. **Temporal Splits Work Correctly**
    - Tests: 9/11 passing
-   - Date-based: ✅ Working
-   - Percentage-based: ✅ Working
-   - Year-based: ✅ Working
-   - Data leakage: ✅ Validated
+   - Date-based: [OK] Working
+   - Percentage-based: [OK] Working
+   - Year-based: [OK] Working
+   - Data leakage: [OK] Validated
 
 3. **Feature Engineering Solid**
    - Tests: 5/5 passing
-   - CVSS normalization: ✅
-   - Interaction features: ✅
-   - Missing value handling: ✅
+   - CVSS normalization: [OK]
+   - Interaction features: [OK]
+   - Missing value handling: [OK]
 
-### ❌ Not Yet Validated by Tests:
+### [FAIL] Not Yet Validated by Tests:
 
 1. **Data Pipeline Transparency**
-   - No integration tests for backfill → enrich → train flow
+   - No integration tests for backfill -> enrich -> train flow
    - Need: `test_data_pipeline.py`
 
 2. **Multi-Strategy Temporal Splits**
@@ -276,7 +276,7 @@ pytest tests/ --tb=short --maxfail=5
 
 2. **Create Data Pipeline Tests**
    - File: `tests/test_data_pipeline.py`
-   - Coverage: NVD → DB → Enrichment → Features
+   - Coverage: NVD -> DB -> Enrichment -> Features
 
 3. **Add Model Training Tests**
    - File: `tests/test_ltr_model.py`
@@ -291,11 +291,11 @@ pytest tests/ --tb=short --maxfail=5
 ## Test Quality Standards
 
 ### Required for All Tests:
-- ✅ Descriptive docstrings
-- ✅ Isolated (no shared state)
-- ✅ Fast (<1s per test)
-- ✅ Clear assertions with messages
-- ✅ Proper fixtures from conftest.py
+- [OK] Descriptive docstrings
+- [OK] Isolated (no shared state)
+- [OK] Fast (<1s per test)
+- [OK] Clear assertions with messages
+- [OK] Proper fixtures from conftest.py
 
 ### Test Naming Convention:
 ```python

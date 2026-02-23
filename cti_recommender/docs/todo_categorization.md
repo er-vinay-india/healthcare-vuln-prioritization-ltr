@@ -4,7 +4,7 @@
 
 ---
 
-## ✅ Category 1: REMOVE (Not Needed - 15 TODOs)
+## [OK] Category 1: REMOVE (Not Needed - 15 TODOs)
 **Action:** Delete stub functions entirely
 
 ### Visualization EDA (5 TODOs)
@@ -36,7 +36,7 @@
 
 ---
 
-## 🔧 Category 2: IMPLEMENT NOW (7 TODOs)
+##  Category 2: IMPLEMENT NOW (7 TODOs)
 **Action:** Implement these functions (critical path)
 
 ### Data Preprocessing (2 TODOs) - HIGH PRIORITY
@@ -65,7 +65,7 @@
 
 ---
 
-## 📅 Category 3: DEFER (6 TODOs)
+##  Category 3: DEFER (6 TODOs)
 **Action:** Keep TODO with detailed plan, implement post-production
 
 ### Temporal Utils (1 TODO)
@@ -92,7 +92,7 @@
 
 ---
 
-## 📊 Summary
+## [STATS] Summary
 
 | Category | Count | Action |
 |----------|-------|--------|
@@ -103,7 +103,7 @@
 
 ---
 
-## 🎯 Execution Plan
+## [TARGET] Execution Plan
 
 ### Step 1: Remove Unnecessary Stubs (30 min)
 ```bash
@@ -133,7 +133,7 @@ Add detailed implementation plans to each TODO comment
 
 ---
 
-## ✅ Acceptance Criteria
+## [OK] Acceptance Criteria
 - [ ] 0 TODOs in critical path modules (core/, models/, features/)
 - [ ] All stub files removed
 - [ ] Remaining TODOs have detailed plans

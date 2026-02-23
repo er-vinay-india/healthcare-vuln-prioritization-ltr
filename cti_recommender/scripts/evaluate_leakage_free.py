@@ -248,7 +248,7 @@ def run_leakage_free_evaluation(
     
     # Check we have enough data
     if len(train_only_df) < 100 or len(test_df) < 50:
-        print("\n⚠️ WARNING: Insufficient data for robust evaluation")
+        print("\n[WARN] WARNING: Insufficient data for robust evaluation")
         print("   This may be because temporal labels require future data")
         print("   that isn't available for recent CVEs.")
     
@@ -262,9 +262,9 @@ def run_leakage_free_evaluation(
             'predictions': ltr_predictions.tolist(),
             'metrics': evaluate_model(test_df['temporal_label'].values, ltr_predictions)
         }
-        print(f"✓ LambdaRank trained and evaluated")
+        print(f"[OK] LambdaRank trained and evaluated")
     except Exception as e:
-        print(f"✗ LambdaRank failed: {e}")
+        print(f"[X] LambdaRank failed: {e}")
         ltr_predictions = np.zeros(len(test_df))
     
     # 4b. Bootstrap Ensemble
@@ -287,9 +287,9 @@ def run_leakage_free_evaluation(
                 'metrics': evaluate_model(test_df['temporal_label'].values, risk_aware_preds)
             }
         
-        print(f"✓ Bootstrap Ensemble trained (Mean + Risk-Averse)")
+        print(f"[OK] Bootstrap Ensemble trained (Mean + Risk-Averse)")
     except Exception as e:
-        print(f"✗ Bootstrap Ensemble failed: {e}")
+        print(f"[X] Bootstrap Ensemble failed: {e}")
         mean_preds = np.zeros(len(test_df))
         std_preds = np.zeros(len(test_df))
     
@@ -315,9 +315,9 @@ def run_leakage_free_evaluation(
             'metrics': evaluate_model(test_df['temporal_label'].values, heuristic_scores)
         }
         
-        print(f"✓ Baselines computed (CVSS-only, Heuristic)")
+        print(f"[OK] Baselines computed (CVSS-only, Heuristic)")
     except Exception as e:
-        print(f"✗ Baselines failed: {e}")
+        print(f"[X] Baselines failed: {e}")
     
     # Step 5: Statistical Significance Tests
     print("\n" + "=" * 70)
@@ -345,7 +345,7 @@ def run_leakage_free_evaluation(
         print_significance_report(significance_df, model_metrics)
         
     except Exception as e:
-        print(f"✗ Significance testing failed: {e}")
+        print(f"[X] Significance testing failed: {e}")
         import traceback
         traceback.print_exc()
     
@@ -390,18 +390,18 @@ def run_leakage_free_evaluation(
     with open(output_file, 'w') as f:
         json.dump(convert_for_json(results), f, indent=2)
     
-    print(f"\n✓ Results saved to: {output_file}")
+    print(f"\n[OK] Results saved to: {output_file}")
     
     # Save comparison CSV
     comparison_df = pd.DataFrame(model_metrics).T
     comparison_csv = output_dir / 'leakage_free_comparison.csv'
     comparison_df.to_csv(comparison_csv)
-    print(f"✓ Comparison CSV saved to: {comparison_csv}")
+    print(f"[OK] Comparison CSV saved to: {comparison_csv}")
     
     # Generate summary report
     report_path = output_dir / 'LEAKAGE_FREE_EVALUATION_REPORT.md'
     generate_markdown_report(results, model_metrics, report_path)
-    print(f"✓ Report saved to: {report_path}")
+    print(f"[OK] Report saved to: {report_path}")
     
     return results
 
@@ -459,7 +459,7 @@ def generate_markdown_report(
         report += "| Model A | Model B | Mean Diff | p-value | Significant |\n"
         report += "|---------|---------|-----------|---------|-------------|\n"
         for row in results['significance']:
-            sig = "✓" if row.get('significant', False) else "✗"
+            sig = "[OK]" if row.get('significant', False) else "[X]"
             p_val = f"{row['p_value']:.4f}" if not np.isnan(row.get('p_value', np.nan)) else "N/A"
             report += f"| {row['model_a']} | {row['model_b']} | {row['mean_diff']:.4f} | {p_val} | {sig} |\n"
     else:
@@ -521,7 +521,7 @@ def main():
     )
     
     print("\n" + "=" * 70)
-    print("✅ EVALUATION COMPLETE")
+    print("[OK] EVALUATION COMPLETE")
     print("=" * 70)
     
     return results

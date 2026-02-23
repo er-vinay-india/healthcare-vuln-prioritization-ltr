@@ -194,13 +194,13 @@ def validate_temporal_leakage(
     test_min = test_df[date_col].min()
     
     if test_min < train_max:
-        print(f"⚠️  TEMPORAL LEAKAGE DETECTED!")
+        print(f"[WARN]  TEMPORAL LEAKAGE DETECTED!")
         print(f"   Train max date: {train_max}")
         print(f"   Test min date: {test_min}")
         print(f"   Overlap: {(train_max - test_min).days} days")
         return False
     
-    print(f"✓ No temporal leakage detected")
+    print(f"[OK] No temporal leakage detected")
     print(f"   Train ends: {train_max}")
     print(f"   Test starts: {test_min}")
     return True

@@ -265,22 +265,22 @@ def build_features(
 
         # quick prints (safe to keep)
         print(f"Feature engineering complete: {len(features):,} rows")
-        print(f"Columns: {len(before_tbl)} original → {len(after_tbl)} total (+{len(after_tbl) - len(before_tbl)} new features)")
+        print(f"Columns: {len(before_tbl)} original -> {len(after_tbl)} total (+{len(after_tbl) - len(before_tbl)} new features)")
         
         # Show NEW columns created (not in before)
         new_cols = set(after_tbl.index) - set(before_tbl.index)
         if new_cols:
-            print(f"\n✅ {len(new_cols)} NEW features created (0% missing):")
+            print(f"\n[OK] {len(new_cols)} NEW features created (0% missing):")
             for col in sorted(new_cols):
                 print(f"   - {col}")
         
         # Show columns with reduced missingness
         improved = delta_tbl[delta_tbl["missing_count_reduced"] > 0].head(10)
         if len(improved) > 0:
-            print("\n📉 Top missingness reductions (original columns cleaned):")
+            print("\n Top missingness reductions (original columns cleaned):")
             print(improved[["missing_count_reduced", "missing_pct_reduced"]])
         else:
-            print("\n📊 No missingness in original columns (data already clean)")
+            print("\n[STATS] No missingness in original columns (data already clean)")
 
     # Optional plots
     if plot and report is not None:

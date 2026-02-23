@@ -5,7 +5,7 @@
 
 ---
 
-## 🏗️ Architecture Diagrams
+##  Architecture Diagrams
 
 Visual representations of the system architecture:
 
@@ -17,11 +17,11 @@ Visual representations of the system architecture:
 | **Evaluation Strategies** | Three evaluation approaches | [SVG](diagrams/evaluation_strategies.svg) |
 | **LTR Model** | LambdaMART architecture | [SVG](diagrams/ltr_model.svg) |
 
-> 📝 SVG files are the primary view; Mermaid source (.mmd) is kept in the same folder for edits.
+> [NOTE] SVG files are the primary view; Mermaid source (.mmd) is kept in the same folder for edits.
 
 ---
 
-## 📚 Core Documentation
+##  Core Documentation
 
 ### Getting Started
 - **[Quick Start Guide](QUICKSTART.md)** - Installation and 5-minute setup
@@ -39,7 +39,7 @@ Visual representations of the system architecture:
 
 ---
 
-## 📓 Notebook Documentation
+##  Notebook Documentation
 
 The project uses a **5-notebook pipeline** for modularity and clarity:
 
@@ -55,7 +55,7 @@ The project uses a **5-notebook pipeline** for modularity and clarity:
 
 ---
 
-## 📁 Documentation Structure
+##  Documentation Structure
 
 ```
 docs/
@@ -71,47 +71,47 @@ docs/
 ├── KT_GUIDE.md                 # Knowledge transfer
 ├── GPU_SETUP.md                # GPU acceleration setup
 │
-├── diagrams/                   # 🎨 Architecture diagrams (Mermaid)
+├── diagrams/                   #  Architecture diagrams (Mermaid)
 │   ├── project_architecture.mmd
 │   ├── notebook_pipeline.mmd
 │   ├── data_pipeline.mmd
 │   ├── evaluation_strategies.mmd
 │   └── ltr_model.mmd
 │
-├── guides/                     # 📖 Detailed guides
+├── guides/                     #  Detailed guides
 │   └── ARCHITECTURE_GUIDE.md   # System architecture details
 │
 
 ---
 
-## 🎯 Key Documents by Use Case
+## [TARGET] Key Documents by Use Case
 
 ### I want to...
 
 **...get started quickly**  
-→ [QUICKSTART.md](QUICKSTART.md) - 5-minute installation and first run
+-> [QUICKSTART.md](QUICKSTART.md) - 5-minute installation and first run
 
 **...understand the project**  
-→ [Main README](../README.md) - Overview, architecture, results
+-> [Main README](../README.md) - Overview, architecture, results
 
 **...run the analysis**  
-→ Start with notebooks: `Data_Ingestion` → `EDA` → `Feature_Engineering` → `Model_Training`
+-> Start with notebooks: `Data_Ingestion` -> `EDA` -> `Feature_Engineering` -> `Model_Training`
 
 **...contribute code**  
-→ [DEVELOPMENT.md](DEVELOPMENT.md) - Dev environment, testing, code standards
+-> [DEVELOPMENT.md](DEVELOPMENT.md) - Dev environment, testing, code standards
 
 **...understand the methodology**  
-→ [SCORING_EXPLANATION.md](SCORING_EXPLANATION.md) - Weak supervision, confidence weighting
+-> [SCORING_EXPLANATION.md](SCORING_EXPLANATION.md) - Weak supervision, confidence weighting
 
 **...see the research background**  
-→ [RESEARCH_CONTEXT.md](RESEARCH_CONTEXT.md) - Literature review, problem statement
+-> [RESEARCH_CONTEXT.md](RESEARCH_CONTEXT.md) - Literature review, problem statement
 
 **...present to thesis committee**  
-→ [EXAMINER_BRIEF.md](EXAMINER_BRIEF.md) - Project summary and results
+-> [EXAMINER_BRIEF.md](EXAMINER_BRIEF.md) - Project summary and results
 
 ---
 
-## 📦 Data Sources
+##  Data Sources
 
 - **NVD API**: https://nvd.nist.gov/developers - CVE database
 - **CISA KEV**: https://www.cisa.gov/known-exploited-vulnerabilities-catalog - Exploited CVEs
@@ -121,14 +121,14 @@ docs/
 
 ---
 
-## 📝 Document Updates
+## [NOTE] Document Updates
 
 **Recent Changes (Feb 2026):**
-- ✅ Updated to multi-notebook architecture (5 notebooks)
-- ✅ Added three evaluation strategies (temporal + K-fold)
-- ✅ Archived migration documents (not production yet)
-- ✅ Created new Mermaid diagrams for current architecture
-- ✅ Updated README with actual project structure
+- [OK] Updated to multi-notebook architecture (5 notebooks)
+- [OK] Added three evaluation strategies (temporal + K-fold)
+- [OK] Archived migration documents (not production yet)
+- [OK] Created new Mermaid diagrams for current architecture
+- [OK] Updated README with actual project structure
 
 **Archived Documents:**
 - Migration guides (moved to `archive/migration_docs/`)
@@ -137,7 +137,7 @@ docs/
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for contribution guidelines.
 
@@ -162,7 +162,7 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for contribution guidelines.
 
 - **GitHub Issues**: https://github.com/er-vinay-india/cti-recommender/issues
 - **Email**: [your-email]
-- **Documentation**: You're looking at it! 📚
+- **Documentation**: You're looking at it! 
 
 ---
 

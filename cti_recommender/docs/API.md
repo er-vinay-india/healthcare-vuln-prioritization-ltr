@@ -44,7 +44,7 @@ curl http://localhost:8000/health
 - **ReDoc**: http://localhost:8000/redoc
 - **Health Check**: http://localhost:8000/health
 
-## 📦 Installation (Development)
+##  Installation (Development)
 
 ### Local Setup
 
@@ -101,7 +101,7 @@ Docker volumes for persistence:
 - `./logs` - Application logs
 - `./cache` - API response cache (organized by source)
 
-## 🧪 Testing
+## [TEST] Testing
 
 ### Run Tests
 
@@ -194,7 +194,7 @@ docker-compose exec api python scripts/train_ltr_pruned.py
 docker-compose exec api python scripts/temporal_validation_pruned.py
 ```
 
-## 🛠️ Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -300,7 +300,7 @@ Once running, visit:
 - **Interactive Docs**: http://localhost:8000/docs
 - **Alternative Docs**: http://localhost:8000/redoc
 
-## 🔐 Security
+##  Security
 
 ### Best Practices
 
@@ -325,7 +325,7 @@ pip install --upgrade xgboost
 pip install --upgrade -r requirements.txt
 ```
 
-## 📞 Support
+##  Support
 
 For issues:
 1. Check logs: `docker-compose logs -f`
@@ -333,6 +333,6 @@ For issues:
 3. Review documentation
 4. Open GitHub issue
 
-## 📄 License
+##  License
 
 [Your License Here]

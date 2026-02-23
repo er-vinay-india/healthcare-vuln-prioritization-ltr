@@ -53,7 +53,7 @@ def plot_temporal_trends(df: pd.DataFrame, recent_months: int = 24) -> None:
     
     peak_year = cves_per_year.loc[cves_per_year['count'].idxmax(), 'year']
     peak_count = cves_per_year['count'].max()
-    print(f"📊 TREND: Peak year: {peak_year} with {peak_count:,} CVEs")
+    print(f"[STATS] TREND: Peak year: {peak_year} with {peak_count:,} CVEs")
     
     # Chart 2: Monthly Trend (Line Chart) - Recent period
     # Calculate cutoff date for recent period
@@ -75,7 +75,7 @@ def plot_temporal_trends(df: pd.DataFrame, recent_months: int = 24) -> None:
     fig2.show()
     
     avg_monthly = monthly_trend['count'].mean()
-    print(f"📈 INFO: Average CVEs per month (recent period): {avg_monthly:.0f}")
+    print(f" INFO: Average CVEs per month (recent period): {avg_monthly:.0f}")
 
 
 def plot_cvss_distribution(df: pd.DataFrame, cvss_column: str = 'cvss') -> None:
@@ -87,14 +87,14 @@ def plot_cvss_distribution(df: pd.DataFrame, cvss_column: str = 'cvss') -> None:
         cvss_column: Name of the CVSS column (default: 'cvss')
     """
     if cvss_column not in df.columns:
-        print(f"❌ ERROR: Column '{cvss_column}' not found in DataFrame")
+        print(f"[FAIL] ERROR: Column '{cvss_column}' not found in DataFrame")
         return
     
     # Filter out null values
     df_clean = df[df[cvss_column].notna()].copy()
     
     if len(df_clean) == 0:
-        print(f"❌ ERROR: No non-null values in '{cvss_column}' column")
+        print(f"[FAIL] ERROR: No non-null values in '{cvss_column}' column")
         return
     
     # Create histogram
@@ -111,7 +111,7 @@ def plot_cvss_distribution(df: pd.DataFrame, cvss_column: str = 'cvss') -> None:
     
     # Statistics
     stats = df_clean[cvss_column].describe()
-    print(f"\n📊 CVSS Statistics:")
+    print(f"\n[STATS] CVSS Statistics:")
     print(f"   Mean: {stats['mean']:.2f}")
     print(f"   Median: {stats['50%']:.2f}")
     print(f"   Std Dev: {stats['std']:.2f}")
@@ -123,7 +123,7 @@ def plot_cvss_distribution(df: pd.DataFrame, cvss_column: str = 'cvss') -> None:
     medium = ((df_clean[cvss_column] >= 4.0) & (df_clean[cvss_column] < 7.0)).sum()
     low = (df_clean[cvss_column] < 4.0).sum()
     
-    print(f"\n🎯 Severity Breakdown:")
+    print(f"\n[TARGET] Severity Breakdown:")
     print(f"   Critical (9.0-10.0): {critical:,} ({critical/len(df_clean)*100:.1f}%)")
     print(f"   High (7.0-8.9): {high:,} ({high/len(df_clean)*100:.1f}%)")
     print(f"   Medium (4.0-6.9): {medium:,} ({medium/len(df_clean)*100:.1f}%)")
@@ -140,7 +140,7 @@ def plot_kev_analysis(df: pd.DataFrame, cvss_column: str = 'cvss', kev_column: s
         kev_column: Name of the KEV flag column (default: 'kev_flag')
     """
     if cvss_column not in df.columns or kev_column not in df.columns:
-        print(f"❌ ERROR: Required columns not found")
+        print(f"[FAIL] ERROR: Required columns not found")
         return
     
     # Prepare data
@@ -164,10 +164,10 @@ def plot_kev_analysis(df: pd.DataFrame, cvss_column: str = 'cvss', kev_column: s
     kev_data = df_clean[df_clean[kev_column] == 1][cvss_column]
     non_kev_data = df_clean[df_clean[kev_column] == 0][cvss_column]
     
-    print(f"\n🎯 KEV Analysis:")
+    print(f"\n[TARGET] KEV Analysis:")
     print(f"   KEV CVEs: {len(kev_data):,} ({len(kev_data)/len(df_clean)*100:.2f}%)")
     print(f"   Non-KEV CVEs: {len(non_kev_data):,} ({len(non_kev_data)/len(df_clean)*100:.2f}%)")
-    print(f"\n📊 CVSS Comparison:")
+    print(f"\n[STATS] CVSS Comparison:")
     print(f"   KEV Mean: {kev_data.mean():.2f} (Median: {kev_data.median():.2f})")
     print(f"   Non-KEV Mean: {non_kev_data.mean():.2f} (Median: {non_kev_data.median():.2f})")
     print(f"   Difference: {kev_data.mean() - non_kev_data.mean():.2f} points")
@@ -182,7 +182,7 @@ def plot_attack_coverage(df: pd.DataFrame, attack_count_column: str = 'attack_te
         attack_count_column: Name of the technique count column (default: 'attack_technique_count')
     """
     if attack_count_column not in df.columns:
-        print(f"❌ ERROR: Column '{attack_count_column}' not found")
+        print(f"[FAIL] ERROR: Column '{attack_count_column}' not found")
         return
     
     # Filter CVEs with ATT&CK mapping
@@ -190,10 +190,10 @@ def plot_attack_coverage(df: pd.DataFrame, attack_count_column: str = 'attack_te
     attack_total = len(attack_cves)
     attack_pct = (attack_total / len(df) * 100)
     
-    print(f"🔗 INFO: CVEs with ATT&CK Mapping: {attack_total:,} ({attack_pct:.2f}%)")
+    print(f" INFO: CVEs with ATT&CK Mapping: {attack_total:,} ({attack_pct:.2f}%)")
     
     if attack_total == 0:
-        print("⚠️  No CVEs with ATT&CK mappings found")
+        print("[WARN]  No CVEs with ATT&CK mappings found")
         return
     
     # Technique count distribution (top 10)
@@ -210,8 +210,8 @@ def plot_attack_coverage(df: pd.DataFrame, attack_count_column: str = 'attack_te
     fig.update_layout(height=400, showlegend=False)
     fig.show()
     
-    print(f"📊 INFO: Average techniques per mapped CVE: {attack_cves[attack_count_column].mean():.2f}")
-    print(f"📊 INFO: Max techniques for a single CVE: {attack_cves[attack_count_column].max()}")
+    print(f"[STATS] INFO: Average techniques per mapped CVE: {attack_cves[attack_count_column].mean():.2f}")
+    print(f"[STATS] INFO: Max techniques for a single CVE: {attack_cves[attack_count_column].max()}")
 
 
 def plot_label_distribution(df: pd.DataFrame, label_column: str = 'label') -> None:
@@ -223,14 +223,14 @@ def plot_label_distribution(df: pd.DataFrame, label_column: str = 'label') -> No
         label_column: Name of the label column (default: 'label')
     """
     if label_column not in df.columns:
-        print(f"❌ ERROR: Column '{label_column}' not found")
+        print(f"[FAIL] ERROR: Column '{label_column}' not found")
         return
     
     # Filter out null labels
     df_labeled = df[df[label_column].notna()].copy()
     
     if len(df_labeled) == 0:
-        print("❌ ERROR: No labeled CVEs found")
+        print("[FAIL] ERROR: No labeled CVEs found")
         return
     
     # Label counts
@@ -248,7 +248,7 @@ def plot_label_distribution(df: pd.DataFrame, label_column: str = 'label') -> No
     fig.show()
     
     # Statistics table
-    print(f"\n🏷️  Label Distribution Summary:")
+    print(f"\n  Label Distribution Summary:")
     print(f"   Total Labeled CVEs: {len(df_labeled):,}")
     
     # Priority buckets
@@ -256,7 +256,7 @@ def plot_label_distribution(df: pd.DataFrame, label_column: str = 'label') -> No
     medium_priority = ((df_labeled[label_column] >= 2) & (df_labeled[label_column] < 4)).sum()
     low_priority = ((df_labeled[label_column] >= 0) & (df_labeled[label_column] < 2)).sum()
     
-    print(f"\n📊 Priority Buckets:")
+    print(f"\n[STATS] Priority Buckets:")
     print(f"   High Priority (4-5): {high_priority:,} ({high_priority/len(df_labeled)*100:.1f}%)")
     print(f"   Medium Priority (2-3): {medium_priority:,} ({medium_priority/len(df_labeled)*100:.1f}%)")
     print(f"   Low Priority (0-1): {low_priority:,} ({low_priority/len(df_labeled)*100:.1f}%)")
@@ -280,29 +280,29 @@ def plot_all_eda(df: pd.DataFrame,
         recent_months: Number of recent months for temporal trend (default: 24)
     """
     print("=" * 80)
-    print("🔍 EXPLORATORY DATA ANALYSIS")
+    print(" EXPLORATORY DATA ANALYSIS")
     print("=" * 80)
     
-    print("\n1️⃣  Temporal Trends")
+    print("\n1⃣  Temporal Trends")
     print("-" * 80)
     plot_temporal_trends(df, recent_months=recent_months)
     
-    print("\n\n2️⃣  CVSS Distribution")
+    print("\n\n2⃣  CVSS Distribution")
     print("-" * 80)
     plot_cvss_distribution(df, cvss_column=cvss_column)
     
-    print("\n\n3️⃣  KEV Analysis")
+    print("\n\n3⃣  KEV Analysis")
     print("-" * 80)
     plot_kev_analysis(df, cvss_column=cvss_column, kev_column=kev_column)
     
-    print("\n\n4️⃣  ATT&CK Coverage")
+    print("\n\n4⃣  ATT&CK Coverage")
     print("-" * 80)
     plot_attack_coverage(df, attack_count_column=attack_column)
     
-    print("\n\n5️⃣  Label Distribution")
+    print("\n\n5⃣  Label Distribution")
     print("-" * 80)
     plot_label_distribution(df, label_column=label_column)
     
     print("\n" + "=" * 80)
-    print("✅ EDA Complete")
+    print("[OK] EDA Complete")
     print("=" * 80)

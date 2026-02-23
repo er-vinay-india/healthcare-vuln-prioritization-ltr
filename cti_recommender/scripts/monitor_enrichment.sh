@@ -8,21 +8,21 @@ echo ""
 
 # Check if process is running
 if ps aux | grep -q "[p]ython scripts/enrich_cves.py"; then
-    echo "✅ Enrichment process is RUNNING"
+    echo "[OK] Enrichment process is RUNNING"
     echo ""
 else
-    echo "⚠️  Enrichment process NOT FOUND"
+    echo "[WARN]  Enrichment process NOT FOUND"
     echo ""
 fi
 
 # Show latest log entries
-echo "📊 Latest Progress:"
+echo "[STATS] Latest Progress:"
 echo "-------------------------------------------------------------------"
 tail -20 /tmp/enrich_cves.log | grep -E "(Batch|PHASE|enriched|CHPL:)"
 echo ""
 
 # Show database CHPL count
-echo "📈 Current Database Status:"
+echo " Current Database Status:"
 echo "-------------------------------------------------------------------"
 cd /Users/vinayksharma/AirDnd/cti_recommender
 source venv/bin/activate 2>/dev/null

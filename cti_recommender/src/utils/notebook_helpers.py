@@ -52,7 +52,7 @@ def save_plot(fig, name: str, subdir: str = 'plots', show_link: bool = True):
         else:
             rel_path = output_path
         
-        link_html = f'✓ Plot saved: <a href="../{rel_path}" target="_blank">{name}</a>'
+        link_html = f'[OK] Plot saved: <a href="../{rel_path}" target="_blank">{name}</a>'
         return HTML(link_html)
     
     return None
@@ -86,7 +86,7 @@ def save_dataframe(df, name: str, subdir: str = 'data', format: str = 'csv'):
     else:
         raise ValueError(f"Unknown format: {format}")
     
-    print(f"✓ DataFrame saved: {output_path}")
+    print(f"[OK] DataFrame saved: {output_path}")
     return output_path
 
 
@@ -126,4 +126,4 @@ def setup_notebook_output():
     warnings.filterwarnings('ignore', category=FutureWarning)
     warnings.filterwarnings('ignore', category=UserWarning)
     
-    print("✓ Notebook output configured")
+    print("[OK] Notebook output configured")

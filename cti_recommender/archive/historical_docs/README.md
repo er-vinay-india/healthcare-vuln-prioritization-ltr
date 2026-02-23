@@ -1,10 +1,10 @@
-# 🗄️ Historical Documents Archive
+#  Historical Documents Archive
 
 This directory contains historical documents from development phases, code reviews, and refactoring processes. These are kept for reference but are **not current documentation**.
 
 ---
 
-## ⚠️ Important Notice
+## [WARN] Important Notice
 
 **DO NOT use these documents as reference for current code.** These represent past states of the system.
 
@@ -15,7 +15,7 @@ This directory contains historical documents from development phases, code revie
 
 ---
 
-## 📑 Archived Documents
+##  Archived Documents
 
 ### Phase 1 Documents
 - **PHASE1_SUMMARY.md** - Phase 1 audit results and findings
@@ -42,7 +42,7 @@ This directory contains historical documents from development phases, code revie
 
 ---
 
-## 📅 Archive Timeline
+##  Archive Timeline
 
 | Date | Event | Documents Archived |
 |------|-------|-------------------|
@@ -51,7 +51,7 @@ This directory contains historical documents from development phases, code revie
 
 ---
 
-## 🔍 Why Archived?
+##  Why Archived?
 
 These documents were archived because they:
 1. **Represent historical states** - Code has changed significantly
@@ -61,23 +61,23 @@ These documents were archived because they:
 
 ---
 
-## 📚 Finding Current Information
+##  Finding Current Information
 
-### Instead of archived Phase 1 docs → See:
+### Instead of archived Phase 1 docs -> See:
 - **README.md** - Current performance metrics
 - **docs/QUICKSTART.md** - Current workflow
 
-### Instead of review documents → See:
+### Instead of review documents -> See:
 - **ARCHITECTURE_GUIDE.md** - Current architecture
 - **docs/DEVELOPMENT.md** - Coding standards
 
-### Instead of planning documents → See:
+### Instead of planning documents -> See:
 - **GitHub Issues** - Current roadmap
 - **README.md** - Current phase status
 
 ---
 
-## 🗑️ Deletion Policy
+##  Deletion Policy
 
 These documents are kept for:
 - **Historical reference**
@@ -91,7 +91,7 @@ They may be deleted after:
 
 ---
 
-## 📖 Reading Archived Documents
+##  Reading Archived Documents
 
 If you need to understand **why** decisions were made:
 1. Check git commit history first

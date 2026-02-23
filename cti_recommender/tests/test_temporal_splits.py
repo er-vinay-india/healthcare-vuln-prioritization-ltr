@@ -68,7 +68,7 @@ class TestTemporalSplits:
         assert val_max <= test_min, \
             f"Temporal leakage: val_max ({val_max}) > test_min ({test_min})"
         
-        print(f"✓ No leakage: {train_max.date()} < {val_min.date()} < {test_min.date()}")
+        print(f"[OK] No leakage: {train_max.date()} < {val_min.date()} < {test_min.date()}")
     
     def test_2024_split_date(self, sample_data):
         """Test split with 2024-11-01 cutoff (current config)"""
@@ -84,7 +84,7 @@ class TestTemporalSplits:
         
         # Check if 2025 data is in test set
         test_years = test['published'].dt.year.unique()
-        print(f"✓ Test set years: {sorted(test_years)}")
+        print(f"[OK] Test set years: {sorted(test_years)}")
     
     def test_validate_leakage_function(self, sample_data):
         """Test temporal leakage validation function"""
@@ -111,7 +111,7 @@ class TestTemporalSplits:
         assert all(year < 2025 for year in train_years), \
             "Train set contains 2025 data"
         
-        print(f"✓ Train: {sorted(train_years)}, Test: {sorted(test_years)}")
+        print(f"[OK] Train: {sorted(train_years)}, Test: {sorted(test_years)}")
 
 
 class TestPercentageBasedSplit:
@@ -150,7 +150,7 @@ class TestPercentageBasedSplit:
         assert 14 < val_pct < 16, f"Val should be ~15%, got {val_pct:.1f}%"
         assert 14 < test_pct < 16, f"Test should be ~15%, got {test_pct:.1f}%"
         
-        print(f"✓ Split: {train_pct:.1f}% / {val_pct:.1f}% / {test_pct:.1f}%")
+        print(f"[OK] Split: {train_pct:.1f}% / {val_pct:.1f}% / {test_pct:.1f}%")
     
     def test_percentage_maintains_temporal_order(self, sample_data):
         """Verify percentage split maintains chronological order"""
@@ -201,8 +201,8 @@ class TestYearBasedSplit:
         assert all(y in train_years for y in train_actual)
         assert all(y in test_years for y in test_actual)
         
-        print(f"✓ Train years: {sorted(train_actual)}")
-        print(f"✓ Test years: {sorted(test_actual)}")
+        print(f"[OK] Train years: {sorted(train_actual)}")
+        print(f"[OK] Test years: {sorted(test_actual)}")
 
 
 class TestEdgeCases:

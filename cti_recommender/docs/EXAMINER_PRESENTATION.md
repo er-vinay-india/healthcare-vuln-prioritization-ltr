@@ -150,7 +150,7 @@ Traditional vulnerability management relies on CVSS severity scores alone, which
 
 **Label Leakage Issue (Discovered & Mitigated):**
 - Initial labels were **deterministic functions** of features (perfect NDCG=1.0)
-- Root cause: `label = f(KEV, EPSS, healthcare)` → model just learned thresholds
+- Root cause: `label = f(KEV, EPSS, healthcare)` -> model just learned thresholds
 - **Solution:** Pruned model with strong regularization (NDCG@10 = 0.76, more realistic)
 
 ### Stage 4: Model Training (LightGBM LambdaMART)
@@ -231,13 +231,13 @@ Traditional vulnerability management relies on CVSS severity scores alone, which
 │    │ CVSS-Only (baseline)    │ 0.6675    │ -13.0%   │     │
 │    └─────────────────────────┴───────────┴──────────┘     │
 │                                                             │
-│    🔑 Key Insight: KEV is most critical signal (-10.2%)    │
+│     Key Insight: KEV is most critical signal (-10.2%)    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🎓 ACADEMIC COMPARISON & BASELINE FRAMING
+##  ACADEMIC COMPARISON & BASELINE FRAMING
 
 ### Comparison Strategy
 
@@ -320,8 +320,8 @@ Total Score = KEV (0.28)
 **Before (CVSS-only approach):**
 ```
 Input: 226,320 CVEs
-Filter: CVSS >= 7.0 → 89,547 High/Critical CVEs
-Problem: Which 89,547 to patch first? → Alert fatigue
+Filter: CVSS >= 7.0 -> 89,547 High/Critical CVEs
+Problem: Which 89,547 to patch first? -> Alert fatigue
 Result: Security team overwhelmed
 ```
 
@@ -342,25 +342,25 @@ Benefit: Reduced mean-time-to-remediation by ~40%
 
 ---
 
-## 🔬 TECHNICAL RIGOR & VALIDATION
+##  TECHNICAL RIGOR & VALIDATION
 
 ### Data Quality Assurance
 
 **Issue Discovered During Development:**
 - **EPSS Coverage Bug:** Initial run showed 0% EPSS coverage (all zeros)
 - **Root Cause:** Enrichment script never executed on full dataset
-- **Fix:** Ran full enrichment pipeline → 94.7% EPSS coverage
+- **Fix:** Ran full enrichment pipeline -> 94.7% EPSS coverage
 - **Impact:** +41.6% NDCG improvement (largest single feature)
 
 **Validation Checks:**
 ```python
 # Data Quality Tests (src/analysis/data_quality.py)
-✓ No missing CVE IDs
-✓ Valid date ranges (2018-2025)
-✓ CVSS scores in [0, 10] range
-✓ EPSS scores in [0, 1] range
-✓ No duplicate CVE IDs
-✓ Enrichment coverage >= 90%
+[OK] No missing CVE IDs
+[OK] Valid date ranges (2018-2025)
+[OK] CVSS scores in [0, 10] range
+[OK] EPSS scores in [0, 1] range
+[OK] No duplicate CVE IDs
+[OK] Enrichment coverage >= 90%
 ```
 
 ### Label Leakage Investigation
@@ -374,7 +374,7 @@ Benefit: Reduced mean-time-to-remediation by ~40%
 
 **Solution (Pruned Model):**
 - Strong regularization (L1=0.1, L2=0.1, max_depth=5)
-- Feature reduction (23 → 14 features)
+- Feature reduction (23 -> 14 features)
 - Result: NDCG@10 = 0.76 (more realistic)
 - Documentation: `docs/LABEL_LEAKAGE_INVESTIGATION.md`
 
@@ -396,7 +396,7 @@ Conclusion: Model generalizes well to future data
 
 ---
 
-## 💡 KEY CONTRIBUTIONS & NOVELTY
+## [TIP] KEY CONTRIBUTIONS & NOVELTY
 
 ### 1. Multi-Source Data Fusion
 **Innovation:** First system to integrate 6 authoritative sources for healthcare
@@ -545,7 +545,7 @@ Conclusion: Model generalizes well to future data
 
 **Prepare to Explain:**
 - [ ] Problem statement (alert fatigue, CVSS limitations)
-- [ ] Data flow (6 sources → 14 features → LTR model → Top-K output)
+- [ ] Data flow (6 sources -> 14 features -> LTR model -> Top-K output)
 - [ ] Why LTR? (ranking-native, learns from data, no manual tuning)
 - [ ] Baseline comparison (CVSS, EPSS, ATT&CK, CAVP vs ours)
 - [ ] Key results (NDCG 0.76, +27.5% improvement, 80% precision)
@@ -562,16 +562,16 @@ Conclusion: Model generalizes well to future data
 - [ ] Temporal validation results
 
 **Be Ready to Answer:**
-- *"How is this different from existing tools?"* → Multi-source fusion + LTR + healthcare focus
-- *"Why not just use CVSS?"* → Show +27.5% NDCG improvement
-- *"How do you handle label quality?"* → Pruned model, regularization, NDCG 0.76 (realistic)
-- *"Does it generalize to future data?"* → Yes, temporal validation NDCG 0.76 on 2025
-- *"What's the computational cost?"* → 10ms per CVE, ~2 minutes for 226K CVEs
-- *"Can this work for other sectors?"* → Yes, replace healthcare patterns with finance/retail
+- *"How is this different from existing tools?"* -> Multi-source fusion + LTR + healthcare focus
+- *"Why not just use CVSS?"* -> Show +27.5% NDCG improvement
+- *"How do you handle label quality?"* -> Pruned model, regularization, NDCG 0.76 (realistic)
+- *"Does it generalize to future data?"* -> Yes, temporal validation NDCG 0.76 on 2025
+- *"What's the computational cost?"* -> 10ms per CVE, ~2 minutes for 226K CVEs
+- *"Can this work for other sectors?"* -> Yes, replace healthcare patterns with finance/retail
 
 ---
 
-## 🎓 ACADEMIC POSITIONING
+##  ACADEMIC POSITIONING
 
 ### Thesis Statement
 *"Multi-source cyber threat intelligence fusion via learning-to-rank improves healthcare vulnerability prioritization accuracy by 27.5% compared to traditional CVSS-only approaches, while providing interpretable recommendations through feature attribution analysis."*
@@ -593,7 +593,7 @@ Conclusion: Model generalizes well to future data
 
 ---
 
-## 📞 QUESTIONS FOR EXAMINER (Ask at End)
+##  QUESTIONS FOR EXAMINER (Ask at End)
 
 1. *"Would it strengthen the thesis to compare against commercial tools (Tenable, Rapid7)?"*
 2. *"Should we emphasize the label leakage discovery as a research finding?"*
@@ -618,4 +618,4 @@ Conclusion: Model generalizes well to future data
 
 ---
 
-**Good luck with your examination! You have solid work backed by rigorous evaluation. Be confident!** 🚀
+**Good luck with your examination! You have solid work backed by rigorous evaluation. Be confident!** [RUN]

@@ -228,7 +228,7 @@ def main():
     results = evaluate_temporal(model, X_test, y_test, X_train.columns.tolist())
     
     logger.info("="*70)
-    logger.info("✅ Temporal validation complete!")
+    logger.info("[OK] Temporal validation complete!")
     logger.info("="*70)
     logger.info(f"Key Insight: NDCG@10 on 2025 data = {results['ndcg_10']:.4f}")
     logger.info("(Compare to 1.0000 on random split - temporal split is more realistic)")

@@ -1,6 +1,6 @@
 %%{init: {'theme': 'base'}}%%
 flowchart LR
-    subgraph Sources["🌐 Data Sources"]
+    subgraph Sources[" Data Sources"]
         direction TB
         S1[NVD API<br/>176K CVEs]
         S2[CISA KEV<br/>1.5K Exploited]
@@ -9,7 +9,7 @@ flowchart LR
         S5[CHPL<br/>6.9K Products]
     end
 
-    subgraph Ingest["1️⃣ Ingestion"]
+    subgraph Ingest["1⃣ Ingestion"]
         direction TB
         I1[Fetch & Cache]
         I2[Store SQLite]
@@ -18,7 +18,7 @@ flowchart LR
         I2 --> I3
     end
 
-    subgraph Features["2️⃣ Features"]
+    subgraph Features["2⃣ Features"]
         direction TB
         F1[16 Features]
         F2[CVSS Score]
@@ -35,7 +35,7 @@ flowchart LR
         F1 --> F7
     end
 
-    subgraph Labels["3️⃣ Weak Labels"]
+    subgraph Labels["3⃣ Weak Labels"]
         direction TB
         L1[Soft Labels 0-3]
         L2[KEV: 3.0]
@@ -48,7 +48,7 @@ flowchart LR
         L1 --> L5
     end
 
-    subgraph Train["4️⃣ Training"]
+    subgraph Train["4⃣ Training"]
         direction TB
         T1[3 Split Strategies]
         T2[LambdaMART<br/>Confidence-Weighted]
@@ -59,7 +59,7 @@ flowchart LR
         T3 --> T4
     end
 
-    subgraph Eval["5️⃣ Evaluation"]
+    subgraph Eval["5⃣ Evaluation"]
         direction TB
         E1["NDCG@K: 1.0000"]
         E2["Precision@K: 1.0000"]
@@ -70,7 +70,7 @@ flowchart LR
         E3 --> E4
     end
 
-    subgraph Output["6️⃣ Output"]
+    subgraph Output["6⃣ Output"]
         direction TB
         F1[Trained Models]
         F2[Evaluation Results]

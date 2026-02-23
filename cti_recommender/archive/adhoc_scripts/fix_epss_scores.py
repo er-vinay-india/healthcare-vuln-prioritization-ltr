@@ -21,7 +21,7 @@ def check_epss_cache():
     cache_path = Path(__file__).parent.parent / 'data_cache' / 'epss' / 'epss_2026-01-17.json'
     
     if not cache_path.exists():
-        print("❌ No EPSS cache found!")
+        print("[FAIL] No EPSS cache found!")
         return None
     
     with open(cache_path) as f:
@@ -63,7 +63,7 @@ def update_epss_from_cache(dry_run=True, limit=100):
     print(f"\nCVEs needing EPSS update: {len(df):,}")
     
     if len(df) == 0:
-        print("✅ No CVEs need EPSS updates!")
+        print("[OK] No CVEs need EPSS updates!")
         db.close()
         return
     
@@ -103,11 +103,11 @@ def update_epss_from_cache(dry_run=True, limit=100):
     
     if not dry_run:
         db.conn.commit()
-        print(f"\n✅ Updated {updated:,} CVEs with EPSS scores")
+        print(f"\n[OK] Updated {updated:,} CVEs with EPSS scores")
     else:
-        print(f"\n📊 DRY RUN: Would update {updated:,} CVEs")
+        print(f"\n[STATS] DRY RUN: Would update {updated:,} CVEs")
     
-    print(f"⚠️  {not_in_cache:,} CVEs not in EPSS cache")
+    print(f"[WARN]  {not_in_cache:,} CVEs not in EPSS cache")
     
     # Sample check
     if updated > 0:

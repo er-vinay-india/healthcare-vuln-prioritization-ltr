@@ -59,7 +59,7 @@ def recalculate_labels(batch_size=10000):
     
     db.close()
     
-    print(f"\n✅ Complete! Recalculated labels for {updated_count:,} CVEs")
+    print(f"\n[OK] Complete! Recalculated labels for {updated_count:,} CVEs")
     print("\nLabel Distribution:")
     for label in sorted(label_counts.keys(), reverse=True):
         count = label_counts[label]

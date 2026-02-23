@@ -105,7 +105,7 @@ def analyze_correlations(features):
     corr_matrix = features.corr(method='spearman')
     
     # Find highly correlated pairs
-    logger.info("🔍 Highly Correlated Feature Pairs (|r| > 0.8):")
+    logger.info(" Highly Correlated Feature Pairs (|r| > 0.8):")
     logger.info("-" * 70)
     
     high_corr_pairs = []
@@ -121,7 +121,7 @@ def analyze_correlations(features):
                 logger.info(f"  {feat1:30s} <-> {feat2:30s}  r={corr:6.3f}")
     
     if not high_corr_pairs:
-        logger.info("  ✅ No highly correlated pairs found!")
+        logger.info("  [OK] No highly correlated pairs found!")
     
     # Analyze EPSS-related features
     logger.info("EPSS Feature Correlations:")
@@ -135,7 +135,7 @@ def analyze_correlations(features):
                 logger.info(f"    {other_feat:30s}: {corr:6.3f}")
     
     # Analyze healthcare-related features
-    logger.info("🏥 Healthcare Feature Correlations:")
+    logger.info(" Healthcare Feature Correlations:")
     logger.info("-" * 70)
     healthcare_features = ['is_healthcare', 'healthcare_critical', 'healthcare_x_cvss', 
                            'kev_healthcare', 'chpl_healthcare', 'attack_healthcare']
@@ -199,11 +199,11 @@ def recommend_removals(high_corr_pairs, features):
     logger.info("="*70)
     
     if not high_corr_pairs:
-        logger.info("✅ No highly correlated features found.")
+        logger.info("[OK] No highly correlated features found.")
         logger.info("   All features provide unique information.")
         return
     
-    logger.info("💡 Consider removing one from each correlated pair:")
+    logger.info("[TIP] Consider removing one from each correlated pair:")
     logger.info("-" * 70)
     
     for feat1, feat2, corr in high_corr_pairs:
@@ -214,11 +214,11 @@ def recommend_removals(high_corr_pairs, features):
             keep, remove = feat2, feat1
         
         logger.info(f"  Pair: {feat1} <-> {feat2} (r={corr:.3f})")
-        logger.info(f"    → Keep:   {keep}")
-        logger.info(f"    → Remove: {remove} (redundant)")
+        logger.info(f"    -> Keep:   {keep}")
+        logger.info(f"    -> Remove: {remove} (redundant)")
     
     # Feature variance analysis
-    logger.info("📉 Low Variance Features (may not be useful):")
+    logger.info(" Low Variance Features (may not be useful):")
     logger.info("-" * 70)
     variances = features.var().sort_values()
     low_var = variances[variances < 0.01]
@@ -227,7 +227,7 @@ def recommend_removals(high_corr_pairs, features):
         for feat, var in low_var.items():
             logger.info(f"  {feat:30s}: variance = {var:.6f}")
     else:
-        logger.info("  ✅ All features have sufficient variance")
+        logger.info("  [OK] All features have sufficient variance")
 
 def main():
     logger.info("="*70)
@@ -261,7 +261,7 @@ def main():
     logger.info(f"Correlation matrix saved: {output_path}")
     
     print("\n" + "="*70)
-    print("✅ Correlation analysis complete!")
+    print("[OK] Correlation analysis complete!")
     print("="*70)
 
 if __name__ == "__main__":

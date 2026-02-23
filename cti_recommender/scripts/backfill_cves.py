@@ -42,7 +42,7 @@ def backfill_by_month(start_year: int, end_year: int, api_key: str = None):
         api_key = os.environ.get("NVD_API_KEY")
     
     if not api_key:
-        print("⚠️  WARNING: No NVD API key found!")
+        print("[WARN]  WARNING: No NVD API key found!")
         print("   Rate limit: 5 requests/30 seconds (very slow)")
         print("   Get a free key at: https://nvd.nist.gov/developers/request-an-api-key")
         print("   Set via: export NVD_API_KEY='your-key-here'")
@@ -51,7 +51,7 @@ def backfill_by_month(start_year: int, end_year: int, api_key: str = None):
             print("Aborted.")
             return
     else:
-        print(f"✓ Using NVD API key (50 requests/30 seconds)")
+        print(f"[OK] Using NVD API key (50 requests/30 seconds)")
     
     # Initialize database
     print(f"\nInitializing database: {DB_PATH}")
@@ -108,12 +108,12 @@ def backfill_by_month(start_year: int, end_year: int, api_key: str = None):
                         status='success'
                     )
                     
-                    print(f"✓ {count} CVEs")
+                    print(f"[OK] {count} CVEs")
                 else:
-                    print("✓ 0 CVEs")
+                    print("[OK] 0 CVEs")
                 
             except Exception as e:
-                print(f"✗ ERROR: {e}")
+                print(f"[X] ERROR: {e}")
                 db.log_fetch(
                     start_date=month_start,
                     end_date=month_end,
@@ -136,7 +136,7 @@ def backfill_by_month(start_year: int, end_year: int, api_key: str = None):
                 print(f"  Estimated time remaining: {remaining/60:.1f} minutes\n")
     
     except KeyboardInterrupt:
-        print("\n\n⚠️  Backfill interrupted by user")
+        print("\n\n[WARN]  Backfill interrupted by user")
     
     finally:
         elapsed = time.time() - start_time
@@ -165,9 +165,9 @@ if __name__ == "__main__":
     # Check for API key
     api_key = os.environ.get("NVD_API_KEY")
     if api_key:
-        print(f"✓ NVD API Key: {'*' * 20}{api_key[-4:]}")
+        print(f"[OK] NVD API Key: {'*' * 20}{api_key[-4:]}")
     else:
-        print("✗ NVD API Key: Not found")
+        print("[X] NVD API Key: Not found")
     
     # Start backfill
     backfill_by_month(START_YEAR, END_YEAR, api_key)

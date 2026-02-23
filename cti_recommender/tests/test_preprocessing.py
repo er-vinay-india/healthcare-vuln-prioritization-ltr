@@ -282,7 +282,7 @@ class TestFilterCVEs:
     """Integration tests for preprocessing pipeline"""
     
     def test_clean_then_filter_pipeline(self):
-        """Test full preprocessing pipeline: clean → filter"""
+        """Test full preprocessing pipeline: clean -> filter"""
         # Create dirty data
         df = pd.DataFrame({
             'cve_id': ['CVE-2024-0001', 'CVE-2024-0002', 'CVE-2024-0003'],

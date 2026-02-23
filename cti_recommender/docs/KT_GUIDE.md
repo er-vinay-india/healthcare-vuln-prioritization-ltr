@@ -1,9 +1,9 @@
-# 🎓 Knowledge Transfer Guide - CTI Recommender System
+#  Knowledge Transfer Guide - CTI Recommender System
 **Easy Explanation for Quick Learning | Exam Ready Guide**
 
 ---
 
-## 📖 Table of Contents (Index)
+##  Table of Contents (Index)
 1. [What is this project? (Kya hai yeh?)](#1-what-is-this-project)
 2. [Why we need this? (Kyun chahiye?)](#2-why-we-need-this)
 3. [How it works? (Kaise kaam karta hai?)](#3-how-it-works)
@@ -36,7 +36,7 @@
 ```
 
 ### Memory Technique:
-**CTI = "Choose The Important"** vulnerabilities first! 🎯
+**CTI = "Choose The Important"** vulnerabilities first! [TARGET]
 
 ---
 
@@ -64,7 +64,7 @@ CVE-2024-1234: CVSS = 9.8 (बहुत high)
 5. ATT&CK - hackers कौनसी techniques use करेंगे
 6. CHPL - certified medical products
 
-Result: Smart priority score! 🚀
+Result: Smart priority score! [RUN]
 ```
 
 ### Memory Technique:
@@ -88,7 +88,7 @@ Step 4: PREDICTION (Priority बताओ)
 
 ### Detailed Explanation:
 
-#### Step 1: Data Collection 📥
+#### Step 1: Data Collection 
 ```python
 # Script: enrich_cves.py
 # What it does:
@@ -99,7 +99,7 @@ Step 4: PREDICTION (Priority बताओ)
 Memory trick: "Download करो, जैसे songs download करते हो"
 ```
 
-#### Step 2: Enrichment 🎨
+#### Step 2: Enrichment 
 ```python
 # Same script: enrich_cves.py
 # What it adds:
@@ -132,10 +132,10 @@ Memory trick: "Download करो, जैसे songs download करते ह�
 6. Label (0-5)
    - Final priority level
    - 0 = Low, 5 = Emergency
-   - याद रखो: "5 = पांच alarm!" 🚨
+   - याद रखो: "5 = पांच alarm!" 
 ```
 
-#### Step 3: Training 🤖
+#### Step 3: Training 
 ```python
 # Script: train_ltr.py
 # What it does:
@@ -149,7 +149,7 @@ Memory trick:
 "LTR = Learning To Rank (सीखो कि कैसे rank करें)"
 ```
 
-#### Step 4: Prediction 🎯
+#### Step 4: Prediction [TARGET]
 ```python
 # Uses trained model
 # For new CVE:
@@ -166,7 +166,7 @@ Memory trick: "Top 20 = First 20 homework questions करो"
 
 ## 4. Key Components (Main Parts)
 
-### A. Database (SQLite) 💾
+### A. Database (SQLite) 
 
 **2 Main Tables:**
 
@@ -186,7 +186,7 @@ CVE-123|   1    | 0.85 |      1        |  5
 Memory: "Enrichment = Extra masala add kiya!"
 ```
 
-### B. Scripts (Executable Files) 📜
+### B. Scripts (Executable Files) 
 
 **Main 4 Scripts:**
 
@@ -212,7 +212,7 @@ Memory: "Enrichment = Extra masala add kiya!"
    - ablation_study.py - Feature importance
    - feature_correlation.py - Features ka relation
 
-### C. Source Code (src/) 💻
+### C. Source Code (src/) 
 
 **Structure:**
 ```
@@ -391,7 +391,7 @@ The enrichment pipeline (enrich_cves.py) is a single-pass process that:
 8. **Stores in SQLite database**
 
 **Time:** ~8 minutes for 1 year of CVEs
-**Workflow:** 9 steps → 4 steps (56% faster than old approach)
+**Workflow:** 9 steps -> 4 steps (56% faster than old approach)
 
 ---
 
@@ -449,8 +449,8 @@ CVE-2024-1234:
 - EPSS: 0.001 (0.1% chance)
 - KEV: No
 - Healthcare: No
-→ Traditional: #1 priority
-→ Our System: #523 priority (low actual risk)
+-> Traditional: #1 priority
+-> Our System: #523 priority (low actual risk)
 ```
 
 ---
@@ -651,10 +651,10 @@ CTI Recommender = Smart vulnerability prioritization for healthcare
 5. **Analysis:** 5 analysis scripts
 
 ### Workflow in 4 Steps:
-1. **Enrich** → python scripts/enrich_cves.py
-2. **Train** → python scripts/train_ltr.py
-3. **Validate** → python scripts/temporal_validation.py
-4. **Analyze** → python scripts/analyze/*.py
+1. **Enrich** -> python scripts/enrich_cves.py
+2. **Train** -> python scripts/train_ltr.py
+3. **Validate** -> python scripts/temporal_validation.py
+4. **Analyze** -> python scripts/analyze/*.py
 
 ---
 
@@ -688,7 +688,7 @@ CTI Recommender = Smart vulnerability prioritization for healthcare
 
 ## 10. Common Mistakes to Avoid (Galtiyan)
 
-### ❌ Wrong Answers:
+### [FAIL] Wrong Answers:
 
 1. **"It only uses CVSS scores"**
    - - Correct: Uses 6 data sources including CVSS
@@ -707,7 +707,7 @@ CTI Recommender = Smart vulnerability prioritization for healthcare
 
 ---
 
-## Final Tips for Exam 🎯
+## Final Tips for Exam [TARGET]
 
 ### If asked about:
 
@@ -719,7 +719,7 @@ CTI Recommender = Smart vulnerability prioritization for healthcare
 
 **Performance:** "NDCG@10 = 0.77 (77% accurate)"
 
-**Workflow:** "Enrich → Train → Validate → Analyze (4 steps)"
+**Workflow:** "Enrich -> Train -> Validate -> Analyze (4 steps)"
 
 **Key Innovation:** "Multi-source intelligence vs single CVSS score"
 
@@ -740,7 +740,7 @@ CTI Recommender = Smart vulnerability prioritization for healthcare
 
 ---
 
-**अब तुम तैयार हो! All the best for your exam! 🚀**
+**अब तुम तैयार हो! All the best for your exam! [RUN]**
 
 **Remember:** Confidence + Clear explanation = Good marks!
 

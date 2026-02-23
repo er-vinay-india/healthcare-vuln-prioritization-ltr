@@ -1,4 +1,4 @@
-# 🔧 EPSS Enrichment Improvements
+#  EPSS Enrichment Improvements
 
 **Date:** 2026-01-17  
 **Issue:** EPSS feature had 0 coverage - all values were 0.0  
@@ -6,7 +6,7 @@
 
 ---
 
-## ✅ Improvements Implemented
+## [OK] Improvements Implemented
 
 ### 1. **Separate Fetch and Process Phases**
 
@@ -36,9 +36,9 @@ db.transaction_commit()
 ```
 
 **Benefits:**
-- ✅ If fetch fails, no partial database updates
-- ✅ Can verify data completeness before processing
-- ✅ Transaction safety - all or nothing
+- [OK] If fetch fails, no partial database updates
+- [OK] Can verify data completeness before processing
+- [OK] Transaction safety - all or nothing
 
 ---
 
@@ -65,15 +65,15 @@ for i, batch in enumerate(batches):
     if i % 50 == 0:  # Every 5000 CVEs
         save_checkpoint()  # Don't lose progress!
 
-# On resume: Load existing → Fetch only missing CVEs
+# On resume: Load existing -> Fetch only missing CVEs
 cached = load_persistent_cache()  # 150K CVEs already cached
 to_fetch = [cve for cve in all_cves if cve not in cached]  # Only 76K remaining
 ```
 
 **Benefits:**
-- ✅ Resume after interruption (no re-fetching)
-- ✅ Saves API calls (cache never expires)
-- ✅ Progress checkpoints every 5000 CVEs (~50 batches)
+- [OK] Resume after interruption (no re-fetching)
+- [OK] Saves API calls (cache never expires)
+- [OK] Progress checkpoints every 5000 CVEs (~50 batches)
 
 ---
 
@@ -88,11 +88,11 @@ def validate_enrichment(db):
     epss_count = db.execute(query).fetchone()[0]
     
     if epss_count == 0:
-        print("🔴 CRITICAL: EPSS has 0 CVEs! Feature is useless!")
+        print(" CRITICAL: EPSS has 0 CVEs! Feature is useless!")
         return False
     
     if epss_count < total * 0.5:
-        print(f"⚠️  WARNING: Low EPSS coverage ({epss_count/total:.1f}%)")
+        print(f"[WARN]  WARNING: Low EPSS coverage ({epss_count/total:.1f}%)")
     
     return True
 ```
@@ -103,9 +103,9 @@ def validate_enrichment(db):
 python scripts/enrich_cves.py --validate-only
 
 # Expected output:
-# ✅ EPSS: 180,000 CVEs (79.5%)
-# ✅ Healthcare: 125,000 CVEs (55.2%)
-# ✅ KEV: 1,161 CVEs (0.5%)
+# [OK] EPSS: 180,000 CVEs (79.5%)
+# [OK] Healthcare: 125,000 CVEs (55.2%)
+# [OK] KEV: 1,161 CVEs (0.5%)
 ```
 
 ---
@@ -120,25 +120,25 @@ python scripts/enrich_cves.py --validate-only
 
 **After:**
 ```
-[EPSS] 🎯 Starting bulk fetch for 226,320 CVEs
-[EPSS] ✓ Cache hit: 150,000/226,320 CVEs (66.3%)
-[EPSS] 🌐 Need to fetch: 76,320 CVEs from API
-[EPSS] ⏱️  Estimated time: 19.1 minutes (763 batches)
+[EPSS] [TARGET] Starting bulk fetch for 226,320 CVEs
+[EPSS] [OK] Cache hit: 150,000/226,320 CVEs (66.3%)
+[EPSS]  Need to fetch: 76,320 CVEs from API
+[EPSS] ⏱  Estimated time: 19.1 minutes (763 batches)
 
-[EPSS] 📈 Progress: 100/763 batches (13.1%) | Fetched: 9,850 CVEs | Rate: 45.2 CVEs/sec | ETA: 14.5m
-[EPSS] 💾 Checkpoint: Saved progress at batch 100/763
+[EPSS]  Progress: 100/763 batches (13.1%) | Fetched: 9,850 CVEs | Rate: 45.2 CVEs/sec | ETA: 14.5m
+[EPSS]  Checkpoint: Saved progress at batch 100/763
 
-[EPSS] 📈 Progress: 763/763 batches (100.0%) | Fetched: 76,320 CVEs | Rate: 44.8 CVEs/sec | ETA: 0.0m
-[EPSS] 💾 Final save: 76,320 new CVEs added to cache
+[EPSS]  Progress: 763/763 batches (100.0%) | Fetched: 76,320 CVEs | Rate: 44.8 CVEs/sec | ETA: 0.0m
+[EPSS]  Final save: 76,320 new CVEs added to cache
 
-[EPSS] ✅ Completed in 18.9 minutes
-[EPSS] 📊 Success: 226,320/226,320 CVEs (100.0%)
+[EPSS] [OK] Completed in 18.9 minutes
+[EPSS] [STATS] Success: 226,320/226,320 CVEs (100.0%)
 ```
 
 **Benefits:**
-- ✅ Know exactly what's happening
-- ✅ Estimate completion time
-- ✅ Identify issues early (low coverage, API failures)
+- [OK] Know exactly what's happening
+- [OK] Estimate completion time
+- [OK] Identify issues early (low coverage, API failures)
 
 ---
 
@@ -158,7 +158,7 @@ python scripts/enrich_cves.py --dry-run
 
 ---
 
-## 📊 Performance Characteristics
+## [STATS] Performance Characteristics
 
 ### Storage
 - **Persistent cache size:** ~200 bytes per CVE
@@ -178,14 +178,14 @@ python scripts/enrich_cves.py --dry-run
 
 ---
 
-## 🎯 Recommended Workflow
+## [TARGET] Recommended Workflow
 
 ### Initial Enrichment (Full 226K CVEs)
 ```bash
 # Step 1: Validate current state
 python scripts/enrich_cves.py --validate-only
 
-# Expected: 🔴 CRITICAL: EPSS has 0 CVEs!
+# Expected:  CRITICAL: EPSS has 0 CVEs!
 
 # Step 2: Test with small batch
 python scripts/enrich_cves.py --limit 100
@@ -193,7 +193,7 @@ python scripts/enrich_cves.py --limit 100
 # Step 3: Validate test worked
 python scripts/enrich_cves.py --validate-only
 
-# Expected: ✅ EPSS: 100 CVEs (100%)
+# Expected: [OK] EPSS: 100 CVEs (100%)
 
 # Step 4: Run full enrichment (~38 minutes)
 python scripts/enrich_cves.py
@@ -201,7 +201,7 @@ python scripts/enrich_cves.py
 # Step 5: Final validation
 python scripts/enrich_cves.py --validate-only
 
-# Expected: ✅ EPSS: ~180,000 CVEs (79.5%)
+# Expected: [OK] EPSS: ~180,000 CVEs (79.5%)
 ```
 
 ### Daily Updates (New CVEs Only)
@@ -217,7 +217,7 @@ python scripts/enrich_cves.py --limit 200
 
 ---
 
-## 🚨 Critical Learnings
+##  Critical Learnings
 
 ### What Went Wrong?
 
@@ -227,9 +227,9 @@ python scripts/enrich_cves.py --limit 200
    - Ablation study showed +0% (we didn't investigate why!)
 
 2. **Assumed script ran because it existed**
-   - Wrote `enrich_cves.py` ✅
-   - Tested with 4 CVEs ✅
-   - **Forgot to run on full 226K CVEs** ❌
+   - Wrote `enrich_cves.py` [OK]
+   - Tested with 4 CVEs [OK]
+   - **Forgot to run on full 226K CVEs** [FAIL]
 
 3. **No data quality checks**
    - Trained model without checking feature distributions
@@ -239,20 +239,20 @@ python scripts/enrich_cves.py --limit 200
 
 **Before Training ANY Model:**
 ```python
-✅ Check feature distributions
+[OK] Check feature distributions
    - No all-zero features
    - No single-value features
    - Reasonable coverage (>50%)
 
-✅ Validate data sources
+[OK] Validate data sources
    - EPSS: 180K+ CVEs with scores
    - KEV: ~1.5K CVEs flagged
    - Healthcare: ~125K CVEs tagged
 
-✅ Run validation script
+[OK] Run validation script
    python scripts/enrich_cves.py --validate-only
 
-✅ Check ablation results
+[OK] Check ablation results
    If feature adds 0%, investigate why!
    - Missing data?
    - Feature extraction bug?
@@ -261,7 +261,7 @@ python scripts/enrich_cves.py --limit 200
 
 ---
 
-## 📈 Expected Impact
+##  Expected Impact
 
 ### Before Fix
 ```
@@ -284,14 +284,14 @@ EPSS predicts exploit probability (0-1):
 - Low EPSS (<0.1) = <5% chance of exploitation
 
 This is **gold** for prioritization:
-- CVE-A: CVSS 9.0, EPSS 0.05 → Low priority (unlikely to be exploited)
-- CVE-B: CVSS 7.5, EPSS 0.85 → **High priority** (actively exploited!)
+- CVE-A: CVSS 9.0, EPSS 0.05 -> Low priority (unlikely to be exploited)
+- CVE-B: CVSS 7.5, EPSS 0.85 -> **High priority** (actively exploited!)
 
 Current model can't distinguish these - it only sees CVSS.
 
 ---
 
-## 🔍 Monitoring & Alerts
+##  Monitoring & Alerts
 
 ### Add to CI/CD
 ```yaml
@@ -300,7 +300,7 @@ Current model can't distinguish these - it only sees CVSS.
   run: |
     python scripts/enrich_cves.py --validate-only
     if [ $? -ne 0 ]; then
-      echo "❌ Data validation failed!"
+      echo "[FAIL] Data validation failed!"
       exit 1
     fi
 ```
@@ -320,16 +320,16 @@ def main():
 
 ---
 
-## 📝 Summary
+## [NOTE] Summary
 
 ### Fixed Issues
-1. ✅ EPSS now properly populated (0 → 180K CVEs)
-2. ✅ Persistent cache prevents data loss
-3. ✅ Checkpoint recovery for long fetches
-4. ✅ Transaction safety for database updates
-5. ✅ Validation script catches missing data
-6. ✅ Comprehensive logging and progress tracking
-7. ✅ Dry-run mode for testing
+1. [OK] EPSS now properly populated (0 -> 180K CVEs)
+2. [OK] Persistent cache prevents data loss
+3. [OK] Checkpoint recovery for long fetches
+4. [OK] Transaction safety for database updates
+5. [OK] Validation script catches missing data
+6. [OK] Comprehensive logging and progress tracking
+7. [OK] Dry-run mode for testing
 
 ### Time to Full Enrichment
 - **Initial run:** ~38 minutes (226K CVEs)

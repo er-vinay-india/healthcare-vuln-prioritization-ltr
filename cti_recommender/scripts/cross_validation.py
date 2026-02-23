@@ -237,7 +237,7 @@ def main():
     logger.info(f"Results saved: {output_path}")
     
     logger.info("="*70)
-    logger.info("✅ Cross-validation complete!")
+    logger.info("[OK] Cross-validation complete!")
     logger.info("="*70)
 
 if __name__ == "__main__":

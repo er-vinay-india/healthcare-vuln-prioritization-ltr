@@ -1,13 +1,13 @@
-# 🔬 DATA SCIENCE MODEL REVIEW
+#  DATA SCIENCE MODEL REVIEW
 **Project:** CTI Healthcare Vulnerability Recommender  
 **Review Date:** 2026-01-17  
 **Reviewer:** Data Science Team  
 **Model:** XGBoost Learning-to-Rank (LambdaRank)  
-**Overall Grade:** ⭐⭐⭐⭐ (4/5 - Strong with Room for Improvement)
+**Overall Grade:** **** (4/5 - Strong with Room for Improvement)
 
 ---
 
-## 📊 EXECUTIVE SUMMARY
+## [STATS] EXECUTIVE SUMMARY
 
 ### Model Performance
 - **NDCG@10:** 0.7504 (Good - industry standard is 0.70-0.80)
@@ -17,14 +17,14 @@
 - **Algorithm:** XGBoost Ranker with NDCG objective
 
 ### Key Findings
-✅ **Strengths:**
+[OK] **Strengths:**
 - Perfect precision indicates strong top-K ranking capability
 - Comprehensive feature engineering with domain knowledge
 - Ablation study shows +27.5% improvement over baseline
 - Proper feature scaling implemented (8 continuous features)
 - Multi-source data integration (6 authoritative sources)
 
-⚠️ **Areas for Improvement:**
+[WARN] **Areas for Improvement:**
 - No hyperparameter tuning (using defaults)
 - No cross-validation (single train/test split)
 - Class imbalance (72.8% are L2, only 0.02% L4)
@@ -33,16 +33,16 @@
 
 ---
 
-## 🏗️ MODEL ARCHITECTURE ANALYSIS
+##  MODEL ARCHITECTURE ANALYSIS
 
-### Algorithm Choice: XGBoost Ranker ⭐⭐⭐⭐½
+### Algorithm Choice: XGBoost Ranker ****½
 
 **Strengths:**
-- ✅ Purpose-built for ranking tasks (vs classification)
-- ✅ NDCG objective directly optimizes ranking metrics
-- ✅ Handles non-linear relationships well
-- ✅ Built-in feature importance
-- ✅ Robust to outliers and missing values
+- [OK] Purpose-built for ranking tasks (vs classification)
+- [OK] NDCG objective directly optimizes ranking metrics
+- [OK] Handles non-linear relationships well
+- [OK] Built-in feature importance
+- [OK] Robust to outliers and missing values
 
 **Why This Works:**
 ```python
@@ -54,19 +54,19 @@
 ```
 
 **Considerations:**
-- 🤔 LightGBM might be faster for this dataset size (200K+ rows)
-- 🤔 CatBoost could handle categorical features better (vendor names)
-- 🤔 Neural rankers (RankNet, LambdaMART) for more complex patterns
+-  LightGBM might be faster for this dataset size (200K+ rows)
+-  CatBoost could handle categorical features better (vendor names)
+-  Neural rankers (RankNet, LambdaMART) for more complex patterns
 
-**Verdict:** ✅ Appropriate choice for the task
+**Verdict:** [OK] Appropriate choice for the task
 
 ---
 
-## 🎯 FEATURE ENGINEERING REVIEW
+## [TARGET] FEATURE ENGINEERING REVIEW
 
 ### Feature Categories (23 Total)
 
-#### 1. **Base Features (9)** - ⭐⭐⭐⭐
+#### 1. **Base Features (9)** - ****
 ```python
 # Direct signals from data sources
 - kev_flag              # CISA Known Exploited Vulnerabilities
@@ -81,12 +81,12 @@
 ```
 
 **Assessment:**
-- ✅ All features are justified and domain-relevant
-- ✅ Mix of binary flags and continuous variables
-- ✅ Multiple signal types (severity, exploitability, sector)
-- ⚠️ EPSS has minimal coverage (only 4 CVEs have scores)
+- [OK] All features are justified and domain-relevant
+- [OK] Mix of binary flags and continuous variables
+- [OK] Multiple signal types (severity, exploitability, sector)
+- [WARN] EPSS has minimal coverage (only 4 CVEs have scores)
 
-#### 2. **Binary Thresholds (3)** - ⭐⭐⭐
+#### 2. **Binary Thresholds (3)** - ***
 ```python
 - cvss_high            # CVSS >= 7.0
 - cvss_critical        # CVSS >= 9.0  
@@ -94,11 +94,11 @@
 ```
 
 **Assessment:**
-- ✅ Helps model learn non-linear thresholds
-- ⚠️ Redundant with original CVSS (multicollinearity)
-- 💡 **Recommendation:** Let tree-based model learn splits naturally
+- [OK] Helps model learn non-linear thresholds
+- [WARN] Redundant with original CVSS (multicollinearity)
+- [TIP] **Recommendation:** Let tree-based model learn splits naturally
 
-#### 3. **Compound Features (5)** - ⭐⭐⭐⭐⭐
+#### 3. **Compound Features (5)** - *****
 ```python
 - healthcare_critical    # is_healthcare & cvss_critical
 - kev_healthcare        # kev_flag & is_healthcare
@@ -108,11 +108,11 @@
 ```
 
 **Assessment:**
-- ✅ **Excellent domain knowledge encoding**
-- ✅ Captures critical interactions for healthcare prioritization
-- ✅ These are the "money features" (see feature importance)
+- [OK] **Excellent domain knowledge encoding**
+- [OK] Captures critical interactions for healthcare prioritization
+- [OK] These are the "money features" (see feature importance)
 
-#### 4. **Interaction Features (4)** - ⭐⭐⭐⭐
+#### 4. **Interaction Features (4)** - ****
 ```python
 - healthcare_x_cvss              # is_healthcare * cvss
 - kev_x_epss                    # kev_flag * epss_score
@@ -121,24 +121,24 @@
 ```
 
 **Assessment:**
-- ✅ Multiplicative interactions capture synergies
-- ✅ `healthcare_x_cvss` is 3rd most important feature (6.22 gain)
-- 💡 Could explore more: `chpl_x_cvss`, `epss_x_cvss`
+- [OK] Multiplicative interactions capture synergies
+- [OK] `healthcare_x_cvss` is 3rd most important feature (6.22 gain)
+- [TIP] Could explore more: `chpl_x_cvss`, `epss_x_cvss`
 
-#### 5. **Temporal Features (2)** - ⭐⭐⭐
+#### 5. **Temporal Features (2)** - ***
 ```python
 - days_since_2018       # Age of CVE
 - is_recent            # > 2500 days (~7 years)
 ```
 
 **Assessment:**
-- ✅ Recency is important for prioritization
-- ⚠️ Linear age may not capture decay properly
-- 💡 **Better approach:** Exponential decay or bucketing
+- [OK] Recency is important for prioritization
+- [WARN] Linear age may not capture decay properly
+- [TIP] **Better approach:** Exponential decay or bucketing
 
 ---
 
-## 📈 FEATURE IMPORTANCE DEEP DIVE
+##  FEATURE IMPORTANCE DEEP DIVE
 
 ### Top Features by Gain
 
@@ -169,7 +169,7 @@
    - ATT&CK (attack patterns): Low importance
    - CHPL (certified products): Low importance
 
-### ⚠️ Feature Importance Concerns
+### [WARN] Feature Importance Concerns
 
 **Problem: Top 3 features = 64% of model decisions**
 
@@ -192,7 +192,7 @@ params = {
 
 ---
 
-## 🎲 DATA DISTRIBUTION ANALYSIS
+##  DATA DISTRIBUTION ANALYSIS
 
 ### Label Distribution (Target Variable)
 
@@ -206,7 +206,7 @@ params = {
 
 **Critical Issues:**
 
-1. **Severe Class Imbalance** 🔴
+1. **Severe Class Imbalance** 
    ```
    L4: 50 samples (0.02%)  ← Only 50 examples!
    L2: 153,045 samples (72.8%)  ← Dominates training
@@ -215,7 +215,7 @@ params = {
    Risk: Can't learn what makes something L4/L5
    ```
 
-2. **No L5 Labels** 🔴
+2. **No L5 Labels** 
    ```
    L5 (Critical): 0 CVEs
    
@@ -230,11 +230,11 @@ params = {
    All 1,161 KEV CVEs are in L3 or L4
    None in L2 (despite being actively exploited!)
    
-   Issue: Label logic forces KEV → L3+
+   Issue: Label logic forces KEV -> L3+
    Risk: May overemphasize healthcare over exploitation
    ```
 
-### 💡 Recommendations for Data Distribution
+### [TIP] Recommendations for Data Distribution
 
 **1. Address Class Imbalance:**
 ```python
@@ -279,32 +279,32 @@ mask_5 = (
 
 ---
 
-## 🧪 MODEL TRAINING CONFIGURATION
+## [TEST] MODEL TRAINING CONFIGURATION
 
 ### Hyperparameters (Current)
 
 ```python
 params = {
-    'objective': 'rank:ndcg',      # ✅ Correct for ranking
-    'eval_metric': 'ndcg',         # ✅ Matches objective
-    'eta': 0.1,                    # ⚠️ Default learning rate
-    'max_depth': 6,                # ⚠️ Default depth
-    'min_child_weight': 1,         # ⚠️ Default
-    'subsample': 0.8,              # ✅ Good for generalization
-    'colsample_bytree': 0.8,       # ✅ Good for feature sampling
-    'seed': 42                     # ✅ Reproducibility
+    'objective': 'rank:ndcg',      # [OK] Correct for ranking
+    'eval_metric': 'ndcg',         # [OK] Matches objective
+    'eta': 0.1,                    # [WARN] Default learning rate
+    'max_depth': 6,                # [WARN] Default depth
+    'min_child_weight': 1,         # [WARN] Default
+    'subsample': 0.8,              # [OK] Good for generalization
+    'colsample_bytree': 0.8,       # [OK] Good for feature sampling
+    'seed': 42                     # [OK] Reproducibility
 }
 ```
 
-### ⚠️ Issues with Current Configuration
+### [WARN] Issues with Current Configuration
 
-1. **No Hyperparameter Tuning** 🔴
+1. **No Hyperparameter Tuning** 
    ```
    All params are defaults!
    Risk: Sub-optimal performance
    ```
 
-2. **No Regularization** 🟡
+2. **No Regularization** 
    ```python
    # Missing:
    'alpha': 0,      # L1 regularization
@@ -314,7 +314,7 @@ params = {
    Impact: Potential overfitting to training data
    ```
 
-3. **Learning Rate Not Optimized** 🟡
+3. **Learning Rate Not Optimized** 
    ```python
    eta: 0.1  # Default
    
@@ -323,7 +323,7 @@ params = {
    Higher = fewer trees, faster training
    ```
 
-### 🎯 Recommended Hyperparameter Search
+### [TARGET] Recommended Hyperparameter Search
 
 ```python
 # Option 1: Grid Search (comprehensive but slow)
@@ -376,21 +376,21 @@ print(f"Best params: {study.best_params}")
 
 ---
 
-## 📊 EVALUATION METRICS ANALYSIS
+## [STATS] EVALUATION METRICS ANALYSIS
 
 ### Current Metrics
 
 | Metric | Value | Assessment |
 |--------|-------|------------|
-| NDCG@5 | 0.7504 | ✅ Good |
-| NDCG@10 | 0.7504 | ✅ Good (industry: 0.70-0.80) |
-| NDCG@20 | 0.8234 | ✅ Excellent |
-| P@10 | 100% | ✅ Perfect |
-| P@20 | 100% | ✅ Perfect |
-| P@50 | 100% | ✅ Perfect |
-| P@100 | 100% | ⚠️ Too perfect? |
+| NDCG@5 | 0.7504 | [OK] Good |
+| NDCG@10 | 0.7504 | [OK] Good (industry: 0.70-0.80) |
+| NDCG@20 | 0.8234 | [OK] Excellent |
+| P@10 | 100% | [OK] Perfect |
+| P@20 | 100% | [OK] Perfect |
+| P@50 | 100% | [OK] Perfect |
+| P@100 | 100% | [WARN] Too perfect? |
 
-### 🤔 Why P@100 = 100%?
+###  Why P@100 = 100%?
 
 **This is suspicious and needs investigation:**
 
@@ -414,10 +414,10 @@ print(f"Best params: {study.best_params}")
 correlation_with_label = X_train.corrwith(y_train)
 print(correlation_with_label.sort_values(ascending=False))
 
-# If healthcare_critical > 0.9 correlation → problem!
+# If healthcare_critical > 0.9 correlation -> problem!
 ```
 
-### Missing Metrics 🟡
+### Missing Metrics 
 
 **Should also track:**
 
@@ -448,7 +448,7 @@ print(correlation_with_label.sort_values(ascending=False))
 
 ---
 
-## 🔍 ABLATION STUDY REVIEW
+##  ABLATION STUDY REVIEW
 
 ### Results Summary
 
@@ -462,7 +462,7 @@ print(correlation_with_label.sort_values(ascending=False))
 | V6: +ATT&CK | 18 | 0.8673 | 100% | **0.0%** | 0.0% |
 | V7: Full (+CHPL) | 23 | 0.8673 | 100% | **0.0%** | 0.0% |
 
-### 🎯 Key Insights
+### [TARGET] Key Insights
 
 1. **Healthcare is the game-changer** (+11.5% NDCG)
    - Largest single improvement
@@ -472,10 +472,10 @@ print(correlation_with_label.sort_values(ascending=False))
 2. **Curated dataset is extremely valuable** (+14.3% NDCG)
    - 52 manually labeled CVEs
    - Provides strong supervision signal
-   - **High ROI: 0.02% of data → 14% improvement**
+   - **High ROI: 0.02% of data -> 14% improvement**
 
 3. **KEV adds NO value** (0.0% NDCG, -11% P@20)
-   - ⚠️ **This is concerning!**
+   - [WARN] **This is concerning!**
    - KEV = actively exploited vulnerabilities
    - Should be high priority, but model ignores it
    - **Root cause: Correlated with other features?**
@@ -486,7 +486,7 @@ print(correlation_with_label.sort_values(ascending=False))
    - **Action: Bulk fetch EPSS for all 200K+ CVEs**
 
 5. **ATT&CK and CHPL add NO value** (0.0% improvement)
-   - ⚠️ **Surprising given effort to integrate**
+   - [WARN] **Surprising given effort to integrate**
    - 83K CVEs mapped to ATT&CK (36.9%)
    - 5K CVEs mapped to CHPL (2.2%)
    - **Possible causes:**
@@ -494,7 +494,7 @@ print(correlation_with_label.sort_values(ascending=False))
      - Correlate with existing features
      - Model saturates before using them
 
-### 🚨 Critical Issues from Ablation
+###  Critical Issues from Ablation
 
 **Problem 1: Feature Saturation**
 ```
@@ -516,7 +516,7 @@ KEV should be critical, but model doesn't use it
 Possible reasons:
 1. KEV correlates perfectly with healthcare (check!)
 2. CVSS already captures KEV importance
-3. Label definition makes KEV redundant (all KEV → L3)
+3. Label definition makes KEV redundant (all KEV -> L3)
 
 Action: Feature correlation analysis
 ```
@@ -533,7 +533,7 @@ Action: Bulk fetch EPSS scores for all CVEs
 
 ---
 
-## 🏗️ CROSS-VALIDATION CONCERNS
+##  CROSS-VALIDATION CONCERNS
 
 ### Current Approach: Single 80/20 Split
 
@@ -545,14 +545,14 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 **Issues:**
 
-1. **No Cross-Validation** 🔴
+1. **No Cross-Validation** 
    ```
-   Single split → Metrics depend on random split
+   Single split -> Metrics depend on random split
    NDCG@10 = 0.7504 might be lucky split
    True performance: 0.65 - 0.80 (unknown variance)
    ```
 
-2. **Temporal Leakage Risk** 🟡
+2. **Temporal Leakage Risk** 
    ```
    Random split mixes old and new CVEs
    Model might learn temporal patterns
@@ -562,7 +562,7 @@ X_train, X_test, y_train, y_test = train_test_split(
    - Test: 2025 (simulate production)
    ```
 
-3. **Label Stratification Only** 🟡
+3. **Label Stratification Only** 
    ```
    Stratifies by label, but not by:
    - Healthcare vs non-healthcare
@@ -572,7 +572,7 @@ X_train, X_test, y_train, y_test = train_test_split(
    Risk: Imbalanced subgroups in test set
    ```
 
-### 🎯 Recommended Cross-Validation
+### [TARGET] Recommended Cross-Validation
 
 ```python
 # Option 1: Stratified K-Fold (robust variance estimate)
@@ -615,7 +615,7 @@ for train_idx, test_idx in gkf.split(X, y, groups):
 
 ---
 
-## 🔬 FEATURE CORRELATION ANALYSIS
+##  FEATURE CORRELATION ANALYSIS
 
 **Hypothesis: Features are highly correlated**
 
@@ -660,9 +660,9 @@ features_to_remove = ['cvss_high', 'cvss_critical', 'healthcare_critical']
 
 ---
 
-## 🎯 MODEL GENERALIZATION CONCERNS
+## [TARGET] MODEL GENERALIZATION CONCERNS
 
-### Overfitting Risk Assessment: **MEDIUM** 🟡
+### Overfitting Risk Assessment: **MEDIUM** 
 
 **Evidence of potential overfitting:**
 
@@ -707,7 +707,7 @@ for size in train_sizes:
     train_scores.append(evaluate(model, X_subset, y_subset))
     val_scores.append(evaluate(model, X_test, y_test))
 
-# If train >> val and gap increases → overfitting
+# If train >> val and gap increases -> overfitting
 
 # 2. Validation Curve (by num_boost_round)
 rounds = [10, 25, 50, 100, 200, 500]
@@ -719,7 +719,7 @@ for n_rounds in rounds:
     train_ndcg.append(ndcg_score([y_train], [model.predict(dtrain)], k=10))
     test_ndcg.append(ndcg_score([y_test], [model.predict(dtest)], k=10))
 
-# If test plateaus while train keeps improving → overfitting
+# If test plateaus while train keeps improving -> overfitting
 
 # 3. Permutation Importance (detect spurious features)
 from sklearn.inspection import permutation_importance
@@ -730,12 +730,12 @@ perm_importance = permutation_importance(
 )
 
 # Compare with model.feature_importances_
-# If big discrepancy → model uses spurious correlations
+# If big discrepancy -> model uses spurious correlations
 ```
 
 ---
 
-## 📊 BUSINESS IMPACT ANALYSIS
+## [STATS] BUSINESS IMPACT ANALYSIS
 
 ### What Does NDCG@10 = 0.75 Mean?
 
@@ -787,9 +787,9 @@ Model cost:
 
 ---
 
-## 🎯 FINAL RECOMMENDATIONS
+## [TARGET] FINAL RECOMMENDATIONS
 
-### 🔴 CRITICAL (Must Do)
+###  CRITICAL (Must Do)
 
 1. **Implement Cross-Validation**
    ```python
@@ -827,7 +827,7 @@ Model cost:
    **Effort:** 2 hours  
    **Priority:** P0
 
-### 🟡 HIGH PRIORITY (Should Do)
+###  HIGH PRIORITY (Should Do)
 
 5. **Temporal Validation**
    ```python
@@ -865,7 +865,7 @@ Model cost:
    **Effort:** 2 hours  
    **Priority:** P1
 
-### 🟢 MEDIUM PRIORITY (Nice to Have)
+###  MEDIUM PRIORITY (Nice to Have)
 
 9. **Learning Curves Analysis**
    ```python
@@ -902,34 +902,34 @@ Model cost:
 
 ---
 
-## 📝 SUMMARY SCORECARD
+## [NOTE] SUMMARY SCORECARD
 
 | Aspect | Grade | Notes |
 |--------|-------|-------|
-| **Algorithm Choice** | ⭐⭐⭐⭐½ | XGBoost appropriate for ranking |
-| **Feature Engineering** | ⭐⭐⭐⭐⭐ | Excellent domain knowledge |
-| **Feature Quality** | ⭐⭐⭐ | Good, but EPSS unusable (4 CVEs) |
-| **Hyperparameters** | ⭐⭐ | No tuning (using defaults) |
-| **Evaluation** | ⭐⭐⭐⭐ | Good metrics, but no CV |
-| **Class Balance** | ⭐⭐ | Severe imbalance (L4: 50, L2: 153K) |
-| **Generalization** | ⭐⭐⭐ | Unknown (no cross-validation) |
-| **Production Ready** | ⭐⭐⭐ | Works, but needs validation |
-| **Overall** | ⭐⭐⭐⭐ | Strong foundation, needs tuning |
+| **Algorithm Choice** | ****½ | XGBoost appropriate for ranking |
+| **Feature Engineering** | ***** | Excellent domain knowledge |
+| **Feature Quality** | *** | Good, but EPSS unusable (4 CVEs) |
+| **Hyperparameters** | ** | No tuning (using defaults) |
+| **Evaluation** | **** | Good metrics, but no CV |
+| **Class Balance** | ** | Severe imbalance (L4: 50, L2: 153K) |
+| **Generalization** | *** | Unknown (no cross-validation) |
+| **Production Ready** | *** | Works, but needs validation |
+| **Overall** | **** | Strong foundation, needs tuning |
 
 ---
 
-## 🏆 CONCLUSION
+##  CONCLUSION
 
 **Your model is production-ready for healthcare CVE prioritization, but has significant room for improvement.**
 
-### What's Working Well ✅
+### What's Working Well [OK]
 - **Perfect precision** (100% P@100) on high-priority CVEs
 - **Strong domain knowledge** encoded in features
 - **Solid baseline** (NDCG@10 = 0.75 is good)
 - **Ablation study** validates feature contributions
 - **Proper scaling** recently added
 
-### What Needs Work ⚠️
+### What Needs Work [WARN]
 - **No hyperparameter tuning** (low-hanging fruit)
 - **No cross-validation** (unknown variance)
 - **Severe class imbalance** (only 50 L4 examples)
@@ -939,16 +939,16 @@ Model cost:
 
 ### Expected Improvements
 With recommended fixes:
-- **NDCG@10:** 0.75 → 0.82 (+9%)
+- **NDCG@10:** 0.75 -> 0.82 (+9%)
 - **Robustness:** ±0.03 variance (from CV)
 - **Confidence:** High (validated across 5 folds)
 
 ### Next Steps (Priority Order)
-1. ✅ Cross-validation (2 hours)
-2. ✅ Hyperparameter tuning (4 hours)
-3. ✅ Fix class imbalance (3 hours)
-4. ✅ Bulk fetch EPSS (2 hours)
-5. ⏭️ Temporal validation (1 hour)
+1. [OK] Cross-validation (2 hours)
+2. [OK] Hyperparameter tuning (4 hours)
+3. [OK] Fix class imbalance (3 hours)
+4. [OK] Bulk fetch EPSS (2 hours)
+5. ⏭ Temporal validation (1 hour)
 
 **Total effort: ~12 hours to significantly improve model quality**
 

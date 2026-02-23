@@ -39,17 +39,17 @@ def test_cache_status(verbose=False):
     print("-" * 70)
     for source, info in cache_info.items():
         if info['exists']:
-            print(f"✅ {source.upper():8} | {info['size_mb']:6.2f} MB | {info['files']:3} files | {info['age_days']:3} days old")
+            print(f"[OK] {source.upper():8} | {info['size_mb']:6.2f} MB | {info['files']:3} files | {info['age_days']:3} days old")
             if verbose:
                 print(f"          Last Modified: {info['last_modified']}")
             total_size += info['size_mb']
             total_files += info['files']
         else:
-            print(f"❌ {source.upper():8} | No cache (will fetch from API)")
+            print(f"[FAIL] {source.upper():8} | No cache (will fetch from API)")
     
     print("-" * 70)
     print(f"TOTAL: {total_size:.2f} MB | {total_files} files")
-    print("\n✅ Test 1 PASSED: Cache status retrieved successfully\n")
+    print("\n[OK] Test 1 PASSED: Cache status retrieved successfully\n")
 
 
 def test_cache_freshness(max_age_days=7):
@@ -60,7 +60,7 @@ def test_cache_freshness(max_age_days=7):
     
     cache_mgr = CacheManager()
     
-    print("\n🕒 Cache Freshness Status:")
+    print("\n Cache Freshness Status:")
     print("-" * 70)
     
     stale_count = 0
@@ -71,22 +71,22 @@ def test_cache_freshness(max_age_days=7):
         age = cache_mgr.get_cache_age(source)
         
         if age is None:
-            print(f"⚠️  {source.upper():8} | MISSING (no cache)")
+            print(f"[WARN]  {source.upper():8} | MISSING (no cache)")
             missing_count += 1
         elif age > max_age_days:
-            print(f"⚠️  {source.upper():8} | STALE ({age} days old) - Consider refreshing")
+            print(f"[WARN]  {source.upper():8} | STALE ({age} days old) - Consider refreshing")
             stale_count += 1
         else:
-            print(f"✅ {source.upper():8} | FRESH ({age} days old)")
+            print(f"[OK] {source.upper():8} | FRESH ({age} days old)")
             fresh_count += 1
     
     print("-" * 70)
     print(f"Summary: {fresh_count} fresh | {stale_count} stale | {missing_count} missing")
     
     if stale_count > 0 or missing_count > 0:
-        print("\n💡 TIP: Run 'python scripts/enrich_cves.py' to refresh cache")
+        print("\n[TIP] TIP: Run 'python scripts/enrich_cves.py' to refresh cache")
     
-    print("\n✅ Test 2 PASSED: Cache freshness checked successfully\n")
+    print("\n[OK] Test 2 PASSED: Cache freshness checked successfully\n")
 
 
 def test_cache_fallback_mock():
@@ -97,7 +97,7 @@ def test_cache_fallback_mock():
     
     cache_mgr = CacheManager()
     
-    print("\n🧪 Testing Fallback Logic (Simulation):")
+    print("\n[TEST] Testing Fallback Logic (Simulation):")
     print("-" * 70)
     
     # Simulate different scenarios
@@ -111,13 +111,13 @@ def test_cache_fallback_mock():
         {
             'name': 'Cache Miss',
             'condition': 'Cache missing or expired',
-            'expected': 'Fetch from API → Save to cache',
+            'expected': 'Fetch from API -> Save to cache',
             'api_call': True
         },
         {
             'name': 'Cache Corrupted',
             'condition': 'Cache file corrupted',
-            'expected': 'Fallback to API → Rebuild cache',
+            'expected': 'Fallback to API -> Rebuild cache',
             'api_call': True
         }
     ]
@@ -127,12 +127,12 @@ def test_cache_fallback_mock():
         print(f"   Condition: {scenario['condition']}")
         print(f"   Expected: {scenario['expected']}")
         print(f"   API Call: {'YES' if scenario['api_call'] else 'NO'}")
-        print("   Result: ✅ PASS (simulation)")
+        print("   Result: [OK] PASS (simulation)")
     
     print("\n" + "-" * 70)
-    print("ℹ️  This is a DRY RUN - no actual cache modifications made")
-    print("ℹ️  Real system implements these fallback patterns automatically")
-    print("\n✅ Test 3 PASSED: Fallback logic validated\n")
+    print("[INFO]  This is a DRY RUN - no actual cache modifications made")
+    print("[INFO]  Real system implements these fallback patterns automatically")
+    print("\n[OK] Test 3 PASSED: Fallback logic validated\n")
 
 
 def test_cache_operations_dry_run():
@@ -148,36 +148,36 @@ def test_cache_operations_dry_run():
     print("-" * 70)
     
     # Operation 1: Clear specific cache (simulation)
-    print("\n1️⃣  Clear Specific Cache (e.g., EPSS)")
+    print("\n1⃣  Clear Specific Cache (e.g., EPSS)")
     if cache_info['epss']['exists']:
         print(f"   Would delete: {cache_info['epss']['files']} files ({cache_info['epss']['size_mb']:.2f} MB)")
         print(f"   Command: cache_mgr.clear_specific_cache('epss', confirm=True)")
     else:
         print(f"   Status: No EPSS cache to clear")
-    print("   ⚠️  DRY RUN: No files deleted")
+    print("   [WARN]  DRY RUN: No files deleted")
     
     # Operation 2: Clear all cache (simulation)
-    print("\n2️⃣  Clear ALL Cache (Nuclear Option)")
+    print("\n2⃣  Clear ALL Cache (Nuclear Option)")
     total_size = sum(info['size_mb'] for info in cache_info.values() if info['exists'])
     total_files = sum(info['files'] for info in cache_info.values() if info['exists'])
     print(f"   Would delete: {total_files} files ({total_size:.2f} MB)")
     print(f"   Command: cache_mgr.clear_all_cache(confirm='DELETE ALL')")
-    print("   ⚠️  DRY RUN: No files deleted")
+    print("   [WARN]  DRY RUN: No files deleted")
     
     # Operation 3: Refresh stale cache (simulation)
-    print("\n3️⃣  Refresh Stale Cache")
+    print("\n3⃣  Refresh Stale Cache")
     stale_sources = [s for s, info in cache_info.items() if info['exists'] and cache_mgr.is_cache_stale(s, max_age_days=7)]
     if stale_sources:
         print(f"   Stale sources: {', '.join(stale_sources)}")
         print(f"   Command: python scripts/enrich_cves.py")
     else:
         print(f"   Status: All caches are fresh")
-    print("   ⚠️  DRY RUN: No API calls made")
+    print("   [WARN]  DRY RUN: No API calls made")
     
     print("\n" + "-" * 70)
-    print("ℹ️  This is a DRY RUN - no actual modifications made")
-    print("ℹ️  Use the commands shown above for actual cache operations")
-    print("\n✅ Test 4 PASSED: Cache operations simulated\n")
+    print("[INFO]  This is a DRY RUN - no actual modifications made")
+    print("[INFO]  Use the commands shown above for actual cache operations")
+    print("\n[OK] Test 4 PASSED: Cache operations simulated\n")
 
 
 def main():
@@ -191,9 +191,9 @@ def main():
     
     args = parser.parse_args()
     
-    print("\n🧪 CTI RECOMMENDER - CACHE TESTING SUITE (DRY RUN)")
+    print("\n[TEST] CTI RECOMMENDER - CACHE TESTING SUITE (DRY RUN)")
     print("=" * 70)
-    print("⚠️  SAFE MODE: No cache modifications will be made")
+    print("[WARN]  SAFE MODE: No cache modifications will be made")
     print("=" * 70)
     print()
     
@@ -204,7 +204,7 @@ def main():
         test_cache_status(verbose=args.verbose)
         results.append(("Cache Status", True))
     except Exception as e:
-        print(f"❌ Test 1 FAILED: {e}\n")
+        print(f"[FAIL] Test 1 FAILED: {e}\n")
         results.append(("Cache Status", False))
     
     # Test 2: Cache Freshness
@@ -212,7 +212,7 @@ def main():
         test_cache_freshness(max_age_days=args.max_age)
         results.append(("Cache Freshness", True))
     except Exception as e:
-        print(f"❌ Test 2 FAILED: {e}\n")
+        print(f"[FAIL] Test 2 FAILED: {e}\n")
         results.append(("Cache Freshness", False))
     
     # Test 3: Fallback Mechanism (if requested)
@@ -221,7 +221,7 @@ def main():
             test_cache_fallback_mock()
             results.append(("Fallback Mechanism", True))
         except Exception as e:
-            print(f"❌ Test 3 FAILED: {e}\n")
+            print(f"[FAIL] Test 3 FAILED: {e}\n")
             results.append(("Fallback Mechanism", False))
     
     # Test 4: Cache Operations (dry run)
@@ -229,7 +229,7 @@ def main():
         test_cache_operations_dry_run()
         results.append(("Cache Operations", True))
     except Exception as e:
-        print(f"❌ Test 4 FAILED: {e}\n")
+        print(f"[FAIL] Test 4 FAILED: {e}\n")
         results.append(("Cache Operations", False))
     
     # Summary
@@ -241,7 +241,7 @@ def main():
     total = len(results)
     
     for test_name, result in results:
-        status = "✅ PASSED" if result else "❌ FAILED"
+        status = "[OK] PASSED" if result else "[FAIL] FAILED"
         print(f"{status}: {test_name}")
     
     print("-" * 70)
@@ -249,11 +249,11 @@ def main():
     print("=" * 70)
     
     if passed == total:
-        print("\n🎉 All cache tests PASSED! Cache system is healthy.")
+        print("\n All cache tests PASSED! Cache system is healthy.")
     else:
-        print(f"\n⚠️  {total - passed} test(s) failed. Check cache configuration.")
+        print(f"\n[WARN]  {total - passed} test(s) failed. Check cache configuration.")
     
-    print("\n💡 Useful Commands:")
+    print("\n[TIP] Useful Commands:")
     print("   • View cache status: python -m src.utils.cache_manager")
     print("   • Refresh cache: python scripts/enrich_cves.py")
     print("   • Clear specific: python -c \"from src.utils.cache_manager import *; clear_cache('epss', confirm=True)\"")

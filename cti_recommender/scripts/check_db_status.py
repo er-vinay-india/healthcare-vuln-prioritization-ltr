@@ -51,5 +51,5 @@ print(f'   CHPL + Healthcare:            {chpl_healthcare:,}')
 print(f'   ATT&CK + Healthcare:          {attack_healthcare:,}')
 
 print('\n' + '='*70)
-print('✅ Phase 3 Complete - Ready for next steps')
+print('[OK] Phase 3 Complete - Ready for next steps')
 print('='*70)

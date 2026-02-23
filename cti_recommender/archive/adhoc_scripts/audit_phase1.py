@@ -24,46 +24,46 @@ def main():
     print("="*80 + "\n")
     
     # Load datasets
-    print("📂 Loading datasets...")
+    print(" Loading datasets...")
     
     # Load NVD
     try:
         nvd_df = cr.get_nvd_cached()
-        print(f"  ✓ NVD: {len(nvd_df)} CVEs loaded")
+        print(f"  [OK] NVD: {len(nvd_df)} CVEs loaded")
     except Exception as e:
-        print(f"  ✗ NVD: Failed to load - {e}")
+        print(f"  [X] NVD: Failed to load - {e}")
         nvd_df = None
     
     # Load KEV
     try:
         kev_df = cr.get_kev_cached()
-        print(f"  ✓ KEV: {len(kev_df)} entries loaded")
+        print(f"  [OK] KEV: {len(kev_df)} entries loaded")
     except Exception as e:
-        print(f"  ✗ KEV: Failed to load - {e}")
+        print(f"  [X] KEV: Failed to load - {e}")
         kev_df = None
     
     # Load CHPL
     try:
         chpl_df = cr.get_chpl_cached()
-        print(f"  ✓ CHPL: {len(chpl_df)} products loaded")
+        print(f"  [OK] CHPL: {len(chpl_df)} products loaded")
     except Exception as e:
-        print(f"  ✗ CHPL: Failed to load - {e}")
+        print(f"  [X] CHPL: Failed to load - {e}")
         chpl_df = None
     
     # Load ATT&CK
     try:
         attack_df = cr.get_attack_cached()
-        print(f"  ✓ ATT&CK: {len(attack_df)} techniques loaded")
+        print(f"  [OK] ATT&CK: {len(attack_df)} techniques loaded")
     except Exception as e:
-        print(f"  ✗ ATT&CK: Failed to load - {e}")
+        print(f"  [X] ATT&CK: Failed to load - {e}")
         attack_df = None
     
     # Load top-20 recommendations
     try:
         top20_df = pd.read_csv('outputs/top20.csv')
-        print(f"  ✓ Top-20: {len(top20_df)} recommendations loaded")
+        print(f"  [OK] Top-20: {len(top20_df)} recommendations loaded")
     except Exception as e:
-        print(f"  ✗ Top-20: Failed to load - {e}")
+        print(f"  [X] Top-20: Failed to load - {e}")
         top20_df = None
     
     print("\n" + "-"*80 + "\n")
@@ -90,7 +90,7 @@ def main():
         print("Analyzing NVD dataset with enhanced healthcare mapping...")
         nvd_coverage = analyze_healthcare_coverage(nvd_df, mapper)
         
-        print(f"\n📊 Healthcare Coverage in NVD:")
+        print(f"\n[STATS] Healthcare Coverage in NVD:")
         print(f"  Total CVEs: {nvd_coverage['total_cves']}")
         print(f"  Healthcare flagged: {nvd_coverage['healthcare_flagged']} ({nvd_coverage['healthcare_flagged']/nvd_coverage['total_cves']*100:.1f}%)")
         print(f"  Vendor matches: {nvd_coverage['vendor_matches']}")
@@ -113,7 +113,7 @@ def main():
                 description_col='description' if 'description' in top20_df.columns else 'description_en'
             )
             
-            print("🎯 Top-20 Healthcare Relevance (Enhanced):")
+            print("[TARGET] Top-20 Healthcare Relevance (Enhanced):")
             print(f"  Healthcare flagged: {top20_enriched['is_healthcare'].sum()}/20")
             print(f"  Vendor matches: {top20_enriched['healthcare_vendor'].notna().sum()}/20")
             print(f"  Product matches: {top20_enriched['healthcare_product'].sum()}/20")
@@ -121,17 +121,17 @@ def main():
             
             # Save enriched top-20
             top20_enriched.to_csv('outputs/top20_enriched.csv', index=False)
-            print(f"\n  ✅ Saved enriched top-20 to outputs/top20_enriched.csv")
+            print(f"\n  [OK] Saved enriched top-20 to outputs/top20_enriched.csv")
             
             # Show detailed breakdown
-            print("\n📋 Detailed Top-20 Breakdown:")
+            print("\n Detailed Top-20 Breakdown:")
             print(f"  {'Rank':<5} {'CVE ID':<18} {'CVSS':<6} {'KEV':<5} {'HC Score':<9} {'Vendor'}")
             print("  " + "-"*70)
             
             for idx, row in top20_enriched.head(20).iterrows():
                 cve_id = row['cve_id']
                 cvss = row.get('cvss', 0)
-                kev = '✓' if row.get('kev_flag', 0) else '✗'
+                kev = '[OK]' if row.get('kev_flag', 0) else '[X]'
                 hc_score = row.get('healthcare_score', 0)
                 vendor = row.get('healthcare_vendor', 'None')[:15] if pd.notna(row.get('healthcare_vendor')) else 'None'
                 
@@ -140,9 +140,9 @@ def main():
         print("\n" + "="*80)
         print("PHASE 1 AUDIT COMPLETE")
         print("="*80)
-        print("\n✅ Quality report saved to: outputs/phase1_quality_report.txt")
-        print("✅ Healthcare mapping saved to: data/config/healthcare_mapping.csv")
-        print("✅ Enriched top-20 saved to: outputs/top20_enriched.csv")
+        print("\n[OK] Quality report saved to: outputs/phase1_quality_report.txt")
+        print("[OK] Healthcare mapping saved to: data/config/healthcare_mapping.csv")
+        print("[OK] Enriched top-20 saved to: outputs/top20_enriched.csv")
         
         # Summary recommendations
         print("\n" + "="*80)
@@ -152,21 +152,21 @@ def main():
         total_issues = sum(len(r.errors) + len(r.warnings) for r in reports.values() if hasattr(r, 'errors'))
         
         if total_issues > 0:
-            print(f"\n⚠️  Found {total_issues} data quality issues that should be addressed")
+            print(f"\n[WARN]  Found {total_issues} data quality issues that should be addressed")
             print("   • Review outputs/phase1_quality_report.txt for details")
             print("   • Consider data cleaning before proceeding to ML training")
         
         if top20_enriched is not None:
             hc_precision = top20_enriched['is_healthcare'].sum() / 20
             if hc_precision < 0.50:
-                print(f"\n⚠️  Healthcare precision is low ({hc_precision:.1%})")
+                print(f"\n[WARN]  Healthcare precision is low ({hc_precision:.1%})")
                 print("   • Consider adjusting scoring weights")
                 print("   • Review and refine healthcare mapping patterns")
             elif hc_precision >= 0.85:
-                print(f"\n✅ Healthcare precision looks good ({hc_precision:.1%})")
+                print(f"\n[OK] Healthcare precision looks good ({hc_precision:.1%})")
                 print("   • Ready to proceed with LTR model training")
         
-        print("\n📍 Next Phase:")
+        print("\n Next Phase:")
         print("   Phase 2: Improve labeling strategy")
         print("   • Add EPSS scores for exploit probability")
         print("   • Create curated positive examples")
@@ -175,7 +175,7 @@ def main():
         print("\n")
         
     else:
-        print("❌ Cannot proceed without NVD dataset")
+        print("[FAIL] Cannot proceed without NVD dataset")
         return 1
     
     return 0

@@ -271,8 +271,8 @@ def ablation_study():
     print("\n" + "="*70)
     print(f"OVERALL: Full model vs Baseline")
     print("="*70)
-    print(f"  NDCG@10: {baseline_ndcg:.4f} → {full_ndcg:.4f} ({total_gain:+.4f}, {total_gain/baseline_ndcg*100:+.1f}%)")
-    print(f"  P@20:    {results_df.iloc[0]['p_20']:.2%} → {results_df.iloc[-1]['p_20']:.2%}")
+    print(f"  NDCG@10: {baseline_ndcg:.4f} -> {full_ndcg:.4f} ({total_gain:+.4f}, {total_gain/baseline_ndcg*100:+.1f}%)")
+    print(f"  P@20:    {results_df.iloc[0]['p_20']:.2%} -> {results_df.iloc[-1]['p_20']:.2%}")
     
     # Key findings
     print("\n" + "="*70)
@@ -291,7 +291,7 @@ def ablation_study():
     for i, (variant, gain) in enumerate(gains[:3], 1):
         print(f"  {i}. {variant}: +{gain:.4f}")
     
-    print("\n✅ Ablation study complete!")
+    print("\n[OK] Ablation study complete!")
     print("="*70)
     
     # Save results

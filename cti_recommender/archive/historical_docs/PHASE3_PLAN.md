@@ -2,7 +2,7 @@
 
 ## Research Objective Completion Checklist
 
-### ✅ COMPLETED (Phase 1-2)
+### [OK] COMPLETED (Phase 1-2)
 - [x] NVD data collection (226,320 CVEs, 2018-2025)
 - [x] CISA KEV integration (1,161 CVEs)
 - [x] Healthcare identification (125,606 CVEs)
@@ -11,7 +11,7 @@
 - [x] XGBoost LTR model (NDCG@10=1.0)
 - [x] Production recommender API
 
-### ⚠️ MISSING (Phase 3 - CRITICAL)
+### [WARN] MISSING (Phase 3 - CRITICAL)
 - [ ] **MITRE ATT&CK mapping** (Research Objective #1)
 - [ ] **CHPL medical device flags** (Research Objective #2)
 - [ ] **Fix EPSS scores** (Currently 0 in database)
@@ -149,14 +149,14 @@ class CHPLMapper:
 ## Execution Order
 
 ### Week 1: Critical Fixes
-1. ✅ Task 3.1: Fix EPSS (30 min) - **DO FIRST**
-2. ✅ Task 3.4: Link curated dataset (30 min)
-3. ✅ Task 3.2: ATT&CK integration (3 hours)
+1. [OK] Task 3.1: Fix EPSS (30 min) - **DO FIRST**
+2. [OK] Task 3.4: Link curated dataset (30 min)
+3. [OK] Task 3.2: ATT&CK integration (3 hours)
 
 ### Week 2: Enhancements
-4. ✅ Task 3.3: CHPL integration (2 hours)
-5. ✅ Task 3.5: Ablation study (1 hour)
-6. ✅ Task 3.6: Temporal analysis (2 hours)
+4. [OK] Task 3.3: CHPL integration (2 hours)
+5. [OK] Task 3.5: Ablation study (1 hour)
+6. [OK] Task 3.6: Temporal analysis (2 hours)
 
 ---
 

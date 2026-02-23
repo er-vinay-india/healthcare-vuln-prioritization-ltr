@@ -93,16 +93,16 @@ python scripts/test_cache.py --max-age 14
 ```
 
 **What it tests:**
-- ✅ Cache status (size, files, age)
-- ✅ Cache freshness validation
-- ✅ Fallback mechanism simulation
-- ✅ Cache operations (dry run)
+- [OK] Cache status (size, files, age)
+- [OK] Cache freshness validation
+- [OK] Fallback mechanism simulation
+- [OK] Cache operations (dry run)
 
 **Features:**
-- 🛡️ **Safe Mode**: No actual cache modifications
-- 📊 **Detailed Reports**: Shows cache size, age, and freshness
-- 🧪 **Fallback Testing**: Validates cache miss/hit scenarios
-- 💡 **Command Reference**: Shows actual commands for cache operations
+-  **Safe Mode**: No actual cache modifications
+- [STATS] **Detailed Reports**: Shows cache size, age, and freshness
+- [TEST] **Fallback Testing**: Validates cache miss/hit scenarios
+- [TIP] **Command Reference**: Shows actual commands for cache operations
 
 #### `check_db_status.py`
 Checks database status and statistics.

@@ -52,7 +52,7 @@ def fetch_kev_catalog() -> set:
         kev_data = response.json()
         
         kev_cves = {vuln['cveID'] for vuln in kev_data.get('vulnerabilities', [])}
-        logger.info(f"✓ Loaded {len(kev_cves):,} CVEs from KEV catalog")
+        logger.info(f"[OK] Loaded {len(kev_cves):,} CVEs from KEV catalog")
         return kev_cves
         
     except Exception as e:
@@ -103,7 +103,7 @@ def fetch_epss_bulk(cve_ids: list, batch_size: int = 100) -> dict:
             logger.warning(f"Failed to fetch batch {batch_num}: {e}")
             continue
     
-    logger.info(f"✓ Fetched {len(epss_scores):,} EPSS scores ({len(epss_scores)/len(cve_ids)*100:.1f}% coverage)")
+    logger.info(f"[OK] Fetched {len(epss_scores):,} EPSS scores ({len(epss_scores)/len(cve_ids)*100:.1f}% coverage)")
     return epss_scores
 
 
@@ -144,7 +144,7 @@ def validate_enrichment(db: CVEDatabase):
         db: CVEDatabase instance
     """
     logger.info("="*70)
-    logger.info("🔍 ENRICHMENT VALIDATION")
+    logger.info(" ENRICHMENT VALIDATION")
     logger.info("="*70)
     
     query = '''
@@ -178,20 +178,20 @@ def validate_enrichment(db: CVEDatabase):
     # Critical checks
     issues = []
     if result[2] == 0:
-        issues.append("🔴 CRITICAL: EPSS has 0 CVEs! Feature is useless!")
+        issues.append(" CRITICAL: EPSS has 0 CVEs! Feature is useless!")
     elif result[2] < result[0] * 0.5:
-        issues.append(f"⚠️  WARNING: EPSS coverage is low ({result[2]/result[0]*100:.1f}%)")
+        issues.append(f"[WARN]  WARNING: EPSS coverage is low ({result[2]/result[0]*100:.1f}%)")
     
     if result[3] > result[0] * 0.7:
-        issues.append(f"⚠️  WARNING: Healthcare coverage seems high ({result[3]/result[0]*100:.1f}%) - check for false positives")
+        issues.append(f"[WARN]  WARNING: Healthcare coverage seems high ({result[3]/result[0]*100:.1f}%) - check for false positives")
     
     if issues:
-        logger.warning("⚠️  Issues Found:")
+        logger.warning("[WARN]  Issues Found:")
         for issue in issues:
             logger.warning(f"  {issue}")
         return False
     else:
-        logger.info("✅ Validation passed!")
+        logger.info("[OK] Validation passed!")
         return True
 
 
@@ -210,7 +210,7 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
     
     logger.info("="*70)
     if dry_run:
-        logger.info("🔍 CVE DATABASE ENRICHMENT - DRY RUN MODE")
+        logger.info(" CVE DATABASE ENRICHMENT - DRY RUN MODE")
     else:
         logger.info("CVE DATABASE ENRICHMENT PIPELINE")
     logger.info("="*70)
@@ -225,7 +225,7 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
     if not skip_attack:
         try:
             attack_mapper = AttackMapper()
-            logger.info("✓ ATT&CK mapper initialized")
+            logger.info("[OK] ATT&CK mapper initialized")
         except Exception as e:
             logger.warning(f"ATT&CK mapper unavailable: {e}")
             skip_attack = True
@@ -240,7 +240,7 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
                 skip_chpl = True
                 chpl_mapper = None
             else:
-                logger.info(f"✓ CHPL mapper initialized with {len(chpl_mapper.products_df):,} products")
+                logger.info(f"[OK] CHPL mapper initialized with {len(chpl_mapper.products_df):,} products")
         except Exception as e:
             logger.warning(f"CHPL mapper unavailable: {e}")
             skip_chpl = True
@@ -265,7 +265,7 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
         query += f" LIMIT {limit}"
     
     cves_df = pd.read_sql_query(query, db.conn)
-    logger.info(f"✓ Loaded {len(cves_df):,} CVEs")
+    logger.info(f"[OK] Loaded {len(cves_df):,} CVEs")
     
     # =================================================================
     # PHASE 1: FETCH ALL EPSS DATA (SEPARATE FROM PROCESSING)
@@ -285,10 +285,10 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
     
     # Verify EPSS fetch completeness
     epss_coverage = len(epss_scores) / len(cves_df) * 100
-    logger.info(f"\n✓ EPSS Fetch Complete: {len(epss_scores):,}/{len(cves_df):,} CVEs ({epss_coverage:.1f}%)")
+    logger.info(f"\n[OK] EPSS Fetch Complete: {len(epss_scores):,}/{len(cves_df):,} CVEs ({epss_coverage:.1f}%)")
     
     if epss_coverage < 50:
-        logger.warning(f"⚠️  Low EPSS coverage ({epss_coverage:.1f}%) - many CVEs may not be in EPSS database")
+        logger.warning(f"[WARN]  Low EPSS coverage ({epss_coverage:.1f}%) - many CVEs may not be in EPSS database")
     
     # =================================================================
     # PHASE 2: PROCESS CVEs AND PREPARE ENRICHMENT DATA
@@ -402,10 +402,10 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
         db.conn.execute("BEGIN TRANSACTION")
         db.upsert_enrichments(enrichments_df)
         db.conn.commit()
-        logger.info("✓ Database transaction committed successfully")
+        logger.info("[OK] Database transaction committed successfully")
     except Exception as e:
         db.conn.rollback()
-        logger.error(f"❌ Database transaction failed, rolled back: {e}")
+        logger.error(f"[FAIL] Database transaction failed, rolled back: {e}")
         raise
     
     # Step 6: Print final statistics

@@ -36,21 +36,21 @@ Total Score = KEV flag          (weight: 0.28)   ← Highest weight!
 - `cve_id`: CVE-2024-XXXX
 - `label`: 3
 - `cvss`: 9.8
-- `is_healthcare`: 0 ❌
+- `is_healthcare`: 0 [FAIL]
 - `kev_flag`: 1 
 - `epss_score`: 0.85
 
 **Score Calculation:**
 ```
-KEV flag       : 0.28   ✓ Known exploited!
+KEV flag       : 0.28   [OK] Known exploited!
 EPSS score     : 0.187  (0.22 × 0.85 = high probability)
 CVSS score     : 0.147  (0.15 × 9.8/10 = critical severity)
 CVSS×EPSS mix  : 0.100  (0.12 × 0.98 × 0.85)
 Recency        : 0.065  (published recently)
-Healthcare     : 0.000  ✗ Not healthcare-specific
+Healthcare     : 0.000  [X] Not healthcare-specific
 ATT&CK         : 0.018  (3 techniques mapped)
-CHPL           : 0.000  ✗ Not medical device
-KEV×Health     : 0.000  ✗ No combo bonus
+CHPL           : 0.000  [X] Not medical device
+KEV×Health     : 0.000  [X] No combo bonus
 ─────────────────────
 TOTAL          : 0.797
 ```
@@ -60,17 +60,17 @@ TOTAL          : 0.797
 **Hypothetical Healthcare CVE (not #1):**
 - `cvss`: 9.8
 - `is_healthcare`: 1 
-- `kev_flag`: 0 ❌
+- `kev_flag`: 0 [FAIL]
 - `epss_score`: 0.15
 
 **Score Calculation:**
 ```
-KEV flag       : 0.000  ✗ Not exploited yet
+KEV flag       : 0.000  [X] Not exploited yet
 EPSS score     : 0.033  (0.22 × 0.15 = low probability)
 CVSS score     : 0.147  (0.15 × 9.8/10)
 CVSS×EPSS mix  : 0.018  (0.12 × 0.98 × 0.15)
 Recency        : 0.065
-Healthcare     : 0.050  ✓ Healthcare-relevant
+Healthcare     : 0.050  [OK] Healthcare-relevant
 ATT&CK         : 0.012  (2 techniques)
 CHPL           : 0.000
 KEV×Health     : 0.000  (KEV=0, no bonus)
@@ -78,7 +78,7 @@ KEV×Health     : 0.000  (KEV=0, no bonus)
 TOTAL          : 0.325
 ```
 
-**Result:** 0.797 > 0.325 → Non-healthcare KEV CVE ranks higher!
+**Result:** 0.797 > 0.325 -> Non-healthcare KEV CVE ranks higher!
 
 ---
 
@@ -94,7 +94,7 @@ TOTAL          : 0.325
 
 - **EPSS (Exploit Prediction Scoring System):** Probability of exploitation in next 30 days
 - High EPSS (>0.7) means attackers are likely to target this CVE soon
-- Combined with high CVSS → imminent critical threat
+- Combined with high CVSS -> imminent critical threat
 
 ### 3. **Healthcare Flag is a Refinement, Not Primary Filter**
 
@@ -116,15 +116,15 @@ Priority 3: Refine by Context (Healthcare, ATT&CK, CHPL)
 
 **Scenario 1: Two KEV CVEs with similar EPSS/CVSS**
 ```
-CVE-A: KEV=1, EPSS=0.8, CVSS=9.5, Healthcare=0 → Score: 0.78
-CVE-B: KEV=1, EPSS=0.8, CVSS=9.5, Healthcare=1 → Score: 0.83 ✓
+CVE-A: KEV=1, EPSS=0.8, CVSS=9.5, Healthcare=0 -> Score: 0.78
+CVE-B: KEV=1, EPSS=0.8, CVSS=9.5, Healthcare=1 -> Score: 0.83 [OK]
 
 Result: CVE-B ranks higher due to healthcare flag
 ```
 
 **Scenario 2: KEV + Healthcare Combo Bonus**
 ```
-CVE-C: KEV=1, Healthcare=1 → Gets +0.05 bonus (total +0.10 healthcare boost)
+CVE-C: KEV=1, Healthcare=1 -> Gets +0.05 bonus (total +0.10 healthcare boost)
 
 This is the "perfect storm": actively exploited + healthcare-relevant
 ```

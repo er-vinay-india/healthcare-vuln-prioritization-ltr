@@ -21,7 +21,7 @@ class CHPLMapper:
         self.products_df = fetcher.get_chpl_data()
         
         if self.products_df is None or len(self.products_df) == 0:
-            print("⚠ No CHPL data available")
+            print("[WARN] No CHPL data available")
             self.products_df = None
             return
         

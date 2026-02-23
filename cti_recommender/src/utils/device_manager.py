@@ -60,17 +60,17 @@ class DeviceManager:
     def _log_device_info(self):
         """Log device information."""
         if self.device_type == "mps":
-            logger.info("✓ Using Apple Silicon GPU (MPS) for acceleration")
+            logger.info("[OK] Using Apple Silicon GPU (MPS) for acceleration")
             logger.info("  - Metal Performance Shaders enabled")
             logger.info("  - Unified memory architecture")
         elif self.device_type == "cuda":
             gpu_name = torch.cuda.get_device_name(0)
             gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1e9
-            logger.info(f"✓ Using NVIDIA GPU (CUDA) for acceleration")
+            logger.info(f"[OK] Using NVIDIA GPU (CUDA) for acceleration")
             logger.info(f"  - GPU: {gpu_name}")
             logger.info(f"  - Memory: {gpu_memory:.1f} GB")
         else:
-            logger.info("⚠ Using CPU (no GPU acceleration)")
+            logger.info("[WARN] Using CPU (no GPU acceleration)")
             logger.info("  - Consider using a system with GPU for faster training")
     
     def to_device(self, *tensors_or_models):
@@ -179,13 +179,13 @@ def test_device():
     dm.synchronize()
     elapsed = time.time() - start
     
-    print(f"✓ 100 matrix multiplications completed in {elapsed:.4f}s")
+    print(f"[OK] 100 matrix multiplications completed in {elapsed:.4f}s")
     print(f"  Average: {elapsed/100*1000:.2f}ms per operation")
     
     if dm.device_type in ["mps", "cuda"]:
-        print("\n✓ GPU acceleration is working!")
+        print("\n[OK] GPU acceleration is working!")
     else:
-        print("\n⚠ Running on CPU (no GPU acceleration)")
+        print("\n[WARN] Running on CPU (no GPU acceleration)")
     
     print("=" * 60)
 

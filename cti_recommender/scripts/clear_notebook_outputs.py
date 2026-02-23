@@ -35,11 +35,11 @@ if __name__ == '__main__':
         if path.exists():
             print(f"Clearing outputs from: {nb_path}")
             cleared = clear_notebook_outputs(path)
-            print(f"  ✓ Cleared {cleared} code cells")
+            print(f"  [OK] Cleared {cleared} code cells")
             
             # Check new size
             with open(path) as f:
                 lines = len(f.readlines())
-            print(f"  ✓ New size: {lines:,} lines\n")
+            print(f"  [OK] New size: {lines:,} lines\n")
         else:
-            print(f"  ⚠️  Not found: {nb_path}\n")
+            print(f"  [WARN]  Not found: {nb_path}\n")

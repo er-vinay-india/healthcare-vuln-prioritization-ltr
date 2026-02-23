@@ -41,8 +41,8 @@ We have two notebooks with significant overlap and complementary content:
 
 **Data Flow:**
 ```
-SQLite DB → Data Loading → Feature Engineering → Train/Test Split → 
-LightGBM Training → Evaluation → Ablation Study → Results
+SQLite DB -> Data Loading -> Feature Engineering -> Train/Test Split -> 
+LightGBM Training -> Evaluation -> Ablation Study -> Results
 ```
 
 ---
@@ -96,9 +96,9 @@ LightGBM Training → Evaluation → Ablation Study → Results
 
 **Data Flow:**
 ```
-SQLite DB → Feature Engineering → Weak Label Construction → 
-Temporal Split → Confidence-Weighted LTR + Comparison Models (DiffusionRank, RGCN, Ensemble) → 
-Evaluation & Comparison → Statistical Tests → Results
+SQLite DB -> Feature Engineering -> Weak Label Construction -> 
+Temporal Split -> Confidence-Weighted LTR + Comparison Models (DiffusionRank, RGCN, Ensemble) -> 
+Evaluation & Comparison -> Statistical Tests -> Results
 ```
 
 ---
@@ -108,12 +108,12 @@ Evaluation & Comparison → Statistical Tests → Results
 ### Shared Functionality
 | Function | NB1 | NB2 | Notes |
 |----------|-----|-----|-------|
-| Data Loading | ✓ | ✓ | Same SQLite source, slightly different queries |
-| Feature Engineering | ✓ | ✓ | Similar but NB2 more comprehensive |
-| Train/Test Split | ✓ | ✓ | NB2 adds validation set |
-| LTR Training | ✓ | ✓ | NB2 adds confidence weighting **[Key Innovation]** |
-| Baseline Comparison | ✓ | ✓ | NB2 more comprehensive |
-| Evaluation Metrics | ✓ | ✓ | Similar, NB2 adds temporal evaluation |
+| Data Loading | [OK] | [OK] | Same SQLite source, slightly different queries |
+| Feature Engineering | [OK] | [OK] | Similar but NB2 more comprehensive |
+| Train/Test Split | [OK] | [OK] | NB2 adds validation set |
+| LTR Training | [OK] | [OK] | NB2 adds confidence weighting **[Key Innovation]** |
+| Baseline Comparison | [OK] | [OK] | NB2 more comprehensive |
+| Evaluation Metrics | [OK] | [OK] | Similar, NB2 adds temporal evaluation |
 
 ### Unique to NB1
 - More detailed EDA visualizations (Plotly charts)
@@ -185,7 +185,7 @@ src/
     └── config.py              # Configuration management
 ```
 
-### Functions → Modules Mapping
+### Functions -> Modules Mapping
 
 **src/data/loader.py:**
 - `load_cves_from_db()` - Load CVEs with enrichments
@@ -334,8 +334,8 @@ touch src/utils/temporal.py src/utils/config.py
 **Priority:** High  
 **Estimated Time:** 15 minutes
 
-1. Move `load_cves_from_db()` from notebooks → `src/data/loader.py`
-2. Move `get_data_summary()` → `src/data/loader.py`
+1. Move `load_cves_from_db()` from notebooks -> `src/data/loader.py`
+2. Move `get_data_summary()` -> `src/data/loader.py`
 3. Update imports in NB2
 4. Run data loading cells in NB2
 5. Verify identical output
@@ -345,7 +345,7 @@ touch src/utils/temporal.py src/utils/config.py
 **Priority:** High  
 **Estimated Time:** 30 minutes
 
-1. Move `build_features()` → `src/features/engineering.py`
+1. Move `build_features()` -> `src/features/engineering.py`
 2. Update imports in NB2
 3. Run feature engineering cells
 4. Verify feature matrix matches
@@ -355,8 +355,8 @@ touch src/utils/temporal.py src/utils/config.py
 **Priority:** High (Core Innovation)  
 **Estimated Time:** 30 minutes
 
-1. Move `build_weak_labels()` → `src/features/labeling.py`
-2. Move `print_label_diagnostics()` → `src/features/labeling.py`
+1. Move `build_weak_labels()` -> `src/features/labeling.py`
+2. Move `print_label_diagnostics()` -> `src/features/labeling.py`
 3. Update imports
 4. Run labeling cells
 5. Verify label distributions match
@@ -366,8 +366,8 @@ touch src/utils/temporal.py src/utils/config.py
 **Priority:** High  
 **Estimated Time:** 45 minutes
 
-1. Move `prepare_ranking_data()` → `src/models/ltr.py`
-2. Move `train_lambdarank()` → `src/models/ltr.py`
+1. Move `prepare_ranking_data()` -> `src/models/ltr.py`
+2. Move `train_lambdarank()` -> `src/models/ltr.py`
 3. Add cross-validation function
 4. Update imports
 5. Run training cells
@@ -378,7 +378,7 @@ touch src/utils/temporal.py src/utils/config.py
 **Priority:** Medium  
 **Estimated Time:** 15 minutes
 
-1. Move baseline functions → `src/models/baselines.py`
+1. Move baseline functions -> `src/models/baselines.py`
 2. Update imports
 3. Run baseline cells
 4. Verify scores match
@@ -388,10 +388,10 @@ touch src/utils/temporal.py src/utils/config.py
 **Priority:** High  
 **Estimated Time:** 30 minutes
 
-1. Move `evaluate_ranking()` → `src/evaluation/metrics.py`
-2. Move `evaluate_by_week()` → `src/evaluation/metrics.py`
-3. Move comparison logic → `src/evaluation/comparison.py`
-4. Move significance tests → `src/evaluation/significance.py`
+1. Move `evaluate_ranking()` -> `src/evaluation/metrics.py`
+2. Move `evaluate_by_week()` -> `src/evaluation/metrics.py`
+3. Move comparison logic -> `src/evaluation/comparison.py`
+4. Move significance tests -> `src/evaluation/significance.py`
 5. Update imports
 6. Run evaluation cells
 7. Verify metrics match
@@ -401,8 +401,8 @@ touch src/utils/temporal.py src/utils/config.py
 **Priority:** Low (can defer)  
 **Estimated Time:** 45 minutes
 
-1. Move EDA functions → `src/visualization/eda.py`
-2. Move SHAP functions → `src/visualization/explainability.py`
+1. Move EDA functions -> `src/visualization/eda.py`
+2. Move SHAP functions -> `src/visualization/explainability.py`
 3. Update imports
 4. Run visualization cells
 5. Verify plots render
@@ -412,8 +412,8 @@ touch src/utils/temporal.py src/utils/config.py
 **Priority:** Medium  
 **Estimated Time:** 15 minutes
 
-1. Move `make_temporal_splits()` → `src/utils/temporal.py`
-2. Create config management → `src/utils/config.py`
+1. Move `make_temporal_splits()` -> `src/utils/temporal.py`
+2. Create config management -> `src/utils/config.py`
 3. Update imports
 4. Run utility cells
 5. **Git commit:** `refactor: Move utilities to src/utils`
@@ -507,7 +507,7 @@ git push
 
 | Phase | Duration | Cumulative |
 |-------|----------|------------|
-| Phase 1: Inventory | ✅ Complete | 1h |
+| Phase 1: Inventory | [OK] Complete | 1h |
 | Phase 2: Module Skeleton | 30 min | 1.5h |
 | Phase 3: Function Migration | 3-4 hours | 5h |
 | Phase 4: Build Final Notebook | 1-2 hours | 7h |

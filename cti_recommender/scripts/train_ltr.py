@@ -126,10 +126,10 @@ def train_model_with_regularization(X_train, y_train, X_test, y_test):
     Train XGBoost ranker with STRONGER REGULARIZATION to prevent overfitting.
     
     Changes from previous model:
-    - min_child_weight: 1 → 5 (require more samples per leaf)
-    - max_depth: 6 → 5 (shallower trees)
-    - alpha: 0 → 0.1 (L1 regularization)
-    - lambda: 1 → 2 (L2 regularization)
+    - min_child_weight: 1 -> 5 (require more samples per leaf)
+    - max_depth: 6 -> 5 (shallower trees)
+    - alpha: 0 -> 0.1 (L1 regularization)
+    - lambda: 1 -> 2 (L2 regularization)
     - eta: 0.05 (kept low for stability)
     """
     logger.info("Training XGBoost Ranker with STRONG REGULARIZATION...")
@@ -287,7 +287,7 @@ def main():
     print(f"Metadata saved: {metadata_path}")
     
     print("\n" + "="*70)
-    print("✅ Training complete!")
+    print("[OK] Training complete!")
     print("="*70)
     print(f"\nModel summary:")
     print(f"  Features: {len(X.columns)} (pruned from 23)")

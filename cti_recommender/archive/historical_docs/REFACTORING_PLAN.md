@@ -6,16 +6,16 @@
 
 ---
 
-## 🔍 Phase 1: Issues Identified
+##  Phase 1: Issues Identified
 
 ### A. Database Schema Problems
 
-#### ❌ Current Issues:
+#### [FAIL] Current Issues:
 1. **Incremental Column Addition**: `attack_technique_count` added via ALTER TABLE migration in runtime
 2. **Missing Columns on Creation**: Schema created minimal, then expanded later
 3. **Migration Code in Production**: Try/except ALTER TABLE in `_create_tables()` (line 94)
 
-#### ✅ Solution:
+#### [OK] Solution:
 - Create complete schema upfront with ALL columns
 - Remove migration code from `cve_database.py`
 - Add proper migration script IF needed for existing DBs (one-time use)
@@ -38,7 +38,7 @@
 | `apply_chpl_mappings.py` | Add CHPL data | Retroactive fix | Integrate into `enrich_cves.py` |
 | `rescore_weights.py` | Recalculate scores | Weight tuning test | Archive or integrate into validation |
 
-**Impact:** 7 scripts eliminated → 1 comprehensive enrichment script
+**Impact:** 7 scripts eliminated -> 1 comprehensive enrichment script
 
 ---
 
@@ -58,38 +58,38 @@
 
 #### Current Workflow (Fragmented):
 ```
-1. refresh_cves.py       → Fetch CVEs from NVD
-2. enrich_cves.py        → Partial enrichment (EPSS, KEV)
-3. fix_epss_scores.py    → Fix missing EPSS
-4. fix_healthcare_flags.py → Add healthcare flags
-5. apply_attack_mappings.py → Add ATT&CK data
-6. apply_chpl_mappings.py → Add CHPL data
-7. link_curated_dataset.py → Link curated CVEs
-8. recalculate_labels.py → Compute final labels
-9. train_ltr_model.py    → Train model
+1. refresh_cves.py       -> Fetch CVEs from NVD
+2. enrich_cves.py        -> Partial enrichment (EPSS, KEV)
+3. fix_epss_scores.py    -> Fix missing EPSS
+4. fix_healthcare_flags.py -> Add healthcare flags
+5. apply_attack_mappings.py -> Add ATT&CK data
+6. apply_chpl_mappings.py -> Add CHPL data
+7. link_curated_dataset.py -> Link curated CVEs
+8. recalculate_labels.py -> Compute final labels
+9. train_ltr_model.py    -> Train model
 ```
 
 #### Proposed Workflow (Streamlined):
 ```
-1. refresh_cves.py          → Fetch CVEs from NVD
-2. enrich_cves_complete.py  → ALL enrichments in one pass
+1. refresh_cves.py          -> Fetch CVEs from NVD
+2. enrich_cves_complete.py  -> ALL enrichments in one pass
    ├─ EPSS scores
    ├─ KEV flags
    ├─ Healthcare detection
    ├─ ATT&CK mappings
    ├─ CHPL mappings
    └─ Curated dataset linking
-3. train_ltr_pruned.py      → Train model (single version)
-4. recommend_cves.py        → Generate recommendations
+3. train_ltr_pruned.py      -> Train model (single version)
+4. recommend_cves.py        -> Generate recommendations
 ```
 
-**Impact:** 9 steps → 4 steps
+**Impact:** 9 steps -> 4 steps
 
 ---
 
-## 📋 Phase 2: Consolidation Plan
+##  Phase 2: Consolidation Plan
 
-### Phase 2.1: Database Schema Fix ⚡
+### Phase 2.1: Database Schema Fix 
 **Priority:** Critical  
 **Risk:** Low (well-tested schema)  
 **Time:** 30 mins
@@ -114,7 +114,7 @@
 
 ---
 
-### Phase 2.2: Enrichment Pipeline Consolidation 🔄
+### Phase 2.2: Enrichment Pipeline Consolidation 
 **Priority:** High  
 **Risk:** Medium (complex logic)  
 **Time:** 2 hours
@@ -153,14 +153,14 @@
 
 ---
 
-### Phase 2.3: Training Script Cleanup 🧹
+### Phase 2.3: Training Script Cleanup 
 **Priority:** Medium  
 **Risk:** Low  
 **Time:** 15 mins
 
 **Actions:**
-1. Rename `train_ltr_pruned.py` → `train_ltr.py`
-2. Archive `train_ltr_model.py` → `archive/adhoc_scripts/`
+1. Rename `train_ltr_pruned.py` -> `train_ltr.py`
+2. Archive `train_ltr_model.py` -> `archive/adhoc_scripts/`
 3. Update references in docs
 4. Test training pipeline
 5. Commit
@@ -173,14 +173,14 @@
 
 ---
 
-### Phase 2.4: Validation Script Cleanup 🧹
+### Phase 2.4: Validation Script Cleanup 
 **Priority:** Medium  
 **Risk:** Low  
 **Time:** 15 mins
 
 **Actions:**
-1. Rename `temporal_validation_pruned.py` → `temporal_validation.py`
-2. Archive old `temporal_validation.py` → `archive/adhoc_scripts/`
+1. Rename `temporal_validation_pruned.py` -> `temporal_validation.py`
+2. Archive old `temporal_validation.py` -> `archive/adhoc_scripts/`
 3. Update references
 4. Test validation
 5. Commit
@@ -193,7 +193,7 @@
 
 ---
 
-### Phase 2.5: Analysis Scripts Consolidation 📊
+### Phase 2.5: Analysis Scripts Consolidation [STATS]
 **Priority:** Low  
 **Risk:** Low  
 **Time:** 1 hour
@@ -220,7 +220,7 @@
 
 ---
 
-### Phase 2.6: Documentation Update 📝
+### Phase 2.6: Documentation Update [NOTE]
 **Priority:** High  
 **Risk:** None  
 **Time:** 30 mins
@@ -243,7 +243,7 @@
 
 ---
 
-## 📊 Impact Summary
+## [STATS] Impact Summary
 
 | Metric | Before | After | Improvement |
 |--------|--------|-------|-------------|
@@ -256,7 +256,7 @@
 
 ---
 
-## ✅ Testing Strategy
+## [OK] Testing Strategy
 
 ### After Each Phase:
 1. **Unit Tests:** `pytest tests/` (49/53 passing target)
@@ -272,7 +272,7 @@
 
 ---
 
-## 🎯 Success Criteria
+## [TARGET] Success Criteria
 
 - [ ] All adhoc "fix_*" scripts archived
 - [ ] Single comprehensive enrichment pipeline
@@ -284,7 +284,7 @@
 
 ---
 
-## 📅 Execution Timeline
+##  Execution Timeline
 
 | Phase | Duration | Dependencies |
 |-------|----------|--------------|
@@ -298,6 +298,6 @@
 
 ---
 
-## 🚀 Let's Begin!
+## [RUN] Let's Begin!
 
 Ready to start with **Phase 2.1: Database Schema Fix**?

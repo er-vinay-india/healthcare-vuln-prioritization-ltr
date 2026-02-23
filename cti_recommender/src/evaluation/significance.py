@@ -342,7 +342,7 @@ def print_significance_report(
     print()
     
     for _, row in significance_df.iterrows():
-        sig_marker = "✓" if row.get('significant', False) else "✗"
+        sig_marker = "[OK]" if row.get('significant', False) else "[X]"
         p_str = f"{row['p_value']:.4f}" if not np.isnan(row['p_value']) else "N/A"
         diff_sign = "+" if row['mean_diff'] > 0 else ""
         
