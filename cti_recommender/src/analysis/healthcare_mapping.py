@@ -178,20 +178,52 @@ class HealthcareMapper:
         return None
     
     def check_product_match(self, text: str) -> bool:
-        """Check if text mentions healthcare products"""
+        """Check if text mentions healthcare products
+        
+        Uses word boundaries for short acronyms to avoid false positives
+        """
         if not isinstance(text, str):
             return False
         
         text_lower = text.lower()
-        return any(keyword in text_lower for keyword in self.product_keywords)
+        
+        for keyword in self.product_keywords:
+            # Short acronyms (<=4 chars) need word boundaries to avoid substring matches
+            # e.g., 'his' should match "HIS system" not "this is"
+            if len(keyword) <= 4 and keyword.isalpha():
+                regex_pattern = r'\b' + re.escape(keyword) + r'\b'
+                if re.search(regex_pattern, text_lower):
+                    return True
+            else:
+                # Longer keywords can use substring matching
+                if keyword in text_lower:
+                    return True
+        
+        return False
     
     def check_healthcare_keyword(self, text: str) -> bool:
-        """Check if text contains healthcare keywords"""
+        """Check if text contains healthcare keywords
+        
+        Uses word boundaries for short acronyms to avoid false positives
+        """
         if not isinstance(text, str):
             return False
         
         text_lower = text.lower()
-        return any(keyword in text_lower for keyword in self.healthcare_keywords)
+        
+        for keyword in self.healthcare_keywords:
+            # Short acronyms (<=4 chars) need word boundaries to avoid substring matches
+            # e.g., 'his' should match "HIS system" not "this is", 'phi' should match "PHI data" not "graphics"
+            if len(keyword) <= 4 and keyword.isalpha():
+                regex_pattern = r'\b' + re.escape(keyword) + r'\b'
+                if re.search(regex_pattern, text_lower):
+                    return True
+            else:
+                # Longer keywords and multi-word phrases can use substring matching
+                if keyword in text_lower:
+                    return True
+        
+        return False
     
     def get_healthcare_score(self, text: str, vendor_weight: float = 0.5, 
                             product_weight: float = 0.3, keyword_weight: float = 0.2) -> float:
