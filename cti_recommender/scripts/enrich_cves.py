@@ -195,8 +195,7 @@ def validate_enrichment(db: CVEDatabase):
         return True
 
 
-def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = False,
-                    skip_attack: bool = False, skip_chpl: bool = False):
+def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = False, skip_epss: bool = False, skip_attack: bool = False, skip_chpl: bool = False):
     """
     Enrich all CVEs in database with KEV, EPSS, healthcare, ATT&CK, CHPL, curated flags, and labels
     
@@ -204,6 +203,7 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
         batch_size: Number of CVEs to process at once
         limit: Optional limit for testing (None = process all)
         dry_run: If True, show plan without making changes
+        skip_epss: Skip EPSS fetching (use existing EPSS data from database)
         skip_attack: Skip ATT&CK mapping (useful if mapper unavailable)
         skip_chpl: Skip CHPL mapping (useful if API unavailable)
     """
@@ -274,21 +274,24 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
     logger.info("PHASE 1: FETCHING EPSS SCORES")
     logger.info("="*70)
     
-    if dry_run:
+    if skip_epss:
+        logger.info("[SKIP] EPSS fetching skipped - using existing EPSS data from database")
+        epss_scores = {}
+    elif dry_run:
         logger.info(f"[DRY RUN] Would fetch EPSS for {len(cves_df):,} CVEs")
         logger.info(f"  Estimated time: {len(cves_df)/100*1.5/60:.1f} minutes")
         logger.info(f"  Storage: ~{len(cves_df)*0.2:.1f} KB in persistent cache")
         db.close()
         return
-    
-    epss_scores = fetch_epss_bulk(cves_df['cve_id'].tolist())
-    
-    # Verify EPSS fetch completeness
-    epss_coverage = len(epss_scores) / len(cves_df) * 100
-    logger.info(f"\n[OK] EPSS Fetch Complete: {len(epss_scores):,}/{len(cves_df):,} CVEs ({epss_coverage:.1f}%)")
-    
-    if epss_coverage < 50:
-        logger.warning(f"[WARN]  Low EPSS coverage ({epss_coverage:.1f}%) - many CVEs may not be in EPSS database")
+    else:
+        epss_scores = fetch_epss_bulk(cves_df['cve_id'].tolist())
+        
+        # Verify EPSS fetch completeness
+        epss_coverage = len(epss_scores) / len(cves_df) * 100
+        logger.info(f"\n[OK] EPSS Fetch Complete: {len(epss_scores):,}/{len(cves_df):,} CVEs ({epss_coverage:.1f}%)")
+        
+        if epss_coverage < 50:
+            logger.warning(f"[WARN]  Low EPSS coverage ({epss_coverage:.1f}%) - many CVEs may not be in EPSS database")
     
     # =================================================================
     # PHASE 2: PROCESS CVEs AND PREPARE ENRICHMENT DATA
@@ -311,17 +314,31 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
         batch_df['kev_flag'] = batch_df['cve_id'].isin(kev_cves).astype(int)
         
         # Add EPSS scores - extract from dict properly
-        batch_df['epss_score'] = batch_df['cve_id'].apply(
-            lambda cve: epss_scores.get(cve, {}).get('epss_score', 0.0)
-        )
-        batch_df['epss_percentile'] = batch_df['cve_id'].apply(
-            lambda cve: epss_scores.get(cve, {}).get('percentile', 0.0)
-        )
+        # When skip_epss=True, use None to preserve existing database values
+        if skip_epss:
+            batch_df['epss_score'] = None
+            batch_df['epss_percentile'] = None
+            batch_df['epss_date'] = None
+        else:
+            batch_df['epss_score'] = batch_df['cve_id'].apply(
+                lambda cve: epss_scores.get(cve, {}).get('epss_score', 0.0)
+            )
+            batch_df['epss_percentile'] = batch_df['cve_id'].apply(
+                lambda cve: epss_scores.get(cve, {}).get('percentile', 0.0)
+            )
+            # FIX 1: Extract EPSS date from API response
+            batch_df['epss_date'] = batch_df['cve_id'].apply(
+                lambda cve: epss_scores.get(cve, {}).get('date', None)
+            )
         
         # Add healthcare flags
         batch_df['is_healthcare'] = batch_df.apply(
             lambda row: int(detect_healthcare_relevance({'description': row['description']}, healthcare_mapper)),
             axis=1
+        )
+        # FIX 2: Extract healthcare score (0-1 range)
+        batch_df['healthcare_score'] = batch_df['description'].apply(
+            lambda desc: healthcare_mapper.get_healthcare_score(desc) if pd.notna(desc) else 0.0
         )
         
         # Add ATT&CK mappings
@@ -351,6 +368,11 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
         batch_df['is_curated'] = batch_df['cve_id'].apply(
             lambda cve_id: int(curated_dataset.is_curated(cve_id))
         ).astype(int)
+        # FIX 3: Extract curated severity from breach info
+        batch_df['curated_severity'] = batch_df['cve_id'].apply(
+            lambda cve_id: curated_dataset.get_breach_info(cve_id).get('severity', None)
+            if curated_dataset.is_curated(cve_id) else None
+        )
         
         # Add curated exploited flag
         batch_df['curated_exploited'] = batch_df['cve_id'].apply(
@@ -368,8 +390,11 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
                 'kev_flag': row['kev_flag'],
                 'epss_score': row['epss_score'],
                 'epss_percentile': row.get('epss_percentile', 0.0),
+                'epss_date': row.get('epss_date', None),  # FIX 4a: Include epss_date
                 'is_healthcare': row['is_healthcare'],
+                'healthcare_score': row.get('healthcare_score', 0.0),  # FIX 4b: Include healthcare_score
                 'is_curated': row['is_curated'],
+                'curated_severity': row.get('curated_severity', None),  # FIX 4c: Include curated_severity
                 'attack_flag': row.get('attack_flag', 0),
                 'attack_technique_count': row.get('attack_technique_count', 0),
                 'chpl_flag': row.get('chpl_flag', 0),
@@ -453,6 +478,7 @@ if __name__ == "__main__":
     parser.add_argument('--limit', type=int, help='Limit number of CVEs to process (for testing)')
     parser.add_argument('--dry-run', action='store_true', help='Show plan without making changes')
     parser.add_argument('--validate-only', action='store_true', help='Only validate existing enrichment')
+    parser.add_argument('--skip-epss', action='store_true', help='Skip EPSS fetching (use existing EPSS data)')
     parser.add_argument('--skip-attack', action='store_true', help='Skip ATT&CK mapping')
     parser.add_argument('--skip-chpl', action='store_true', help='Skip CHPL mapping')
     
@@ -467,6 +493,7 @@ if __name__ == "__main__":
             batch_size=args.batch_size, 
             limit=args.limit, 
             dry_run=args.dry_run,
+            skip_epss=args.skip_epss,
             skip_attack=args.skip_attack,
             skip_chpl=args.skip_chpl
         )
