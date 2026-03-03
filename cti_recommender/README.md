@@ -101,6 +101,60 @@ jupyter notebook
 
 ---
 
+## 🐳 Docker Setup (Recommended)
+
+**For quick deployment on any system (Windows, Mac, Linux):**
+
+### Quick Start with Docker
+
+```bash
+# One command to build, start, and test:
+make demo
+
+# Or step by step:
+make build        # Build Docker image
+make up           # Start services
+make health       # Verify API is running
+make test-fast    # Run 99 tests (~1 second)
+```
+
+**Features:**
+- ✅ No Python installation needed
+- ✅ Consistent environment across all systems
+- ✅ All dependencies pre-installed
+- ✅ API server, Jupyter notebooks, testing - all included
+- ✅ Database and models persisted as volumes
+
+### Available Commands
+
+```bash
+make help         # See all commands
+make dev          # Development mode (hot-reload)
+make jupyter      # Start Jupyter notebooks
+make enrich       # Run CVE enrichment
+make train        # Train LTR model
+make cv           # Cross-validation
+make test         # Run all tests
+```
+
+### Documentation
+
+- **Quick Start:** [QUICKSTART_DOCKER.md](QUICKSTART_DOCKER.md) - 5 minute setup
+- **Full Guide:** [DOCKER_GUIDE.md](DOCKER_GUIDE.md) - Complete documentation
+- **Verification:** Run `./verify-docker.sh` to check setup
+
+### Alternative: Using Script
+
+```bash
+./docker-run.sh build      # Build image
+./docker-run.sh start      # Start services
+./docker-run.sh health     # Check API health
+./docker-run.sh test-fast  # Run tests
+./docker-run.sh help       # See all commands
+```
+
+---
+
 ##  Project Structure
 
 ```

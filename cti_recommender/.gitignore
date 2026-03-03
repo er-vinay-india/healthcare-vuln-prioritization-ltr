@@ -73,3 +73,6 @@ Thumbs.db
 .env
 *.key
 *_secret.py
+
+# Temporary/Work folders
+VVVVIPPPP/
