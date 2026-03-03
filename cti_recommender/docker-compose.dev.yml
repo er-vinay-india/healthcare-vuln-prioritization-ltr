@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # CTI Recommender - DEVELOPMENT MODE
+  # - Hot reload enabled
+  # - Source code mounted as volume
+  # - All logs visible
+  # - Debug mode enabled
+  # ===========================================================================
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder  # Use builder stage for dev dependencies
+    container_name: cti-recommender-dev
+    ports:
+      - "8000:8000"
+      - "8888:8888"  # Jupyter notebook
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      - ./scripts:/app/scripts:ro
+      - ./config:/app/config:ro
+      - ./notebooks:/app/notebooks
+      
+      # Persist data directories
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+      - ./outputs:/app/outputs
+    environment:
+      - LOG_LEVEL=DEBUG
+      - DATABASE_PATH=/app/data/cve_database.db
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - STRUCTURED_LOGGING=true
+      - PYTHONPATH=/app
+      - RELOAD=true  # Enable auto-reload
+    command: >
+      sh -c "python -m uvicorn src.api.main:app 
+             --host 0.0.0.0 
+             --port 8000 
+             --reload 
+             --log-level debug"
+    restart: unless-stopped
+    networks:
+      - cti-network
+    stdin_open: true
+    tty: true
+
+  # ===========================================================================
+  # Jupyter Notebook Service (Development)
+  # ===========================================================================
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: cti-jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./src:/app/src:ro
+      - ./data:/app/data
+      - ./models:/app/models:ro
+      - ./outputs:/app/outputs
+      - ./cache:/app/cache
+    environment:
+      - PYTHONPATH=/app
+      - JUPYTER_ENABLE_LAB=yes
+    command: >
+      jupyter lab 
+      --ip=0.0.0.0 
+      --port=8888 
+      --no-browser 
+      --allow-root 
+      --NotebookApp.token='' 
+      --NotebookApp.password=''
+    restart: unless-stopped
+    networks:
+      - cti-network
+
+  # ===========================================================================
+  # Test Runner Service
+  # ===========================================================================
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: cti-test-runner
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      - ./config:/app/config:ro
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+      - ./cache:/app/cache
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_PATH=/app/data/cve_database.db
+    command: pytest tests/ -v --tb=short
+    networks:
+      - cti-network
+    profiles:
+      - testing  # Only run with: docker-compose --profile testing up
+
+networks:
+  cti-network:
+    driver: bridge
