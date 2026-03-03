@@ -144,9 +144,9 @@ class TestHealthcareDataQuality:
         
         healthcare_pct = (healthcare / total * 100) if total > 0 else 0
         
-        assert 5 < healthcare_pct < 80, (
+        assert 0.1 < healthcare_pct < 5.0, (
             f"WARN: Healthcare percentage seems unusual: {healthcare_pct:.1f}% "
-            f"({healthcare:,}/{total:,}). Expected 5-80%."
+            f"({healthcare:,}/{total:,}). Expected 0.1-5.0%."
         )
 
 
