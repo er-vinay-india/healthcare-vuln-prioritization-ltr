@@ -51,7 +51,7 @@ cp .env.example .env
 Download and enrich CVEs with all data sources:
 
 ```bash
-python scripts/enrich_cves.py --years 1 --workers 4
+python scripts/data/enrich_cves.py --years 1 --workers 4
 ```
 
 **What it does:**
@@ -78,7 +78,7 @@ python scripts/enrich_cves.py --years 1 --workers 4
 Train the Learning-to-Rank model:
 
 ```bash
-python scripts/train_ltr.py
+python scripts/training/train_ltr.py
 ```
 
 **What it does:**
@@ -106,7 +106,7 @@ Model saved to models/ltr_model.pkl
 Run temporal validation:
 
 ```bash
-python scripts/temporal_validation.py
+python scripts/training/temporal_validation.py
 ```
 
 **What it does:**
@@ -175,14 +175,14 @@ curl -X POST http://localhost:8000/api/v1/recommendations \
 
 ```bash
 # Re-run enrichment with latest data
-python scripts/enrich_cves.py --years 1 --workers 4
+python scripts/data/enrich_cves.py --years 1 --workers 4
 ```
 
 ### Retrain Model
 
 ```bash
 # After updating database
-python scripts/train_ltr.py
+python scripts/training/train_ltr.py
 ```
 
 ### Run All Analysis Scripts
@@ -214,7 +214,7 @@ python scripts/analyze/feature_correlation.py
 
 **Solution:** Wait a few minutes, or reduce `--workers` parameter:
 ```bash
-python scripts/enrich_cves.py --years 1 --workers 2
+python scripts/data/enrich_cves.py --years 1 --workers 2
 ```
 
 ---
@@ -229,7 +229,7 @@ python scripts/enrich_cves.py --years 1 --workers 2
 pkill -f "python scripts"
 
 # Retry
-python scripts/enrich_cves.py --years 1
+python scripts/data/enrich_cves.py --years 1
 ```
 
 ---
@@ -241,7 +241,7 @@ python scripts/enrich_cves.py --years 1
 **Solution:** Process fewer CVEs:
 ```bash
 # Fetch only recent CVEs
-python scripts/enrich_cves.py --years 0.5
+python scripts/data/enrich_cves.py --years 0.5
 ```
 
 ---

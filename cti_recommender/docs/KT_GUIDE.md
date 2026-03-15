@@ -267,13 +267,13 @@ src/analysis = दिमाग (Brain - analysis)
 ### Command Flow (Actual Commands):
 ```bash
 # Step 1: Enrich (सबसे पहला काम)
-python scripts/enrich_cves.py --years 1 --workers 4
+python scripts/data/enrich_cves.py --years 1 --workers 4
 
 # Step 2: Train (Model को सिखाओ)
-python scripts/train_ltr.py
+python scripts/training/train_ltr.py
 
 # Step 3: Validate (Test करो)
-python scripts/temporal_validation.py
+python scripts/training/temporal_validation.py
 
 # Step 4: Analyze (Results देखो)
 python scripts/analyze/enrichment_stats.py
@@ -651,9 +651,9 @@ CTI Recommender = Smart vulnerability prioritization for healthcare
 5. **Analysis:** 5 analysis scripts
 
 ### Workflow in 4 Steps:
-1. **Enrich** -> python scripts/enrich_cves.py
-2. **Train** -> python scripts/train_ltr.py
-3. **Validate** -> python scripts/temporal_validation.py
+1. **Enrich** -> python scripts/data/enrich_cves.py
+2. **Train** -> python scripts/training/train_ltr.py
+3. **Validate** -> python scripts/training/temporal_validation.py
 4. **Analyze** -> python scripts/analyze/*.py
 
 ---

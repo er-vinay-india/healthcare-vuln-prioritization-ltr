@@ -167,21 +167,21 @@ test_fast() {
 # Run enrichment
 enrich() {
     print_info "Running CVE enrichment..."
-    docker-compose run --rm api python scripts/enrich_cves.py
+    docker-compose run --rm api python scripts/data/enrich_cves.py
     print_success "Enrichment complete!"
 }
 
 # Train model
 train() {
     print_info "Training LTR model..."
-    docker-compose run --rm api python scripts/train_ltr.py
+    docker-compose run --rm api python scripts/training/train_ltr.py
     print_success "Training complete!"
 }
 
 # Cross-validation
 cv() {
     print_info "Running cross-validation..."
-    docker-compose run --rm api python scripts/cross_validation.py
+    docker-compose run --rm api python scripts/training/cross_validation.py
     print_success "Cross-validation complete!"
 }
 

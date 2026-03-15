@@ -15,7 +15,7 @@
 
 ## 🔧 THE FIX (Copy-Paste Ready)
 
-### File: `scripts/enrich_cves.py`
+### File: `scripts/data/enrich_cves.py`
 
 #### Fix 1: After line 320, add:
 ```python
@@ -67,13 +67,13 @@ enrichment_records.append({
 cp data/cve_database.db data/cve_database_backup_$(date +%Y%m%d).db
 
 # 2. Test on small sample first
-python scripts/enrich_cves.py --limit 1000
+python scripts/data/enrich_cves.py --limit 1000
 
 # 3. Check looks good
 sqlite3 data/cve_database.db "SELECT epss_date, healthcare_score FROM enrichments LIMIT 5;"
 
 # 4. Run full enrichment
-python scripts/enrich_cves.py --batch-size 5000
+python scripts/data/enrich_cves.py --batch-size 5000
 
 # 5. Validate with tests
 python -m pytest tests/test_enrichment_data_quality.py -v

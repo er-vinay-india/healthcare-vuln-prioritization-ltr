@@ -131,20 +131,20 @@ docker-compose -f docker-compose.dev.yml run --rm test-runner \
 
 ```bash
 # Enrich CVEs with healthcare mapping
-docker-compose run --rm api python scripts/enrich_cves.py
+docker-compose run --rm api python scripts/data/enrich_cves.py
 
 # Check database status
-docker-compose run --rm api python scripts/check_db_status.py
+docker-compose run --rm api python scripts/ops/check_db_status.py
 ```
 
 ### Model Training
 
 ```bash
 # Train LTR model
-docker-compose run --rm api python scripts/train_ltr.py
+docker-compose run --rm api python scripts/training/train_ltr.py
 
 # Run cross-validation
-docker-compose run --rm api python scripts/cross_validation.py
+docker-compose run --rm api python scripts/training/cross_validation.py
 
 # Run ablation study
 docker-compose run --rm api python scripts/analyze/ablation_study.py
@@ -154,13 +154,13 @@ docker-compose run --rm api python scripts/analyze/ablation_study.py
 
 ```bash
 # Evaluate leakage-free performance
-docker-compose run --rm api python scripts/evaluate_leakage_free.py
+docker-compose run --rm api python scripts/evaluation/evaluate_leakage_free.py
 
 # Temporal validation
-docker-compose run --rm api python scripts/temporal_validation.py
+docker-compose run --rm api python scripts/training/temporal_validation.py
 
 # Generate report
-docker-compose run --rm api python scripts/generate_report.py
+docker-compose run --rm api python scripts/evaluation/generate_report.py
 ```
 
 ---
@@ -371,9 +371,9 @@ docker-compose run --rm test-runner bash     # Interactive test shell
 # ============================================================================
 # SCRIPTS
 # ============================================================================
-docker-compose run --rm api python scripts/enrich_cves.py
-docker-compose run --rm api python scripts/train_ltr.py
-docker-compose run --rm api python scripts/cross_validation.py
+docker-compose run --rm api python scripts/data/enrich_cves.py
+docker-compose run --rm api python scripts/training/train_ltr.py
+docker-compose run --rm api python scripts/training/cross_validation.py
 
 # ============================================================================
 # DATABASE
@@ -530,7 +530,7 @@ docker-compose logs -f api
 ```bash
 docker-compose run --rm api bash
 # Inside container:
-python scripts/check_db_status.py
+python scripts/ops/check_db_status.py
 pytest tests/ -v
 ```
 

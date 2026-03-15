@@ -168,20 +168,20 @@ docker-compose exec api sqlite3 data/cve_database.db "SELECT COUNT(*) FROM cves;
 
 ```bash
 # Run in Docker
-docker-compose exec api python scripts/refresh_cves.py
+docker-compose exec api python scripts/data/refresh_cves.py
 
 # Or locally
-python scripts/refresh_cves.py
+python scripts/data/refresh_cves.py
 ```
 
 ### Enrich CVEs
 
 ```bash
 # Full enrichment
-docker-compose exec api python scripts/enrich_cves.py
+docker-compose exec api python scripts/data/enrich_cves.py
 
 # Validation only
-docker-compose exec api python scripts/enrich_cves.py --validate-only
+docker-compose exec api python scripts/data/enrich_cves.py --validate-only
 ```
 
 ### Retrain Model

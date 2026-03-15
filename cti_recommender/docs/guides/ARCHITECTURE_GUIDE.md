@@ -247,7 +247,7 @@ docker-compose exec api pytest
    - Location: `src/core/cve_database.py`
 
 2. **Enrichment Pipeline Consolidation** [OK]
-   - Merged 6 adhoc scripts into single `scripts/enrich_cves.py`
+   - Merged 6 adhoc scripts into single `scripts/data/enrich_cves.py`
    - Single-pass enrichment: ATT&CK, CHPL, KEV, EPSS, healthcare, labels
    - Added `--skip-attack` and `--skip-chpl` flags for flexibility
    - Archived: `fix_healthcare_flags.py`, `fix_epss_scores.py`, `recalculate_labels.py`, `link_curated_dataset.py`, `apply_attack_mappings.py`, `apply_chpl_mappings.py`
@@ -336,9 +336,9 @@ class CVEDatabase:
 ```
 
 **c. Replace `print()` statements with `logger` calls** in:
-- `scripts/temporal_validation.py` (29 print statements)
-- `scripts/train_ltr.py` (15 print statements)
-- `scripts/enrich_cves.py` (25 print statements)
+- `scripts/training/temporal_validation.py` (29 print statements)
+- `scripts/training/train_ltr.py` (15 print statements)
+- `scripts/data/enrich_cves.py` (25 print statements)
 - `scripts/analyze/*.py` (various analysis scripts)
 
 **Example Migration:**

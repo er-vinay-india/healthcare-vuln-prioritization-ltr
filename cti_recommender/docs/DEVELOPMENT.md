@@ -284,7 +284,7 @@ def test_caching():
 
 ### 3. Integrate into Pipeline
 
-**File:** `scripts/enrich_cves.py`
+**File:** `scripts/data/enrich_cves.py`
 
 ```python
 from src.enrichment.new_source import NewSourceEnricher
@@ -569,14 +569,14 @@ def test_new_feature():
 
 4. **Retrain model:**
 ```bash
-python scripts/train_ltr.py
+python scripts/training/train_ltr.py
 ```
 
 ### Update Database Schema
 
 1. **Update schema** in `src/core/cve_database.py`
 2. **Delete old database:** `rm data/cve_database.db`
-3. **Re-run enrichment:** `python scripts/enrich_cves.py --years 1`
+3. **Re-run enrichment:** `python scripts/data/enrich_cves.py --years 1`
 4. **Update tests:** Modify `tests/conftest.py` fixtures
 
 ### Add New API Endpoint

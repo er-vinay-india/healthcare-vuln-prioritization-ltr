@@ -73,7 +73,7 @@ Traditional vulnerability management relies on CVSS severity scores alone, which
 ```
 
 **Implementation:** 
-- `scripts/enrich_cves.py` - Consolidated enrichment pipeline
+- `scripts/data/enrich_cves.py` - Consolidated enrichment pipeline
 - `src/core/cve_database.py` - SQLite ORM layer
 - Intelligent caching (~23 MB cache, 7-day TTL)
 
@@ -480,8 +480,8 @@ Conclusion: Model generalizes well to future data
 
 ### Code Artifacts
 - **Notebook:** `notebooks/healthcare_cve_prioritization_ltr.ipynb` (comprehensive walkthrough)
-- **Training Script:** `scripts/train_ltr.py` (reproducible training)
-- **Evaluation:** `scripts/temporal_validation.py`, `scripts/cross_validation.py`
+- **Training Script:** `scripts/training/train_ltr.py` (reproducible training)
+- **Evaluation:** `scripts/training/temporal_validation.py`, `scripts/training/cross_validation.py`
 - **Documentation:** `docs/` (10+ markdown files, 5000+ lines)
 
 ### Output Files

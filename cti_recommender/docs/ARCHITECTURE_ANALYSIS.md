@@ -101,7 +101,7 @@ cache/
 ### 2.2 Root Cause Analysis
 
 #### Issue 1: `epss_date` is 100% NULL
-**Location:** [scripts/enrich_cves.py](scripts/enrich_cves.py#L316-L320)
+**Location:** [scripts/data/enrich_cves.py](scripts/data/enrich_cves.py#L316-L320)
 
 ```python
 # CURRENT CODE (BROKEN) - Line 316-320
@@ -130,7 +130,7 @@ batch_df['epss_percentile'] = batch_df['cve_id'].apply(
 ---
 
 #### Issue 2: `healthcare_score` is 100% NULL
-**Location:** [scripts/enrich_cves.py](scripts/enrich_cves.py#L323-L326)
+**Location:** [scripts/data/enrich_cves.py](scripts/data/enrich_cves.py#L323-L326)
 
 ```python
 # CURRENT CODE (BROKEN) - Line 323-326
@@ -149,7 +149,7 @@ The `HealthcareMapper` class has `get_healthcare_score()` method that returns a 
 ---
 
 #### Issue 3: `curated_severity` is 99.99% NULL
-**Location:** [scripts/enrich_cves.py](scripts/enrich_cves.py#L360-L368)
+**Location:** [scripts/data/enrich_cves.py](scripts/data/enrich_cves.py#L360-L368)
 
 ```python
 # CURRENT CODE (INCOMPLETE)
@@ -253,7 +253,7 @@ CREATE TABLE raw_chpl_products (
 ### Phase 1: Fix Data Quality Issues (PRIORITY 1)
 
 #### Task 1.1: Fix EPSS Date Extraction
-**File:** [scripts/enrich_cves.py](scripts/enrich_cves.py)  
+**File:** [scripts/data/enrich_cves.py](scripts/data/enrich_cves.py)  
 **Change:**
 ```python
 # Add after line 320
@@ -270,7 +270,7 @@ batch_df['epss_date'] = batch_df['cve_id'].apply(
 ---
 
 #### Task 1.2: Fix Healthcare Score Extraction
-**File:** [scripts/enrich_cves.py](scripts/enrich_cves.py)  
+**File:** [scripts/data/enrich_cves.py](scripts/data/enrich_cves.py)  
 **Change:**
 ```python
 # Add after line 326
@@ -288,7 +288,7 @@ batch_df['healthcare_score'] = batch_df['description'].apply(
 ---
 
 #### Task 1.3: Fix Curated Severity Extraction
-**File:** [scripts/enrich_cves.py](scripts/enrich_cves.py)  
+**File:** [scripts/data/enrich_cves.py](scripts/data/enrich_cves.py)  
 **Change:**
 ```python
 # Modify lines 360-368
@@ -311,7 +311,7 @@ batch_df['curated_severity'] = batch_df['cve_id'].apply(
 ---
 
 #### Task 1.4: Update Enrichment Record Building
-**File:** [scripts/enrich_cves.py](scripts/enrich_cves.py) (lines 380-395)  
+**File:** [scripts/data/enrich_cves.py](scripts/data/enrich_cves.py) (lines 380-395)  
 **Change:** Add missing fields to enrichment record dict
 ```python
 enrichment_records.append({
@@ -418,10 +418,10 @@ def test_all_records_comprehensive():
 cp data/cve_database.db data/cve_database_backup_$(date +%Y%m%d).db
 
 # Run enrichment with fixed code (test on small batch first)
-python scripts/enrich_cves.py --limit 1000 --dry-run
+python scripts/data/enrich_cves.py --limit 1000 --dry-run
 
 # If dry-run looks good, run on full dataset
-python scripts/enrich_cves.py --batch-size 5000
+python scripts/data/enrich_cves.py --batch-size 5000
 
 # Validate results
 python -m pytest tests/test_enrichment_data_quality.py -v
@@ -439,7 +439,7 @@ python -m pytest tests/test_enrichment_data_quality.py -v
 
 | Component | Files Modified | Impact | Breaking Changes |
 |-----------|---------------|--------|------------------|
-| Enrichment Pipeline | `scripts/enrich_cves.py` | Add 3 field extractions | **None** ✅ |
+| Enrichment Pipeline | `scripts/data/enrich_cves.py` | Add 3 field extractions | **None** ✅ |
 | Database Schema | None | No schema changes needed | **None** ✅ |
 | Notebooks | None | All column names unchanged | **None** ✅ |
 | Cache Layer | None | No changes to caching | **None** ✅ |
@@ -600,7 +600,7 @@ df[df['curated_severity'] == 'Critical']
 3. **`curated_severity` is 99.99% NULL** - Curated dataset has severity but enrichment ignores it
 
 ### Root Cause ✅
-**Enrichment pipeline (`scripts/enrich_cves.py`) is not extracting all available fields from API responses and mapper outputs.**
+**Enrichment pipeline (`scripts/data/enrich_cves.py`) is not extracting all available fields from API responses and mapper outputs.**
 
 ### Solution ✅
 **Fix enrichment pipeline to extract 3 missing fields - NO database schema changes needed!**

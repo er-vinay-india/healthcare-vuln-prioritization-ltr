@@ -9,7 +9,7 @@ from the notebook and project outputs in `outputs/`.
 
 ```mermaid
 flowchart TD
-    A[NVD CVE Database<br/>cves table] --> E[Enrichment Pipeline<br/>scripts/enrich_cves.py]
+    A[NVD CVE Database<br/>cves table] --> E[Enrichment Pipeline<br/>scripts/data/enrich_cves.py]
     B[CISA KEV Catalog] --> E
     C[EPSS Bulk API] --> E
     D[MITRE ATT&CK Data] --> E

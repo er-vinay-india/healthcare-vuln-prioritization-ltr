@@ -82,7 +82,7 @@ TestCuratedDataQuality::test_curated_severity_populated FAILED
 
 ### Fix 1: Extract EPSS Date (1 line of code)
 
-**File:** `scripts/enrich_cves.py` (after line 320)
+**File:** `scripts/data/enrich_cves.py` (after line 320)
 
 ```python
 # ADD THIS LINE:
@@ -97,7 +97,7 @@ batch_df['epss_date'] = batch_df['cve_id'].apply(
 
 ### Fix 2: Extract Healthcare Score (2 lines of code)
 
-**File:** `scripts/enrich_cves.py` (after line 326)
+**File:** `scripts/data/enrich_cves.py` (after line 326)
 
 ```python
 # ADD THIS LINE:
@@ -112,7 +112,7 @@ batch_df['healthcare_score'] = batch_df['description'].apply(
 
 ### Fix 3: Extract Curated Severity (3 lines of code)
 
-**File:** `scripts/enrich_cves.py` (after line 368)
+**File:** `scripts/data/enrich_cves.py` (after line 368)
 
 ```python
 # ADD THIS CODE:
@@ -128,7 +128,7 @@ batch_df['curated_severity'] = batch_df['cve_id'].apply(
 
 ### Fix 4: Update Enrichment Record Building
 
-**File:** `scripts/enrich_cves.py` (lines 380-395)
+**File:** `scripts/data/enrich_cves.py` (lines 380-395)
 
 ```python
 enrichment_records.append({
@@ -196,16 +196,16 @@ enrichment_records.append({
 cp data/cve_database.db data/cve_database_backup_$(date +%Y%m%d).db
 
 # Step 2: Apply code fixes (6 lines total)
-# Edit scripts/enrich_cves.py with the 3 fixes above
+# Edit scripts/data/enrich_cves.py with the 3 fixes above
 
 # Step 3: Test on small sample
-python scripts/enrich_cves.py --limit 1000
+python scripts/data/enrich_cves.py --limit 1000
 
 # Step 4: Verify fixes work
 python -m pytest tests/test_enrichment_data_quality.py -v
 
 # Step 5: Run full enrichment (226K CVEs)
-python scripts/enrich_cves.py --batch-size 5000
+python scripts/data/enrich_cves.py --batch-size 5000
 
 # Step 6: Comprehensive validation
 python -m pytest tests/test_enrichment_comprehensive.py -v
@@ -409,4 +409,4 @@ pytest tests/test_enrichment_comprehensive.py -v -s
 
 **Questions?** Review the detailed [ARCHITECTURE_ANALYSIS.md](./ARCHITECTURE_ANALYSIS.md) for in-depth technical analysis.
 
-**Ready to implement?** Start with Phase 1 code fixes in `scripts/enrich_cves.py`.
+**Ready to implement?** Start with Phase 1 code fixes in `scripts/data/enrich_cves.py`.
