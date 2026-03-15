@@ -477,9 +477,9 @@ def enrich_database(batch_size: int = 5000, limit: int = None, dry_run: bool = F
         db.close()
 
 
-if __name__ == "__main__":
+def main() -> int:
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Enrich CVE database with KEV, EPSS, healthcare flags, and labels")
     parser.add_argument('--batch-size', type=int, default=5000, help='Batch size for processing (default: 5000)')
     parser.add_argument('--limit', type=int, help='Limit number of CVEs to process (for testing)')
@@ -490,17 +490,28 @@ if __name__ == "__main__":
     parser.add_argument('--skip-chpl', action='store_true', help='Skip CHPL mapping')
     
     args = parser.parse_args()
-    
-    if args.validate_only:
-        db = CVEDatabase()
-        validate_enrichment(db)
-        db.close()
-    else:
-        enrich_database(
-            batch_size=args.batch_size, 
-            limit=args.limit, 
-            dry_run=args.dry_run,
-            skip_epss=args.skip_epss,
-            skip_attack=args.skip_attack,
-            skip_chpl=args.skip_chpl
-        )
+
+    try:
+        if args.validate_only:
+            db = CVEDatabase()
+            try:
+                validate_enrichment(db)
+            finally:
+                db.close()
+        else:
+            enrich_database(
+                batch_size=args.batch_size,
+                limit=args.limit,
+                dry_run=args.dry_run,
+                skip_epss=args.skip_epss,
+                skip_attack=args.skip_attack,
+                skip_chpl=args.skip_chpl
+            )
+        return 0
+    except Exception:
+        logger.exception("CVE enrichment pipeline failed")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

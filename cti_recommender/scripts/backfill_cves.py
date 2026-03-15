@@ -169,21 +169,28 @@ def backfill_by_month(start_year: int, end_year: int, api_key: str = None) -> in
     return 1 if failed_months > 0 else 0
 
 
-if __name__ == "__main__":
+def main() -> int:
     print("""
 ╔══════════════════════════════════════════════════════════════════╗
 ║                   CVE DATABASE BACKFILL                          ║
 ║          Fetching Historical CVE Data from NVD                   ║
 ╚══════════════════════════════════════════════════════════════════╝
 """)
-    
-    # Check for API key
-    api_key = settings.NVD_API_KEY
-    if api_key:
-        print(f"[OK] NVD API Key: {'*' * 20}{api_key[-4:]}")
-    else:
-        print("[X] NVD API Key: Not found")
-    
-    # Start backfill
-    exit_code = backfill_by_month(START_YEAR, END_YEAR, api_key)
-    sys.exit(exit_code)
+
+    try:
+        # Check for API key
+        api_key = settings.NVD_API_KEY
+        if api_key:
+            print(f"[OK] NVD API Key: {'*' * 20}{api_key[-4:]}")
+        else:
+            print("[X] NVD API Key: Not found")
+
+        # Start backfill
+        return backfill_by_month(START_YEAR, END_YEAR, api_key)
+    except Exception:
+        logger.exception("Backfill execution failed")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
