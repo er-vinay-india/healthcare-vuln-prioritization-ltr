@@ -24,8 +24,9 @@ class TestCheckDbStatus:
         mock_db.conn.cursor.return_value = mock_cursor
 
         with patch.object(mod, "CVEDatabase", return_value=mock_db):
-            with pytest.raises(RuntimeError, match="sql error"):
-                mod.check_db_status()
+            with patch.object(mod, "validate_schema_contract", return_value=(True, [])):
+                with pytest.raises(RuntimeError, match="sql error"):
+                    mod.check_db_status()
 
         mock_db.close.assert_called_once()
 
