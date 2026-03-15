@@ -169,6 +169,77 @@ class TestScientificProtocol:
         manifest = tmp_path / "out" / "manifest.json"
         assert manifest.exists()
 
+    def test_run_time_series_cv_produces_fold_rows(self):
+        import scripts.evaluation.run_scientific_protocol as mod
+
+        df = pd.DataFrame(
+            {
+                "published": pd.date_range("2024-01-01", periods=30, tz="UTC"),
+                "soft_label": [0, 1, 2] * 10,
+                "f1": np.linspace(0.1, 1.0, 30),
+            }
+        )
+
+        fake_model = MagicMock()
+        fake_model.predict.return_value = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+
+        with patch.object(mod, "train_lambdarank", return_value=fake_model), \
+             patch.object(mod, "_metrics_for_scores", return_value={"NDCG@10": 0.5, "NDCG@20": 0.4, "Precision@20": 0.3}):
+            folds = mod._run_time_series_cv(df, ["f1"], params={"dummy": True})
+
+        assert len(folds) == 5
+        assert set(["fold", "rows_train", "rows_val", "NDCG@10", "NDCG@20", "Precision@20"]).issubset(folds.columns)
+
+    def test_evaluate_split_writes_artifacts_and_returns_rows(self, tmp_path):
+        import scripts.evaluation.run_scientific_protocol as mod
+
+        train_df = pd.DataFrame(
+            {
+                "published": pd.to_datetime(["2024-01-01", "2024-02-01"], utc=True),
+                "soft_label": [0, 1],
+                "label_confidence": [0.2, 0.5],
+                "f1": [0.1, 0.2],
+                "cvss_norm": [0.3, 0.4],
+            }
+        )
+        val_df = pd.DataFrame(
+            {
+                "published": pd.to_datetime(["2024-03-01"], utc=True),
+                "soft_label": [2],
+                "label_confidence": [0.8],
+                "f1": [0.5],
+                "cvss_norm": [0.9],
+            }
+        )
+        test_df = pd.DataFrame(
+            {
+                "published": pd.to_datetime(["2024-04-01"], utc=True),
+                "soft_label": [1],
+                "label_confidence": [0.6],
+                "f1": [0.7],
+                "cvss_norm": [0.8],
+            }
+        )
+        bundle = mod.SplitBundle(name="unit", train_df=train_df, val_df=val_df, test_df=test_df)
+
+        fake_model = MagicMock()
+        fake_model.predict.return_value = np.array([0.9])
+        weight_search_df = pd.DataFrame([{"scale": 1.0, "val_ndcg10": 0.5}])
+        fold_df = pd.DataFrame([{"fold": 1, "rows_train": 2, "rows_val": 1, "NDCG@10": 0.5, "NDCG@20": 0.5, "Precision@20": 0.5}])
+
+        with patch.object(mod, "_search_confidence_scale", return_value=(1.0, weight_search_df, fake_model)), \
+             patch.object(mod, "train_lambdarank", return_value=fake_model), \
+             patch.object(mod, "save_model", return_value=None), \
+             patch.object(mod, "compute_cvss_only_scores", return_value=np.array([0.7])), \
+             patch.object(mod, "compute_heuristic_scores", return_value=np.array([0.6])), \
+             patch.object(mod, "_metrics_for_scores", return_value={"NDCG@10": 0.6, "NDCG@20": 0.5, "Precision@20": 0.4}), \
+             patch.object(mod, "_run_time_series_cv", return_value=fold_df):
+            rows = mod._evaluate_split(bundle, ["f1"], tmp_path)
+
+        assert not rows.empty
+        assert (tmp_path / "weight_search_unit.csv").exists()
+        assert (tmp_path / "fold_metrics_unit.csv").exists()
+
 
 class TestEvaluateProductionImproved:
     def test_load_data_from_db_re_raises_and_closes_db(self):

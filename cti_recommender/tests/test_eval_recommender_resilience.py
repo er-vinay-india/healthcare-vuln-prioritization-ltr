@@ -62,6 +62,103 @@ class TestEvaluateFastComparison:
 
         assert result == 1
 
+    def test_create_splits_partitions_by_date_windows(self):
+        import scripts.evaluation.evaluate_fast_comparison as mod
+
+        df = pd.DataFrame(
+            {
+                "published": pd.to_datetime(["2024-08-15", "2024-09-10", "2024-10-05"]),
+                "kev_flag": [0, 1, 1],
+            }
+        )
+
+        train_df, val_df, test_df = mod.create_splits(df)
+
+        assert len(train_df) == 1
+        assert len(val_df) == 1
+        assert len(test_df) == 1
+
+    def test_train_fast_calls_lightgbm_with_group_queries(self):
+        import scripts.evaluation.evaluate_fast_comparison as mod
+
+        train_df = pd.DataFrame(
+            {
+                "published": pd.to_datetime(["2024-08-01", "2024-08-20"]),
+                "f1": [0.1, 0.2],
+                "kev_flag": [0, 1],
+            }
+        )
+        val_df = pd.DataFrame(
+            {
+                "published": pd.to_datetime(["2024-09-01", "2024-09-10"]),
+                "f1": [0.3, 0.4],
+                "kev_flag": [1, 0],
+            }
+        )
+
+        with patch.object(mod.lgb, "Dataset", side_effect=lambda *args, **kwargs: MagicMock()), \
+             patch.object(mod.lgb, "train", return_value=MagicMock()) as mock_train:
+            model = mod.train_fast(train_df, val_df, ["f1"])
+
+        assert model is not None
+        mock_train.assert_called_once()
+
+    def test_evaluate_returns_metrics_and_top20_counts(self):
+        import scripts.evaluation.evaluate_fast_comparison as mod
+
+        fake_model = MagicMock()
+        fake_model.predict.return_value = np.array([0.2, 0.9, 0.1])
+        test_df = pd.DataFrame({"f1": [1, 2, 3], "kev_flag": [0, 1, 1]})
+
+        with patch.object(mod, "ndcg_at_k", return_value=0.5), \
+             patch.object(mod, "precision_at_k", return_value=0.25):
+            results, preds = mod.evaluate(fake_model, test_df, ["f1"])
+
+        assert set(["NDCG@5", "NDCG@10", "NDCG@20", "P@5", "P@10", "P@20", "KEV_top20", "KEV_total"]).issubset(results)
+        assert results["KEV_total"] == 2
+        assert int(results["KEV_top20"]) == 2
+        assert len(preds) == 3
+
+    def test_print_comparison_handles_zero_baseline(self, capsys):
+        import scripts.evaluation.evaluate_fast_comparison as mod
+
+        old_results = {"NDCG@10": 0.0, "NDCG@20": 0.0, "P@10": 0.0, "P@20": 0.0, "KEV_top20": 0.0, "KEV_total": 2}
+        new_results = {"NDCG@10": 0.7, "NDCG@20": 0.8, "P@10": 0.4, "P@20": 0.3, "KEV_top20": 1.0, "KEV_total": 2}
+
+        mod.print_comparison(old_results, new_results)
+        output = capsys.readouterr().out
+        assert "RESULTS COMPARISON" in output
+
+    def test_main_returns_zero_on_happy_path(self):
+        import scripts.evaluation.evaluate_fast_comparison as mod
+
+        df = pd.DataFrame(
+            {
+                "published": pd.to_datetime(["2024-08-01", "2024-09-15", "2024-10-20"]),
+                "kev_flag": [0, 1, 0],
+                "cvss": [5.0, 9.0, 7.0],
+            }
+        )
+        fake_results = {"NDCG@10": 1.0, "NDCG@20": 1.0, "P@10": 1.0, "P@20": 1.0, "KEV_top20": 1, "KEV_total": 1}
+
+        with patch.object(mod, "load_data", return_value=df), \
+             patch.object(mod, "create_splits", return_value=(df, df, df)), \
+             patch.object(mod, "extract_old_features", return_value=df.assign(query_id="2024-08")), \
+             patch.object(mod, "get_old_features", return_value=["cvss"]), \
+             patch.object(mod, "train_fast", return_value=MagicMock()), \
+             patch.object(mod, "evaluate", side_effect=[(fake_results, np.array([0.1])), (fake_results, np.array([0.2]))]), \
+             patch.object(mod, "ProductionFeatureEngineer") as mock_engineer, \
+             patch("pandas.DataFrame.to_csv", return_value=None):
+            engineer = MagicMock()
+            engineer.extract_features.return_value = df
+            engineer.get_feature_columns.return_value = ["cvss"]
+            engineer.get_feature_importance_groups.return_value = {"core": ["cvss"]}
+            mock_engineer.return_value = engineer
+
+            result = mod.main()
+
+        assert result == 0
+
 
 class TestRecommendCVEs:
     def test_init_loads_model_and_metadata(self, tmp_path):
