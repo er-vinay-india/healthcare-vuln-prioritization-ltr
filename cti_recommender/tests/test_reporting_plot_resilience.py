@@ -8,6 +8,28 @@ import pytest
 
 
 class TestGenerateReport:
+    def test_create_report_generates_docx(self, tmp_path, monkeypatch):
+        import scripts.evaluation.generate_report as mod
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "outputs").mkdir(parents=True, exist_ok=True)
+
+        output_path = mod.create_report()
+
+        assert output_path == "outputs/CTI_Healthcare_Vulnerability_Recommender_Report.docx"
+        assert (tmp_path / output_path).exists()
+
+    def test_create_report_returns_path_when_getsize_fails(self, tmp_path, monkeypatch):
+        import scripts.evaluation.generate_report as mod
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "outputs").mkdir(parents=True, exist_ok=True)
+
+        with patch("os.path.getsize", side_effect=OSError("stat failed")):
+            output_path = mod.create_report()
+
+        assert output_path == "outputs/CTI_Healthcare_Vulnerability_Recommender_Report.docx"
+
     def test_main_returns_nonzero_when_create_report_fails(self):
         import scripts.evaluation.generate_report as mod
 
