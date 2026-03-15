@@ -247,8 +247,8 @@ make test         # Run all tests
 
 ### Documentation
 
-- **Quick Start:** [QUICKSTART_DOCKER.md](docs/QUICKSTART_DOCKER.md) - 5 minute setup
-- **Full Guide:** [DOCKER_GUIDE.md](docs/DOCKER_GUIDE.md) - Complete documentation
+- **Quick Start:** [QUICKSTART.md](docs/QUICKSTART.md) - first local setup
+- **Docker Guide:** [DOCKER_GUIDE.md](docs/DOCKER_GUIDE.md) - containerized run and troubleshooting
 - **Verification:** Run `./verify-docker.sh` to check setup
 
 ### Alternative: Using Script
@@ -329,9 +329,10 @@ cti_recommender/
 │
 ├── docs/                               #  Documentation
 │   ├── QUICKSTART.md                   # Getting started guide
-│   ├── API.md                          # API documentation
+│   ├── ARCHITECTURE.md                 # System structure
 │   ├── DEVELOPMENT.md                  # Development guide
-│   ├── SCORING_EXPLANATION.md          # Scoring methodology
+│   ├── DOCKER_GUIDE.md                 # Docker usage
+│   ├── RANKING_LOGIC.md                # Ranking behavior
 │   └── diagrams/                       # Architecture diagrams (Mermaid)
 │
 └── archive/                            #  Archived Files
@@ -451,10 +452,10 @@ See [`Advanced_Models_GraphBased.ipynb`](notebooks/Advanced_Models_GraphBased.ip
 ##  Documentation
 
 - **[Quick Start Guide](docs/QUICKSTART.md)** - Installation and basic usage
-- **[API Documentation](docs/API.md)** - REST API and deployment
 - **[Development Guide](docs/DEVELOPMENT.md)** - Contributing and architecture
-- **[Scoring Explanation](docs/SCORING_EXPLANATION.md)** - Methodology deep-dive
-- **[Research Context](docs/RESEARCH_CONTEXT.md)** - Literature review
+- **[Docker Guide](docs/DOCKER_GUIDE.md)** - Container setup and troubleshooting
+- **[Architecture](docs/ARCHITECTURE.md)** - Current system structure
+- **[Ranking Logic](docs/RANKING_LOGIC.md)** - Ranking behavior and interpretation
 
 ---
 
