@@ -29,6 +29,15 @@ class _FakePredictModel:
         return x.sum(dim=1)
 
 
+class _TinyModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.linear = nn.Linear(2, 1)
+
+    def forward(self, x, edge_index, edge_type):
+        return self.linear(x).squeeze(-1)
+
+
 def test_prepare_rgcn_data_builds_tensors_edges_and_masks():
     from src.models.rgcn import prepare_rgcn_data
 
@@ -159,3 +168,95 @@ def test_fast_rgcn_inference_batches_and_returns_predictions():
 
     assert preds.shape == (3,)
     assert np.isfinite(preds).all()
+
+
+def test_fast_rgcn_inference_handles_batches_with_no_neighbors():
+    from src.models.rgcn import fast_rgcn_inference
+
+    model = _FakePredictModel()
+    train_features = np.array([[0.9, 0.1]], dtype=np.float32)
+    test_features = np.array([[0.1, 0.2], [0.3, 0.4]], dtype=np.float32)
+
+    preds = fast_rgcn_inference(
+        model=model,
+        train_features=train_features,
+        test_features=test_features,
+        train_cve_to_cwe={},
+        test_to_train_neighbors={},
+        batch_size=1,
+        device="cpu",
+    )
+
+    assert preds.shape == (2,)
+    assert np.isfinite(preds).all()
+
+
+def test_trainer_init_forces_cpu_when_mps_requested():
+    from src.models import rgcn as mod
+
+    model = _DummyRGCNModel(in_features=2)
+    with patch.object(mod.logger, "warning") as warn:
+        trainer = mod.CVERGCNTrainer(model=model, device="mps", use_minibatch=False)
+
+    assert str(trainer.device) == "cpu"
+    warn.assert_called_once()
+
+
+def test_trainer_evaluate_and_predict_with_mask():
+    from src.models.rgcn import CVERGCNTrainer
+
+    model = _TinyModel()
+    trainer = CVERGCNTrainer(model=model, learning_rate=0.01, device="cpu", use_minibatch=False)
+
+    x = torch.tensor([[1.0, 2.0], [3.0, 4.0]], dtype=torch.float32)
+    edge_index = torch.zeros((2, 0), dtype=torch.long)
+    edge_type = torch.zeros(0, dtype=torch.long)
+    y = torch.tensor([3.0, 7.0], dtype=torch.float32)
+    mask = torch.tensor([True, False])
+
+    loss, preds = trainer.evaluate(x, edge_index, edge_type, y, mask)
+    masked_preds = trainer.predict(x, edge_index, edge_type, mask)
+
+    assert isinstance(loss, float)
+    assert preds.shape == (1,)
+    assert masked_preds.shape == (1,)
+
+
+def test_train_rgcn_model_orchestrates_prepare_and_fit():
+    from src.models import rgcn as mod
+
+    x = torch.zeros((2, 2), dtype=torch.float32)
+    edge_index = torch.zeros((2, 0), dtype=torch.long)
+    edge_type = torch.zeros(0, dtype=torch.long)
+    y = torch.zeros(2, dtype=torch.float32)
+    train_mask = torch.tensor([True, False])
+    val_mask = torch.tensor([False, True])
+    test_mask = torch.tensor([False, False])
+
+    with patch.object(
+        mod,
+        "prepare_rgcn_data",
+        return_value=(x, edge_index, edge_type, y, train_mask, val_mask, test_mask),
+    ) as prep, patch.object(mod.CVERGCNTrainer, "fit", return_value={"train_loss": [0.1], "val_loss": [0.2]}) as fit:
+        model, trainer, history = mod.train_rgcn_model(
+            cve_features=np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32),
+            cve_to_cwe={},
+            cve_labels=np.array([0.0, 1.0], dtype=np.float32),
+            train_idx=np.array([0]),
+            val_idx=np.array([1]),
+            test_idx=np.array([], dtype=int),
+            hidden_channels=4,
+            num_layers=1,
+            epochs=1,
+            early_stopping_patience=1,
+            device="cpu",
+            verbose=False,
+            use_minibatch=False,
+            batch_size=2,
+        )
+
+    prep.assert_called_once()
+    fit.assert_called_once()
+    assert isinstance(model, mod.RGCNPrioritizer)
+    assert isinstance(trainer, mod.CVERGCNTrainer)
+    assert history["train_loss"] == [0.1]
