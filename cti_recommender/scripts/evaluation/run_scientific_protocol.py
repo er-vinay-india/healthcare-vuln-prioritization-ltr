@@ -131,8 +131,10 @@ def _prepare_common_columns(df: pd.DataFrame) -> pd.DataFrame:
         if col in out.columns:
             out[col] = pd.Categorical(out[col].astype(str).fillna("unknown")).codes
 
-    out["soft_label"] = pd.to_numeric(out.get("soft_label", 0), errors="coerce").fillna(0).astype(int)
-    out["label_confidence"] = pd.to_numeric(out.get("label_confidence", 0.2), errors="coerce").fillna(0.2)
+    soft_label_default = pd.Series(0, index=out.index)
+    confidence_default = pd.Series(0.2, index=out.index)
+    out["soft_label"] = pd.to_numeric(out.get("soft_label", soft_label_default), errors="coerce").fillna(0).astype(int)
+    out["label_confidence"] = pd.to_numeric(out.get("label_confidence", confidence_default), errors="coerce").fillna(0.2)
 
     return out
 
@@ -314,6 +316,13 @@ def _build_split_summary(splits: List[SplitBundle]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _safe_to_markdown(df: pd.DataFrame, index: bool = False) -> str:
+    try:
+        return df.to_markdown(index=index)
+    except ImportError:
+        return df.to_string(index=index)
+
+
 def _write_report(final_df: pd.DataFrame, split_summary_df: pd.DataFrame, output_path: Path) -> None:
     lines = [
         "# Scientific Protocol Report",
@@ -322,14 +331,14 @@ def _write_report(final_df: pd.DataFrame, split_summary_df: pd.DataFrame, output
         "",
         "## Split Summary",
         "",
-        split_summary_df.to_markdown(index=False),
+        _safe_to_markdown(split_summary_df, index=False),
         "",
         "## LambdaMART vs Baselines (NDCG@10)",
         "",
     ]
 
     ndcg10 = final_df[final_df["metric"] == "NDCG@10"].pivot_table(index=["split"], columns="model", values="value")
-    lines.append(ndcg10.to_markdown())
+    lines.append(_safe_to_markdown(ndcg10))
     lines.append("")
     lines.append("## Full Artifacts")
     lines.append("")
