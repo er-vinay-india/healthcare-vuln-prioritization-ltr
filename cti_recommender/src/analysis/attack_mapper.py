@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import gzip
 import pickle
 import re
+import sys
 import pandas as pd
 from typing import List, Dict, Set
 
@@ -121,27 +122,36 @@ class AttackMapper:
                         }
         return {}
 
+def main() -> int:
+    try:
+        # Test the mapper
+        mapper = AttackMapper()
+
+        # Test cases
+        test_cases = [
+            "SQL injection vulnerability in web application",
+            "Remote code execution via buffer overflow",
+            "Privilege escalation through DLL hijacking",
+            "Cross-site scripting (XSS) in user input field",
+            "Denial of service via resource exhaustion"
+        ]
+
+        print("\n" + "="*70)
+        print("ATT&CK MAPPER TEST")
+        print("="*70)
+
+        for desc in test_cases:
+            result = mapper.map_cve_to_techniques(desc)
+            print(f"\nDescription: {desc}")
+            print(f"  Matched: {result['technique_count']} techniques")
+            for tech_id in result['techniques'][:3]:  # Show first 3
+                info = mapper.get_technique_info(tech_id)
+                print(f"    {tech_id}: {info.get('name', 'Unknown')}")
+        return 0
+    except Exception:
+        logger.exception("ATT&CK mapper demo execution failed")
+        return 1
+
+
 if __name__ == "__main__":
-    # Test the mapper
-    mapper = AttackMapper()
-    
-    # Test cases
-    test_cases = [
-        "SQL injection vulnerability in web application",
-        "Remote code execution via buffer overflow",
-        "Privilege escalation through DLL hijacking",
-        "Cross-site scripting (XSS) in user input field",
-        "Denial of service via resource exhaustion"
-    ]
-    
-    print("\n" + "="*70)
-    print("ATT&CK MAPPER TEST")
-    print("="*70)
-    
-    for desc in test_cases:
-        result = mapper.map_cve_to_techniques(desc)
-        print(f"\nDescription: {desc}")
-        print(f"  Matched: {result['technique_count']} techniques")
-        for tech_id in result['techniques'][:3]:  # Show first 3
-            info = mapper.get_technique_info(tech_id)
-            print(f"    {tech_id}: {info.get('name', 'Unknown')}")
+    sys.exit(main())

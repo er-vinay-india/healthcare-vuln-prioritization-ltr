@@ -9,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import re
+import sys
 from typing import Dict, Set
 from src.core.chpl_fetcher import CHPLFetcher
 
@@ -134,26 +135,35 @@ class CHPLMapper:
             }
         )
 
+def main() -> int:
+    try:
+        # Test the mapper
+        mapper = CHPLMapper()
+
+        # Test cases
+        test_cases = [
+            "Vulnerability in Epic EHR system allows unauthorized access",
+            "SQL injection in Cerner Millennium PowerChart",
+            "Buffer overflow in medical device firmware",
+            "XSS vulnerability in healthcare portal",
+            "Remote code execution in patient management system"
+        ]
+
+        print("\n" + "="*70)
+        print("CHPL MAPPER TEST")
+        print("="*70)
+
+        for desc in test_cases:
+            result = mapper.check_chpl_match(desc)
+            print(f"\nDescription: {desc}")
+            print(f"  CHPL Match: {result['chpl_flag']}")
+            if result['matched_products']:
+                print(f"  Matched: {result['matched_products']}")
+        return 0
+    except Exception:
+        logger.exception("CHPL mapper demo execution failed")
+        return 1
+
+
 if __name__ == "__main__":
-    # Test the mapper
-    mapper = CHPLMapper()
-    
-    # Test cases
-    test_cases = [
-        "Vulnerability in Epic EHR system allows unauthorized access",
-        "SQL injection in Cerner Millennium PowerChart",
-        "Buffer overflow in medical device firmware",
-        "XSS vulnerability in healthcare portal",
-        "Remote code execution in patient management system"
-    ]
-    
-    print("\n" + "="*70)
-    print("CHPL MAPPER TEST")
-    print("="*70)
-    
-    for desc in test_cases:
-        result = mapper.check_chpl_match(desc)
-        print(f"\nDescription: {desc}")
-        print(f"  CHPL Match: {result['chpl_flag']}")
-        if result['matched_products']:
-            print(f"  Matched: {result['matched_products']}")
+    sys.exit(main())
