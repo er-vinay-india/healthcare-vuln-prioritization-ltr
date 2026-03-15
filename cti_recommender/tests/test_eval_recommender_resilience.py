@@ -168,3 +168,111 @@ class TestRecommendCVEs:
             result = mod.main()
 
         assert result == 1
+
+    def test_prepare_legacy_features_applies_scaler_and_recency(self):
+        import scripts.evaluation.recommend_cves as mod
+
+        rec = mod.HealthcareCVERecommender.__new__(mod.HealthcareCVERecommender)
+        rec.scaler = MagicMock()
+        rec.scaler.transform.side_effect = lambda arr: arr
+
+        df = pd.DataFrame(
+            {
+                "kev_flag": [1],
+                "epss_score": [0.2],
+                "epss_percentile": [0.9],
+                "is_healthcare": [1],
+                "is_curated": [1],
+                "chpl_flag": [1],
+                "attack_flag": [1],
+                "attack_technique_count": [2],
+                "cvss": [9.5],
+                "published_str": ["2024-01-01"],
+            }
+        )
+
+        features = rec._prepare_legacy_features(df)
+
+        assert "cvss_critical" in features.columns
+        assert "days_since_2018" in features.columns
+        assert int(features.iloc[0]["is_recent"]) in [0, 1]
+        rec.scaler.transform.assert_called_once()
+
+    def test_prepare_production_features_adds_missing_columns(self):
+        import scripts.evaluation.recommend_cves as mod
+
+        rec = mod.HealthcareCVERecommender.__new__(mod.HealthcareCVERecommender)
+        rec.production_engineer = MagicMock()
+        rec.production_engineer.extract_features.return_value = pd.DataFrame({"f1": [1.0]})
+
+        input_df = pd.DataFrame({"published_str": ["2024-02-01"]})
+        result = rec._prepare_production_features(input_df)
+
+        assert list(result.columns) == ["f1"]
+        called_df = rec.production_engineer.extract_features.call_args[0][0]
+        assert "cwe" in called_df.columns
+        assert "description" in called_df.columns
+        assert "published" in called_df.columns
+
+    def test_prepare_features_uses_engineer_defaults_when_feature_names_empty(self):
+        import scripts.evaluation.recommend_cves as mod
+
+        rec = mod.HealthcareCVERecommender.__new__(mod.HealthcareCVERecommender)
+        rec.feature_names = []
+        rec.production_engineer = MagicMock()
+        rec.production_engineer.get_feature_columns.return_value = ["f1", "f2"]
+
+        prod = pd.DataFrame({"f1": [1.0], "f2": [2.0]})
+        legacy = pd.DataFrame({"legacy": [1]})
+
+        with patch.object(rec, "_prepare_production_features", return_value=prod), \
+             patch.object(rec, "_prepare_legacy_features", return_value=legacy):
+            result = rec.prepare_features(pd.DataFrame({"dummy": [1]}))
+
+        assert rec.feature_names == ["f1", "f2"]
+        assert list(result.columns) == ["f1", "f2"]
+
+    def test_recommend_from_db_success_path_calls_recommend(self):
+        import scripts.evaluation.recommend_cves as mod
+
+        rec = mod.HealthcareCVERecommender.__new__(mod.HealthcareCVERecommender)
+        rec.recommend = MagicMock(return_value=pd.DataFrame({"cve_id": ["CVE-1"]}))
+
+        query_df = pd.DataFrame(
+            {
+                "cve_id": ["CVE-1", "CVE-2"],
+                "cvss": [8.0, 7.2],
+                "published_str": ["2024-01-01", "2024-01-02"],
+            }
+        )
+        mock_db = MagicMock()
+
+        with patch.object(mod, "CVEDatabase", return_value=mock_db), \
+             patch("pandas.read_sql_query", return_value=query_df):
+            result = rec.recommend_from_db(days_back=10, top_k=5, min_cvss=7.0)
+
+        assert list(result["cve_id"]) == ["CVE-1"]
+        rec.recommend.assert_called_once()
+        mock_db.close.assert_called_once()
+
+    def test_main_returns_zero_on_successful_recommendation(self):
+        import scripts.evaluation.recommend_cves as mod
+
+        recommendations = pd.DataFrame(
+            {
+                "cve_id": ["CVE-1"],
+                "cvss": [9.0],
+                "model_score": [0.95],
+                "kev_flag": [1],
+                "is_healthcare": [1],
+                "label": [1],
+                "published_str": ["2024-01-01"],
+            }
+        )
+        fake_rec = MagicMock()
+        fake_rec.recommend_from_db.return_value = recommendations
+
+        with patch.object(mod, "HealthcareCVERecommender", return_value=fake_rec):
+            result = mod.main()
+
+        assert result == 0
