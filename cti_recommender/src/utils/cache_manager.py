@@ -20,6 +20,14 @@ from typing import Dict, List, Optional
 import gzip
 import pickle
 
+try:
+    from src.utils.logging_config import get_logger as _get_logger
+    _logger = _get_logger(__name__)
+except Exception:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    _logger = logging.getLogger(__name__)
+
 
 class CacheManager:
     """Manages cache for all data sources (NVD, EPSS, KEV, ATT&CK, CHPL)"""
@@ -60,85 +68,105 @@ class CacheManager:
             }
         """
         cache_info = {}
-        
+
         # NVD cache (now in cache/nvd/)
-        nvd_dir = self.cache_sources['nvd']
-        nvd_files = list(nvd_dir.glob('*.pkl.gz')) if nvd_dir.exists() else []
-        if nvd_files:
-            total_size = sum(f.stat().st_size for f in nvd_files)
-            latest_mod = max(f.stat().st_mtime for f in nvd_files)
-            cache_info['nvd'] = {
-                'exists': True,
-                'size_mb': total_size / (1024**2),
-                'files': len(nvd_files),
-                'last_modified': datetime.fromtimestamp(latest_mod).strftime('%Y-%m-%d %H:%M:%S'),
-                'age_days': (datetime.now() - datetime.fromtimestamp(latest_mod)).days
-            }
-        else:
-            cache_info['nvd'] = {'exists': False}
-        
+        try:
+            nvd_dir = self.cache_sources['nvd']
+            nvd_files = list(nvd_dir.glob('*.pkl.gz')) if nvd_dir.exists() else []
+            if nvd_files:
+                total_size = sum(f.stat().st_size for f in nvd_files)
+                latest_mod = max(f.stat().st_mtime for f in nvd_files)
+                cache_info['nvd'] = {
+                    'exists': True,
+                    'size_mb': total_size / (1024**2),
+                    'files': len(nvd_files),
+                    'last_modified': datetime.fromtimestamp(latest_mod).strftime('%Y-%m-%d %H:%M:%S'),
+                    'age_days': (datetime.now() - datetime.fromtimestamp(latest_mod)).days
+                }
+            else:
+                cache_info['nvd'] = {'exists': False}
+        except Exception:
+            _logger.exception("Failed to read NVD cache info")
+            cache_info['nvd'] = {'exists': False, 'error': True}
+
         # EPSS cache (in cache/epss/)
-        epss_dir = self.cache_sources['epss']
-        if epss_dir.exists() and list(epss_dir.glob('*.json')):
-            epss_files = list(epss_dir.glob('*.json'))
-            total_size = sum(f.stat().st_size for f in epss_files)
-            latest_mod = max(f.stat().st_mtime for f in epss_files)
-            cache_info['epss'] = {
-                'exists': True,
-                'size_mb': total_size / (1024**2),
-                'files': len(epss_files),
-                'last_modified': datetime.fromtimestamp(latest_mod).strftime('%Y-%m-%d %H:%M:%S'),
-                'age_days': (datetime.now() - datetime.fromtimestamp(latest_mod)).days
-            }
-        else:
-            cache_info['epss'] = {'exists': False}
-        
+        try:
+            epss_dir = self.cache_sources['epss']
+            if epss_dir.exists() and list(epss_dir.glob('*.json')):
+                epss_files = list(epss_dir.glob('*.json'))
+                total_size = sum(f.stat().st_size for f in epss_files)
+                latest_mod = max(f.stat().st_mtime for f in epss_files)
+                cache_info['epss'] = {
+                    'exists': True,
+                    'size_mb': total_size / (1024**2),
+                    'files': len(epss_files),
+                    'last_modified': datetime.fromtimestamp(latest_mod).strftime('%Y-%m-%d %H:%M:%S'),
+                    'age_days': (datetime.now() - datetime.fromtimestamp(latest_mod)).days
+                }
+            else:
+                cache_info['epss'] = {'exists': False}
+        except Exception:
+            _logger.exception("Failed to read EPSS cache info")
+            cache_info['epss'] = {'exists': False, 'error': True}
+
         # KEV cache (now in cache/kev/)
-        kev_dir = self.cache_sources['kev']
-        kev_file = kev_dir / 'kev_catalog.pkl.gz'
-        if kev_file.exists():
-            kev_stat = kev_file.stat()
-            cache_info['kev'] = {
-                'exists': True,
-                'size_mb': kev_stat.st_size / (1024**2),
-                'files': 1,
-                'last_modified': datetime.fromtimestamp(kev_stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
-                'age_days': (datetime.now() - datetime.fromtimestamp(kev_stat.st_mtime)).days
-            }
-        else:
-            cache_info['kev'] = {'exists': False}
-        
+        try:
+            kev_dir = self.cache_sources['kev']
+            kev_file = kev_dir / 'kev_catalog.pkl.gz'
+            if kev_file.exists():
+                kev_stat = kev_file.stat()
+                cache_info['kev'] = {
+                    'exists': True,
+                    'size_mb': kev_stat.st_size / (1024**2),
+                    'files': 1,
+                    'last_modified': datetime.fromtimestamp(kev_stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
+                    'age_days': (datetime.now() - datetime.fromtimestamp(kev_stat.st_mtime)).days
+                }
+            else:
+                cache_info['kev'] = {'exists': False}
+        except Exception:
+            _logger.exception("Failed to read KEV cache info")
+            cache_info['kev'] = {'exists': False, 'error': True}
+
         # ATT&CK cache (now in cache/attack/)
-        attack_dir = self.cache_sources['attack']
-        attack_file = attack_dir / 'attack_techniques.pkl.gz'
-        if attack_file.exists():
-            attack_stat = attack_file.stat()
-            cache_info['attack'] = {
-                'exists': True,
-                'size_mb': attack_stat.st_size / (1024**2),
-                'files': 1,
-                'last_modified': datetime.fromtimestamp(attack_stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
-                'age_days': (datetime.now() - datetime.fromtimestamp(attack_stat.st_mtime)).days
-            }
-        else:
-            cache_info['attack'] = {'exists': False}
-        
+        try:
+            attack_dir = self.cache_sources['attack']
+            attack_file = attack_dir / 'attack_techniques.pkl.gz'
+            if attack_file.exists():
+                attack_stat = attack_file.stat()
+                cache_info['attack'] = {
+                    'exists': True,
+                    'size_mb': attack_stat.st_size / (1024**2),
+                    'files': 1,
+                    'last_modified': datetime.fromtimestamp(attack_stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
+                    'age_days': (datetime.now() - datetime.fromtimestamp(attack_stat.st_mtime)).days
+                }
+            else:
+                cache_info['attack'] = {'exists': False}
+        except Exception:
+            _logger.exception("Failed to read ATT&CK cache info")
+            cache_info['attack'] = {'exists': False, 'error': True}
+
         # CHPL cache (now in cache/chpl/)
-        chpl_dir = self.cache_sources['chpl']
-        chpl_files = list(chpl_dir.glob('*.json')) if chpl_dir.exists() else []
-        if chpl_files:
-            total_size = sum(f.stat().st_size for f in chpl_files)
-            latest_mod = max(f.stat().st_mtime for f in chpl_files)
-            cache_info['chpl'] = {
-                'exists': True,
-                'size_mb': total_size / (1024**2),
-                'files': len(chpl_files),
-                'last_modified': datetime.fromtimestamp(latest_mod).strftime('%Y-%m-%d %H:%M:%S'),
-                'age_days': (datetime.now() - datetime.fromtimestamp(latest_mod)).days
-            }
-        else:
-            cache_info['chpl'] = {'exists': False}
-        
+        try:
+            chpl_dir = self.cache_sources['chpl']
+            chpl_files = list(chpl_dir.glob('*.json')) if chpl_dir.exists() else []
+            if chpl_files:
+                total_size = sum(f.stat().st_size for f in chpl_files)
+                latest_mod = max(f.stat().st_mtime for f in chpl_files)
+                cache_info['chpl'] = {
+                    'exists': True,
+                    'size_mb': total_size / (1024**2),
+                    'files': len(chpl_files),
+                    'last_modified': datetime.fromtimestamp(latest_mod).strftime('%Y-%m-%d %H:%M:%S'),
+                    'age_days': (datetime.now() - datetime.fromtimestamp(latest_mod)).days
+                }
+            else:
+                cache_info['chpl'] = {'exists': False}
+        except Exception:
+            _logger.exception("Failed to read CHPL cache info")
+            cache_info['chpl'] = {'exists': False, 'error': True}
+
         return cache_info
     
     def print_cache_summary(self) -> None:
@@ -205,31 +233,47 @@ class CacheManager:
         
         # Delete files
         deleted_count = 0
-        
-        if source == 'nvd':
-            for f in self.cache_root.glob('nvd*.pkl.gz'):
-                f.unlink()
-                deleted_count += 1
-        elif source == 'epss':
-            if self.cache_sources['epss'].exists():
-                shutil.rmtree(self.cache_sources['epss'])
-                self.cache_sources['epss'].mkdir(parents=True, exist_ok=True)
-                deleted_count = cache_info[source]['files']
-        elif source == 'kev':
-            kev_file = self.cache_root / 'kev_catalog.pkl.gz'
-            if kev_file.exists():
-                kev_file.unlink()
-                deleted_count = 1
-        elif source == 'attack':
-            attack_file = self.cache_root / 'attack_techniques.pkl.gz'
-            if attack_file.exists():
-                attack_file.unlink()
-                deleted_count = 1
-        elif source == 'chpl':
-            for f in self.cache_root.glob('chpl*.json'):
-                f.unlink()
-                deleted_count += 1
-        
+        failed_count = 0
+
+        try:
+            if source == 'nvd':
+                for f in self.cache_root.glob('nvd*.pkl.gz'):
+                    try:
+                        f.unlink()
+                        deleted_count += 1
+                    except Exception:
+                        _logger.exception("Failed to delete NVD cache file: %s", f)
+                        failed_count += 1
+            elif source == 'epss':
+                if self.cache_sources['epss'].exists():
+                    shutil.rmtree(self.cache_sources['epss'])
+                    self.cache_sources['epss'].mkdir(parents=True, exist_ok=True)
+                    deleted_count = cache_info[source]['files']
+            elif source == 'kev':
+                kev_file = self.cache_root / 'kev_catalog.pkl.gz'
+                if kev_file.exists():
+                    kev_file.unlink()
+                    deleted_count = 1
+            elif source == 'attack':
+                attack_file = self.cache_root / 'attack_techniques.pkl.gz'
+                if attack_file.exists():
+                    attack_file.unlink()
+                    deleted_count = 1
+            elif source == 'chpl':
+                for f in self.cache_root.glob('chpl*.json'):
+                    try:
+                        f.unlink()
+                        deleted_count += 1
+                    except Exception:
+                        _logger.exception("Failed to delete CHPL cache file: %s", f)
+                        failed_count += 1
+        except Exception:
+            _logger.exception("Unexpected error clearing %s cache", source)
+
+        if failed_count:
+            _logger.warning("Cleared %s cache with %d failures (%d deleted)", source, failed_count, deleted_count)
+        else:
+            _logger.info("Cleared %s cache (%d files deleted)", source, deleted_count)
         print(f"[OK] Cleared {source} cache ({deleted_count} files deleted)")
         print(f"   Next run will fetch fresh data from API")
         return True
