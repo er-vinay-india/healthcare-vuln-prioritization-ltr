@@ -128,8 +128,8 @@ cache/
 
 ## 📚 Full Documentation
 
-- **[ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md)** - Executive summary (this is for stakeholders)
 - **[ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md)** - Full technical analysis (11 sections)
+- **[Archived summary](archived/ARCHITECTURE_SUMMARY.md)** - Historical executive summary snapshot
 - **[test_enrichment_data_quality.py](../tests/test_enrichment_data_quality.py)** - Unit tests
 - **[test_enrichment_comprehensive.py](../tests/test_enrichment_comprehensive.py)** - Full scan tests
 

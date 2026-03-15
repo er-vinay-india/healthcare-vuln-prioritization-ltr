@@ -260,10 +260,10 @@ pip install -r requirements.txt --upgrade
 ## Next Steps
 
 - **Read full documentation:** See `docs/` directory
-- **API usage:** See `DEPLOYMENT.md` for REST API
+- **API usage:** See `DOCKER_GUIDE.md` for REST API run and troubleshooting
 - **Development guide:** See `docs/DEVELOPMENT.md`
-- **Architecture details:** See `ARCHITECTURE_GUIDE.md`
-- **Migration guide:** See `MIGRATION_GUIDE.md` (if upgrading from older version)
+- **Architecture details:** See `ARCHITECTURE_ANALYSIS.md`
+- **Historical docs:** See `archived/archive_README.md`
 
 ---
 

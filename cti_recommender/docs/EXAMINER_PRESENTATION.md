@@ -493,9 +493,8 @@ Conclusion: Model generalizes well to future data
 
 ### Research Documentation
 - `docs/RESEARCH_CONTEXT.md` - Literature review & gaps identified
-- `docs/EXAMINER_BRIEF.md` - Data flow, model comparison, interpretation
-- `docs/DATA_SCIENCE_VERIFICATION_REPORT.md` - Label leakage investigation
-- `docs/LABEL_LEAKAGE_INVESTIGATION.md` - Detailed leakage analysis
+- `docs/EXAMINER_PRESENTATION.md` - Data flow, model comparison, interpretation
+- `docs/PROJECT_REVIEW_2026.md` - Project status and roadmap
 
 ---
 

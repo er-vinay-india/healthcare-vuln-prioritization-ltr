@@ -6,6 +6,38 @@
 
 ## 📦 Quick Start (5 Minutes)
 
+### Command Shortcuts (Recommended)
+
+Use the project shortcuts for the fastest bootstrap:
+
+```bash
+# Full demo run (build + start + validation)
+make demo
+
+# Or step-by-step
+make build
+make up
+make health
+make test-fast
+```
+
+You can also use the helper script:
+
+```bash
+chmod +x docker-run.sh
+./docker-run.sh build
+./docker-run.sh start
+./docker-run.sh health
+./docker-run.sh test-fast
+```
+
+For available commands:
+
+```bash
+make help
+./docker-run.sh help
+```
+
 ### 1. Prerequisites
 
 Ensure you have Docker installed:
@@ -236,6 +268,12 @@ docker-compose logs api
 docker-compose down
 docker-compose build --no-cache
 docker-compose up -d
+```
+
+### Issue: Port 8000 already in use
+
+```bash
+lsof -ti:8000 | xargs kill -9
 ```
 
 ### Issue: Permission denied errors

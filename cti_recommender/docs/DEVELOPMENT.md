@@ -299,7 +299,7 @@ for cve_id in cve_ids:
 
 ### 4. Update Documentation
 
-- Add to `docs/API.md` if adding API endpoints
+- Add endpoint usage/update notes to `docs/DOCKER_GUIDE.md`
 - Update `README.md` features list
 - Add to this development guide if introducing new patterns
 
@@ -591,7 +591,7 @@ def new_endpoint(param: str):
 ```
 
 2. **Add tests** in `tests/test_api_endpoints.py`
-3. **Update** `docs/API.md`
+3. **Update** `docs/DOCKER_GUIDE.md` (and `docs/archived/archive_README.md` if needed)
 
 ---
 
@@ -638,7 +638,7 @@ pytest tests/test_file.py::test_name -s
 
 Update version in:
 - `README.md`
-- `ARCHITECTURE_GUIDE.md`
+- `docs/ARCHITECTURE_ANALYSIS.md`
 - `docs/QUICKSTART.md`
 - `docs/DEVELOPMENT.md`
 
