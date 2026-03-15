@@ -1,4 +1,4 @@
-# Scoring Logic Explanation
+# Ranking Logic
 
 **Question:** Why does a CVE with `is_healthcare=0` rank #1 over healthcare-flagged CVEs?
 
@@ -221,4 +221,4 @@ healthcare_cves = df[df['is_healthcare'] == 1]
 
 ---
 
-**Questions? See:** `docs/PROJECT_BRIEF.md` Section "Outcome Interpretation"
+**Questions?** See the root README for the overall project summary. Historical project narrative is archived in `docs/archived/PROJECT_BRIEF.md`.

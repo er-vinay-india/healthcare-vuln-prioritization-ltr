@@ -11,12 +11,11 @@
 - [QUICKSTART.md](QUICKSTART.md) - fastest setup and first run
 - [DEVELOPMENT.md](DEVELOPMENT.md) - developer workflow and conventions
 - [DOCKER_GUIDE.md](DOCKER_GUIDE.md) - Docker run, testing, and troubleshooting
-- [SCORING_EXPLANATION.md](SCORING_EXPLANATION.md) - scoring logic and interpretation
+- [RANKING_LOGIC.md](RANKING_LOGIC.md) - ranking logic and score interpretation
 
-## Technical & Research
+## Technical
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) - current system architecture and structure
-- [PROJECT_BRIEF.md](PROJECT_BRIEF.md) - concise project overview, data flow, and results
 
 ## Diagrams
 
@@ -33,7 +32,7 @@ Older phase plans, niche guides, and snapshot reports are in [archived](archived
 1. [Main Project README](../README.md)
 2. [QUICKSTART.md](QUICKSTART.md)
 3. [DOCKER_GUIDE.md](DOCKER_GUIDE.md) or [DEVELOPMENT.md](DEVELOPMENT.md)
-4. [SCORING_EXPLANATION.md](SCORING_EXPLANATION.md)
+4. [RANKING_LOGIC.md](RANKING_LOGIC.md)
 
 ---
 

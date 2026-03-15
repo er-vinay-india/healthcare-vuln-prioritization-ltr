@@ -21,6 +21,7 @@ These documents were moved from active `docs/` in March 2026 as part of consolid
 - GPU_SETUP.md
 - KT_GUIDE.md
 - PROJECT_REVIEW_2026.md
+- PROJECT_BRIEF.md
 - QUICKSTART_DOCKER.md
 - REFACTOR_PLAN.md
 - RESEARCH_CONTEXT.md
@@ -47,5 +48,4 @@ Use these files first:
 - ../DEVELOPMENT.md
 - ../DOCKER_GUIDE.md
 - ../ARCHITECTURE.md
-- ../SCORING_EXPLANATION.md
-- ../PROJECT_BRIEF.md
+- ../RANKING_LOGIC.md
