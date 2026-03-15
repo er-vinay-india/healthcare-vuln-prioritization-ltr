@@ -35,6 +35,14 @@ from src.evaluation.metrics import ndcg_at_k, precision_at_k
 
 import lightgbm as lgb
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 
 def load_data_from_db() -> pd.DataFrame:
     """Load CVE data from database."""
@@ -63,8 +71,13 @@ def load_data_from_db() -> pd.DataFrame:
     ORDER BY c.published DESC
     """
     
-    df = pd.read_sql_query(query, db.conn)
-    db.close()
+    try:
+        df = pd.read_sql_query(query, db.conn)
+    except Exception:
+        logger.exception("Failed to load production evaluation data")
+        raise
+    finally:
+        db.close()
     
     df['published'] = pd.to_datetime(df['published'], errors='coerce')
     df['cvss'] = pd.to_numeric(df['cvss'], errors='coerce')
@@ -272,89 +285,93 @@ def run_ablation_study(train_df, val_df, test_df):
     return ablation_results
 
 
-def main():
+def main() -> int:
     """Main evaluation pipeline."""
-    
-    # Load data
-    df = load_data_from_db()
-    
-    # Prepare labels and splits
-    train_df, val_df, test_df = prepare_labels_and_splits(
-        df,
-        train_end_date='2024-09-30',
-        test_start_date='2024-10-01',
-        horizon_days=90
-    )
-    
-    # === EXPERIMENT 1: OLD Features (13) ===
-    train_old, val_old, test_old, old_features = extract_old_production_features(
-        train_df, val_df, test_df
-    )
-    
-    model_old = train_model(train_old, val_old, old_features, "OLD Model (13 features)")
-    old_results, old_pred = evaluate_model(model_old, test_old, old_features)
-    
-    # === EXPERIMENT 2: NEW Features ===
-    train_new, val_new, test_new, new_features = extract_new_production_features(
-        train_df, val_df, test_df
-    )
-    
-    model_new = train_model(train_new, val_new, new_features, f"NEW Model ({len(new_features)} features)")
-    new_results, new_pred = evaluate_model(model_new, test_new, new_features)
-    
-    # === COMPARISON ===
-    print_comparison_table(old_results, new_results)
-    
-    # === ABLATION STUDY ===
-    ablation_results = run_ablation_study(train_df, val_df, test_df)
-    
-    # === SAVE RESULTS ===
-    output_dir = Path(__file__).parent.parent / 'outputs'
-    output_dir.mkdir(exist_ok=True)
-    
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # Save metrics
-    comparison_df = pd.DataFrame({
-        'OLD_13_features': old_results,
-        'NEW_28_features': new_results
-    }).T
-    comparison_df.to_csv(output_dir / f'production_comparison_{timestamp}.csv')
-    
-    # Save ablation
-    ablation_df = pd.DataFrame.from_dict(ablation_results, orient='index', columns=['NDCG@20'])
-    ablation_df.to_csv(output_dir / f'ablation_study_{timestamp}.csv')
-    
-    # Save predictions for analysis
-    test_results = test_df[['cve_id', 'published', 'cvss', 'kev_flag']].copy()
-    test_results['pred_old'] = old_pred
-    test_results['pred_new'] = new_pred
-    test_results.to_csv(output_dir / f'test_predictions_{timestamp}.csv', index=False)
-    
-    print("\n" + "=" * 80)
-    print("✓ EVALUATION COMPLETE")
-    print("=" * 80)
-    print(f"\nResults saved:")
-    print(f"  • {output_dir / f'production_comparison_{timestamp}.csv'}")
-    print(f"  • {output_dir / f'ablation_study_{timestamp}.csv'}")
-    print(f"  • {output_dir / f'test_predictions_{timestamp}.csv'}")
-    
-    # Summary
-    print("\n" + "=" * 80)
-    print("SUMMARY")
-    print("=" * 80)
-    print(f"OLD Model (13 features):")
-    print(f"  NDCG@20 = {old_results['NDCG@20']:.4f}")
-    print(f"  KEV Captured (top 20) = {old_results['KEV_captured_top20']:.0f}/{old_results['KEV_total']:.0f}")
-    
-    print(f"\nNEW Model ({len(new_features)} features):")
-    print(f"  NDCG@20 = {new_results['NDCG@20']:.4f}")
-    print(f"  KEV Captured (top 20) = {new_results['KEV_captured_top20']:.0f}/{new_results['KEV_total']:.0f}")
-    
-    improvement = (new_results['NDCG@20'] / old_results['NDCG@20'] - 1) * 100
-    print(f"\n→ IMPROVEMENT: {improvement:.1f}% increase in NDCG@20")
-    print()
+    try:
+        # Load data
+        df = load_data_from_db()
+
+        # Prepare labels and splits
+        train_df, val_df, test_df = prepare_labels_and_splits(
+            df,
+            train_end_date='2024-09-30',
+            test_start_date='2024-10-01',
+            horizon_days=90
+        )
+
+        # === EXPERIMENT 1: OLD Features (13) ===
+        train_old, val_old, test_old, old_features = extract_old_production_features(
+            train_df, val_df, test_df
+        )
+
+        model_old = train_model(train_old, val_old, old_features, "OLD Model (13 features)")
+        old_results, old_pred = evaluate_model(model_old, test_old, old_features)
+
+        # === EXPERIMENT 2: NEW Features ===
+        train_new, val_new, test_new, new_features = extract_new_production_features(
+            train_df, val_df, test_df
+        )
+
+        model_new = train_model(train_new, val_new, new_features, f"NEW Model ({len(new_features)} features)")
+        new_results, new_pred = evaluate_model(model_new, test_new, new_features)
+
+        # === COMPARISON ===
+        print_comparison_table(old_results, new_results)
+
+        # === ABLATION STUDY ===
+        ablation_results = run_ablation_study(train_df, val_df, test_df)
+
+        # === SAVE RESULTS ===
+        output_dir = Path(__file__).parent.parent / 'outputs'
+        output_dir.mkdir(exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Save metrics
+        comparison_df = pd.DataFrame({
+            'OLD_13_features': old_results,
+            'NEW_28_features': new_results
+        }).T
+        comparison_df.to_csv(output_dir / f'production_comparison_{timestamp}.csv')
+
+        # Save ablation
+        ablation_df = pd.DataFrame.from_dict(ablation_results, orient='index', columns=['NDCG@20'])
+        ablation_df.to_csv(output_dir / f'ablation_study_{timestamp}.csv')
+
+        # Save predictions for analysis
+        test_results = test_df[['cve_id', 'published', 'cvss', 'kev_flag']].copy()
+        test_results['pred_old'] = old_pred
+        test_results['pred_new'] = new_pred
+        test_results.to_csv(output_dir / f'test_predictions_{timestamp}.csv', index=False)
+
+        print("\n" + "=" * 80)
+        print("✓ EVALUATION COMPLETE")
+        print("=" * 80)
+        print(f"\nResults saved:")
+        print(f"  • {output_dir / f'production_comparison_{timestamp}.csv'}")
+        print(f"  • {output_dir / f'ablation_study_{timestamp}.csv'}")
+        print(f"  • {output_dir / f'test_predictions_{timestamp}.csv'}")
+
+        # Summary
+        print("\n" + "=" * 80)
+        print("SUMMARY")
+        print("=" * 80)
+        print(f"OLD Model (13 features):")
+        print(f"  NDCG@20 = {old_results['NDCG@20']:.4f}")
+        print(f"  KEV Captured (top 20) = {old_results['KEV_captured_top20']:.0f}/{old_results['KEV_total']:.0f}")
+
+        print(f"\nNEW Model ({len(new_features)} features):")
+        print(f"  NDCG@20 = {new_results['NDCG@20']:.4f}")
+        print(f"  KEV Captured (top 20) = {new_results['KEV_captured_top20']:.0f}/{new_results['KEV_total']:.0f}")
+
+        improvement = (new_results['NDCG@20'] / old_results['NDCG@20'] - 1) * 100
+        print(f"\n→ IMPROVEMENT: {improvement:.1f}% increase in NDCG@20")
+        print()
+        return 0
+    except Exception:
+        logger.exception("Improved production evaluation failed")
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -27,6 +28,14 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 from src.evaluation.metrics import compute_ranking_metrics
 from src.models.baselines import compute_cvss_only_scores, compute_heuristic_scores
 from src.models.ltr import get_default_ltr_params, save_model, train_lambdarank
+
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
 
 EXPECTED_FEATURES = [
@@ -333,56 +342,61 @@ def _write_report(final_df: pd.DataFrame, split_summary_df: pd.DataFrame, output
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser(description="Run unified scientific protocol")
     parser.add_argument("--features-dir", default="outputs/features", help="Directory containing features_with_labels_*.csv")
     parser.add_argument("--output-dir", default="outputs/scientific_protocol", help="Directory to write protocol artifacts")
     parser.add_argument("--cutoff-date", default="2024-12-31", help="Year split cutoff date (inclusive for train)")
     args = parser.parse_args()
 
-    features_dir = (PROJECT_ROOT / args.features_dir).resolve()
-    output_dir = (PROJECT_ROOT / args.output_dir).resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        features_dir = (PROJECT_ROOT / args.features_dir).resolve()
+        output_dir = (PROJECT_ROOT / args.output_dir).resolve()
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-    df_raw = _load_latest_features(features_dir)
-    df = _prepare_common_columns(df_raw)
+        df_raw = _load_latest_features(features_dir)
+        df = _prepare_common_columns(df_raw)
 
-    available_features = [f for f in EXPECTED_FEATURES if f in df.columns]
-    if not available_features:
-        raise RuntimeError("No expected feature columns found in features dataset")
+        available_features = [f for f in EXPECTED_FEATURES if f in df.columns]
+        if not available_features:
+            raise RuntimeError("No expected feature columns found in features dataset")
 
-    missing = [f for f in EXPECTED_FEATURES if f not in available_features]
-    if missing:
-        print(f"[WARN] Missing {len(missing)} expected features. Continuing with {len(available_features)} available features.")
+        missing = [f for f in EXPECTED_FEATURES if f not in available_features]
+        if missing:
+            print(f"[WARN] Missing {len(missing)} expected features. Continuing with {len(available_features)} available features.")
 
-    splits = [
-        _split_complete_temporal(df),
-        _split_year_based(df, args.cutoff_date),
-    ]
+        splits = [
+            _split_complete_temporal(df),
+            _split_year_based(df, args.cutoff_date),
+        ]
 
-    split_summary_df = _build_split_summary(splits)
-    split_summary_df.to_csv(output_dir / "split_summary.csv", index=False)
+        split_summary_df = _build_split_summary(splits)
+        split_summary_df.to_csv(output_dir / "split_summary.csv", index=False)
 
-    comparison_rows = []
-    for split_bundle in splits:
-        print(f"\n[INFO] Evaluating split: {split_bundle.name}")
-        comparison_rows.append(_evaluate_split(split_bundle, available_features, output_dir))
+        comparison_rows = []
+        for split_bundle in splits:
+            print(f"\n[INFO] Evaluating split: {split_bundle.name}")
+            comparison_rows.append(_evaluate_split(split_bundle, available_features, output_dir))
 
-    final_df = pd.concat(comparison_rows, ignore_index=True)
-    final_df.to_csv(output_dir / "final_comparison.csv", index=False)
+        final_df = pd.concat(comparison_rows, ignore_index=True)
+        final_df.to_csv(output_dir / "final_comparison.csv", index=False)
 
-    _write_report(final_df, split_summary_df, output_dir / "scientific_protocol_report.md")
+        _write_report(final_df, split_summary_df, output_dir / "scientific_protocol_report.md")
 
-    manifest = {
-        "features_used": available_features,
-        "missing_expected_features": missing,
-        "output_dir": str(output_dir),
-    }
-    (output_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        manifest = {
+            "features_used": available_features,
+            "missing_expected_features": missing,
+            "output_dir": str(output_dir),
+        }
+        (output_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
-    print("\n[OK] Scientific protocol complete")
-    print(f"[OK] Artifacts written to: {output_dir}")
+        print("\n[OK] Scientific protocol complete")
+        print(f"[OK] Artifacts written to: {output_dir}")
+        return 0
+    except Exception:
+        logger.exception("Scientific protocol execution failed")
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
