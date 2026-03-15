@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs shell test test-fast test-metrics test-coverage cache-prepare enrich train cv ablation clean health jupyter stats
+.PHONY: help build up down restart logs shell test test-fast test-metrics test-coverage cache-prepare enrich train cv ablation clean health jupyter stats doctor
 
 COMPOSE := $(shell if command -v docker-compose >/dev/null 2>&1; then echo docker-compose; else echo docker compose; fi)
 
@@ -53,6 +53,41 @@ status: ## Check container status
 	@echo "Container Status:"
 	@$(COMPOSE) ps
 	@$(COMPOSE) -f docker-compose.dev.yml ps 2>/dev/null || true
+
+doctor: ## Run local environment diagnostics (docker, compose, db)
+	@echo "Running local diagnostics..."
+	@set -e; \
+	fail=0; \
+	if docker info >/dev/null 2>&1; then \
+		echo "✓ Docker daemon: running"; \
+	else \
+		echo "✗ Docker daemon: not running"; \
+		fail=1; \
+	fi; \
+	if $(COMPOSE) -f docker-compose.yml config >/dev/null 2>&1; then \
+		echo "✓ Compose (prod): valid"; \
+	else \
+		echo "✗ Compose (prod): invalid"; \
+		fail=1; \
+	fi; \
+	if $(COMPOSE) -f docker-compose.dev.yml config >/dev/null 2>&1; then \
+		echo "✓ Compose (dev): valid"; \
+	else \
+		echo "✗ Compose (dev): invalid"; \
+		fail=1; \
+	fi; \
+	if [ -f data/cve_database.db ]; then \
+		echo "✓ Database file: present (data/cve_database.db)"; \
+	else \
+		echo "✗ Database file: missing (data/cve_database.db)"; \
+		fail=1; \
+	fi; \
+	if [ $$fail -eq 0 ]; then \
+		echo "✓ Diagnostics passed"; \
+	else \
+		echo "✗ Diagnostics failed"; \
+		exit 1; \
+	fi
 
 stats: ## Show resource usage
 	@docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" \
