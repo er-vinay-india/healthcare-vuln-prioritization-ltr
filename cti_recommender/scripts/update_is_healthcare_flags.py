@@ -14,8 +14,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config.settings import settings
 from src.core.cti_recommender import build_healthcare_features
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
-def main() -> None:
+
+def main() -> int:
     db_path = settings.get_database_path()
     conn = sqlite3.connect(db_path)
 
@@ -33,8 +41,8 @@ def main() -> None:
         )
 
         if cves.empty:
-            print("No CVEs found; no update performed")
-            return
+            logger.warning("No CVEs found; no update performed")
+            return 0
 
         features = build_healthcare_features(cves, add_epss=False, include_osint=True)
         updates = features[["cve_id", "is_healthcare"]].copy()
@@ -62,13 +70,18 @@ def main() -> None:
         after_total = conn.execute("SELECT COUNT(*) FROM enrichments").fetchone()[0]
         after_hc = conn.execute("SELECT COUNT(*) FROM enrichments WHERE is_healthcare = 1").fetchone()[0]
 
-        print(f"DB: {db_path}")
-        print(f"Rows in enrichments: {before_total:,} -> {after_total:,}")
-        print(f"Healthcare flagged: {before_hc:,} -> {after_hc:,}")
-        print(f"Rows with changed is_healthcare: {changed:,}")
+        logger.info(f"DB: {db_path}")
+        logger.info(f"Rows in enrichments: {before_total:,} -> {after_total:,}")
+        logger.info(f"Healthcare flagged: {before_hc:,} -> {after_hc:,}")
+        logger.info(f"Rows with changed is_healthcare: {changed:,}")
+        return 0
+    except Exception as exc:
+        conn.rollback()
+        logger.exception(f"Failed to recompute is_healthcare flags: {exc}")
+        return 1
     finally:
         conn.close()
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

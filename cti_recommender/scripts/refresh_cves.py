@@ -30,7 +30,7 @@ except ImportError:
 DB_PATH = Path("data/cve_database.db")
 
 
-def refresh_cves(api_key: str = None, days_back: int = None):
+def refresh_cves(api_key: str = None, days_back: int = None) -> int:
     """
     Refresh CVE database with new entries
     
@@ -110,9 +110,10 @@ def refresh_cves(api_key: str = None, days_back: int = None):
         
         # Show updated stats
         db.print_summary()
+        return 0
         
     except Exception as e:
-        logger.error(f"[X] ERROR: {e}")
+        logger.exception(f"[X] ERROR: {e}")
         db.log_fetch(
             start_date=start_str,
             end_date=end_str,
@@ -121,6 +122,7 @@ def refresh_cves(api_key: str = None, days_back: int = None):
             status='error',
             error_message=str(e)
         )
+        raise
     
     finally:
         db.close()
@@ -151,4 +153,8 @@ if __name__ == "__main__":
             logger.error(f"   Invalid argument: {sys.argv[1]}")
             sys.exit(1)
     
-    refresh_cves(api_key, days_back)
+    try:
+        code = refresh_cves(api_key, days_back)
+        sys.exit(code)
+    except Exception:
+        sys.exit(1)

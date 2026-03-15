@@ -21,13 +21,21 @@ from src.core.cve_database import CVEDatabase
 from src.core import cti_recommender
 from config.settings import settings
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 # Configuration
 START_YEAR = 2018
 END_YEAR = 2025
 DB_PATH = Path("data/cve_database.db")
 
 
-def backfill_by_month(start_year: int, end_year: int, api_key: str = None):
+def backfill_by_month(start_year: int, end_year: int, api_key: str = None) -> int:
     """
     Backfill CVE data month by month
     
@@ -66,12 +74,13 @@ def backfill_by_month(start_year: int, end_year: int, api_key: str = None):
     total_months = (end_year - start_year + 1) * 12
     processed_months = 0
     total_cves = 0
+    failed_months = 0
     
-    print(f"\n{'='*70}")
-    print(f"BACKFILLING CVE DATA: {start_year} - {end_year}")
-    print(f"{'='*70}\n")
-    print(f"Total months to process: {total_months}")
-    print(f"Estimated time: {total_months * 1:.0f} minutes (with API key)\n")
+    logger.info(f"\n{'='*70}")
+    logger.info(f"BACKFILLING CVE DATA: {start_year} - {end_year}")
+    logger.info(f"{'='*70}\n")
+    logger.info(f"Total months to process: {total_months}")
+    logger.info(f"Estimated time: {total_months * 1:.0f} minutes (with API key)\n")
     
     start_time = time.time()
     
@@ -114,6 +123,8 @@ def backfill_by_month(start_year: int, end_year: int, api_key: str = None):
                 
             except Exception as e:
                 print(f"[X] ERROR: {e}")
+                logger.exception(f"Month backfill failed for {month_start} to {month_end}: {e}")
+                failed_months += 1
                 db.log_fetch(
                     start_date=month_start,
                     end_date=month_end,
@@ -136,7 +147,8 @@ def backfill_by_month(start_year: int, end_year: int, api_key: str = None):
                 print(f"  Estimated time remaining: {remaining/60:.1f} minutes\n")
     
     except KeyboardInterrupt:
-        print("\n\n[WARN]  Backfill interrupted by user")
+        logger.warning("Backfill interrupted by user")
+        failed_months += 1
     
     finally:
         elapsed = time.time() - start_time
@@ -145,6 +157,7 @@ def backfill_by_month(start_year: int, end_year: int, api_key: str = None):
         print(f"{'='*70}")
         print(f"Processed months: {processed_months}/{total_months}")
         print(f"Total CVEs fetched: {total_cves:,}")
+        print(f"Failed months: {failed_months:,}")
         print(f"Time elapsed: {elapsed/60:.1f} minutes")
         print(f"Database: {DB_PATH}")
         print(f"{'='*70}\n")
@@ -152,6 +165,8 @@ def backfill_by_month(start_year: int, end_year: int, api_key: str = None):
         # Print final database summary
         db.print_summary()
         db.close()
+
+    return 1 if failed_months > 0 else 0
 
 
 if __name__ == "__main__":
@@ -170,4 +185,5 @@ if __name__ == "__main__":
         print("[X] NVD API Key: Not found")
     
     # Start backfill
-    backfill_by_month(START_YEAR, END_YEAR, api_key)
+    exit_code = backfill_by_month(START_YEAR, END_YEAR, api_key)
+    sys.exit(exit_code)
