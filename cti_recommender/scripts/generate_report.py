@@ -7,8 +7,17 @@ from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from datetime import datetime
 import os
+import sys
 
-def create_report():
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except Exception:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+def create_report() -> str:
     # Create document
     doc = Document()
     
@@ -385,9 +394,28 @@ This work establishes a foundation for continuous improvement in healthcare cybe
     
     # Save document
     output_path = 'outputs/CTI_Healthcare_Vulnerability_Recommender_Report.docx'
-    doc.save(output_path)
-    print(f'[OK] Report generated successfully: {output_path}')
-    print(f' File size: {os.path.getsize(output_path) / 1024:.1f} KB')
+    try:
+        doc.save(output_path)
+    except Exception:
+        logger.exception("Failed to save report to %s", output_path)
+        raise
+
+    logger.info('[OK] Report generated successfully: %s', output_path)
+    try:
+        logger.info('File size: %.1f KB', os.path.getsize(output_path) / 1024)
+    except Exception:
+        logger.exception("Failed to read generated report file size")
+
+    return output_path
+
+
+def main() -> int:
+    try:
+        create_report()
+        return 0
+    except Exception:
+        logger.exception("Report generation failed")
+        return 1
 
 if __name__ == '__main__':
-    create_report()
+    sys.exit(main())
