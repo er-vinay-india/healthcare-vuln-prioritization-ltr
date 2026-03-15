@@ -7,14 +7,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.core.cve_database import CVEDatabase
+from src.utils.cli_runner import get_logger_with_fallback, run_cli
 
-try:
-	from src.utils.logging_config import get_logger
-	logger = get_logger(__name__)
-except Exception:
-	import logging
-	logging.basicConfig(level=logging.INFO)
-	logger = logging.getLogger(__name__)
+logger = get_logger_with_fallback(__name__)
 
 
 REQUIRED_SCHEMA: dict[str, set[str]] = {
@@ -191,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
 	)
 	args = parser.parse_args(argv or [])
 
-	try:
+	def _run() -> int:
 		if args.schema_contract_only:
 			return _print_schema_contract_status()
 		if args.epss_coverage_only:
@@ -199,9 +194,8 @@ def main(argv: list[str] | None = None) -> int:
 
 		check_db_status()
 		return 0
-	except Exception:
-		logger.exception("Database status check failed")
-		return 1
+
+	return run_cli(_run, logger, "Database status check failed")
 
 
 if __name__ == "__main__":
