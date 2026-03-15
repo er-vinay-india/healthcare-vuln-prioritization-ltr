@@ -183,11 +183,11 @@ class TestEnrichmentCacheIntegrity:
             "cache/chpl",
             "cache/nvd"
         ]
-        
+
         for cache_dir in cache_dirs:
             path = Path(cache_dir)
             assert path.exists(), f"Cache directory missing: {cache_dir}"
-        
+
         print(f"✓ All {len(cache_dirs)} cache directories exist")
 
 

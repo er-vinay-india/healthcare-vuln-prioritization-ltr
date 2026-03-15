@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs shell test test-fast enrich train cv ablation clean health jupyter stats
+.PHONY: help build up down restart logs shell test test-fast test-metrics test-coverage cache-prepare enrich train cv ablation clean health jupyter stats
 
 # Default target
 .DEFAULT_GOAL := help
@@ -72,22 +72,27 @@ jupyter: ## Start Jupyter notebook server
 # TESTING
 # ==============================================================================
 
-test: ## Run all tests
+cache-prepare: ## Prepare required cache artifacts before tests
+	@echo "Preparing cache for test suite..."
+	@docker-compose -f docker-compose.dev.yml run --rm test-runner \
+		python scripts/prepare_test_cache.py --max-cves 30000 --min-size 1000000
+
+test: cache-prepare ## Run all tests
 	@echo "Running all tests..."
 	@docker-compose -f docker-compose.dev.yml run --rm test-runner pytest tests/ -v --tb=short
 
-test-fast: ## Run new tests only (99 tests, ~1 second)
+test-fast: cache-prepare ## Run new tests only (99 tests, ~1 second)
 	@echo "Running new tests (healthcare, CV, ablation)..."
 	@docker-compose -f docker-compose.dev.yml run --rm test-runner \
 		pytest tests/test_healthcare_mapper.py \
 		       tests/test_cross_validation.py \
 		       tests/test_ablation_study.py -v
 
-test-metrics: ## Run evaluation metrics tests
+test-metrics: cache-prepare ## Run evaluation metrics tests
 	@docker-compose -f docker-compose.dev.yml run --rm test-runner \
 		pytest tests/test_evaluation_metrics.py -v
 
-test-coverage: ## Run tests with coverage report
+test-coverage: cache-prepare ## Run tests with coverage report
 	@docker-compose -f docker-compose.dev.yml run --rm test-runner \
 		pytest tests/ --cov=src --cov-report=html --cov-report=term
 
