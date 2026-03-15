@@ -15,7 +15,7 @@
 
 ## Technical & Research
 
-- [ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md) - database/cache architecture and findings
+- [ARCHITECTURE.md](ARCHITECTURE.md) - current system architecture and structure
 - [RESEARCH_CONTEXT.md](RESEARCH_CONTEXT.md) - research framing and background
 - [PROJECT_REVIEW_2026.md](PROJECT_REVIEW_2026.md) - status and roadmap
 - [EXAMINER_PRESENTATION.md](EXAMINER_PRESENTATION.md) - evaluation-facing summary

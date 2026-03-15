@@ -13,6 +13,7 @@ These documents were moved from active `docs/` in March 2026 as part of consolid
 
 - ACTION_PLAN.md
 - API.md
+- ARCHITECTURE_ANALYSIS.md
 - ARCHITECTURE_REFACTOR_2026.md
 - ARCHITECTURE_SUMMARY.md
 - DEPLOYMENT.md
@@ -42,7 +43,7 @@ Use these files first:
 - ../QUICKSTART.md
 - ../DEVELOPMENT.md
 - ../DOCKER_GUIDE.md
-- ../ARCHITECTURE_ANALYSIS.md
+- ../ARCHITECTURE.md
 - ../SCORING_EXPLANATION.md
 - ../RESEARCH_CONTEXT.md
 - ../PROJECT_REVIEW_2026.md

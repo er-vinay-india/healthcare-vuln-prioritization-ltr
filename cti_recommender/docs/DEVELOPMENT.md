@@ -638,7 +638,7 @@ pytest tests/test_file.py::test_name -s
 
 Update version in:
 - `README.md`
-- `docs/ARCHITECTURE_ANALYSIS.md`
+- `docs/ARCHITECTURE.md`
 - `docs/QUICKSTART.md`
 - `docs/DEVELOPMENT.md`
 

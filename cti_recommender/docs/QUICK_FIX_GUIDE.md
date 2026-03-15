@@ -128,8 +128,9 @@ cache/
 
 ## 📚 Full Documentation
 
-- **[ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md)** - Full technical analysis (11 sections)
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Current architecture overview
 - **[Archived summary](archived/ARCHITECTURE_SUMMARY.md)** - Historical executive summary snapshot
+- **[Archived analysis](archived/ARCHITECTURE_ANALYSIS.md)** - Historical diagnostic analysis and action plan
 - **[test_enrichment_data_quality.py](../tests/test_enrichment_data_quality.py)** - Unit tests
 - **[test_enrichment_comprehensive.py](../tests/test_enrichment_comprehensive.py)** - Full scan tests
 
@@ -147,4 +148,4 @@ cache/
 
 ---
 
-**Questions?** See [ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md) for detailed answers.
+**Questions?** See [ARCHITECTURE.md](ARCHITECTURE.md) for current structure and [archived/ARCHITECTURE_ANALYSIS.md](archived/ARCHITECTURE_ANALYSIS.md) for historical investigation details.
