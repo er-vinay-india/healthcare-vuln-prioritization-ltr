@@ -494,7 +494,7 @@ Conclusion: Model generalizes well to future data
 ### Research Documentation
 - `docs/RESEARCH_CONTEXT.md` - Literature review & gaps identified
 - `docs/EXAMINER_PRESENTATION.md` - Data flow, model comparison, interpretation
-- `docs/PROJECT_REVIEW_2026.md` - Project status and roadmap
+- `docs/archived/PROJECT_REVIEW_2026.md` - Historical project status and roadmap snapshot
 
 ---
 

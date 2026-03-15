@@ -20,6 +20,7 @@ These documents were moved from active `docs/` in March 2026 as part of consolid
 - EXAMINER_BRIEF.md
 - GPU_SETUP.md
 - KT_GUIDE.md
+- PROJECT_REVIEW_2026.md
 - QUICKSTART_DOCKER.md
 - REFACTOR_PLAN.md
 - todo_audit.txt
@@ -46,6 +47,5 @@ Use these files first:
 - ../ARCHITECTURE.md
 - ../SCORING_EXPLANATION.md
 - ../RESEARCH_CONTEXT.md
-- ../PROJECT_REVIEW_2026.md
 - ../EXAMINER_PRESENTATION.md
 - ../todo_categorization.md
