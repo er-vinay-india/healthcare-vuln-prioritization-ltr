@@ -12,21 +12,34 @@ import re
 from typing import Dict, Set
 from src.core.chpl_fetcher import CHPLFetcher
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 class CHPLMapper:
     """Maps CVEs to CHPL certified health IT products using cached data."""
     
     def __init__(self):
         """Load CHPL product data - uses cache or fetches if needed."""
-        fetcher = CHPLFetcher()
-        self.products_df = fetcher.get_chpl_data()
-        
-        if self.products_df is None or len(self.products_df) == 0:
-            print("[WARN] No CHPL data available")
+        try:
+            fetcher = CHPLFetcher()
+            self.products_df = fetcher.get_chpl_data()
+        except Exception:
+            logger.exception("Failed to load CHPL data")
             self.products_df = None
             return
-        
-        print(f"Loaded {len(self.products_df)} CHPL certified products")
-        
+
+        if self.products_df is None or len(self.products_df) == 0:
+            logger.warning("No CHPL data available")
+            self.products_df = None
+            return
+
+        logger.info(f"Loaded {len(self.products_df)} CHPL certified products")
+
         # Build lookup structures
         self._build_lookups()
     
@@ -62,7 +75,7 @@ class CHPLMapper:
                 pattern = r'\b' + re.escape(product_name) + r'\b'
                 self.product_patterns.append(re.compile(pattern, re.IGNORECASE))
         
-        print(f"Built lookups: {len(self.vendor_names)} vendors, {len(self.product_names)} products")
+        logger.info(f"Built lookups: {len(self.vendor_names)} vendors, {len(self.product_names)} products")
     
     def check_chpl_match(self, description: str, cpe_list: str = None) -> Dict:
         """
@@ -75,9 +88,9 @@ class CHPLMapper:
         Returns:
             Dict with chpl_flag and matched product info
         """
-        if not description:
+        if self.products_df is None or not description:
             return {'chpl_flag': 0, 'matched_products': []}
-        
+
         description_lower = description.lower()
         matched = []
         

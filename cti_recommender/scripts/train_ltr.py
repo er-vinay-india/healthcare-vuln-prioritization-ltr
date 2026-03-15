@@ -52,9 +52,14 @@ def load_training_data():
     WHERE c.cvss IS NOT NULL
     """
     
-    df = pd.read_sql_query(query, db.conn)
-    db.close()
-    
+    try:
+        df = pd.read_sql_query(query, db.conn)
+    except Exception:
+        logger.exception("Failed to load training data from database")
+        raise
+    finally:
+        db.close()
+
     logger.info(f"Loaded {len(df):,} CVEs with complete data", extra={'cve_count': len(df)})
     return df
 
@@ -199,15 +204,15 @@ def evaluate_model(model, X_test, y_test, feature_names):
     for k in [10, 20, 50, 100]:
         top_k = y_test.iloc[top_k_indices[:k]]
         high_priority = (top_k >= 3).sum()
-        print(f"  P@{k:3d}: {100*high_priority/k:5.1f}% ({high_priority}/{k} high-priority)")
-    
+        logger.info(f"  P@{k:3d}: {100*high_priority/k:5.1f}% ({high_priority}/{k} high-priority)")
+
     # Label distribution in top 100
-    print(f"\nLabel Distribution in Top 100:")
+    logger.info("Label Distribution in Top 100:")
     top_100_labels = y_test.iloc[top_k_indices[:100]]
     for label in sorted(top_100_labels.unique(), reverse=True):
         count = (top_100_labels == label).sum()
         label_name = ['L0', 'L1', 'L2', 'L3', 'L4'][label] if label < 5 else f'L{label}'
-        print(f"  {label_name}: {count:3d} ({100*count/100:.0f}%)")
+        logger.info(f"  {label_name}: {count:3d} ({100*count/100:.0f}%)")
     
     return {
         'ndcg_5': ndcg_5,
@@ -215,85 +220,95 @@ def evaluate_model(model, X_test, y_test, feature_names):
         'ndcg_20': ndcg_20
     }
 
-def main():
-    print("="*70)
-    print("OPTIMIZED LTR MODEL TRAINING")
-    print("Features: 14 (pruned from 23)")
-    print("Regularization: STRONG (min_child_weight=5, max_depth=5, L1/L2)")
-    print("="*70)
-    
-    # Load data
-    df = load_training_data()
-    
-    # Prepare pruned features
-    X, y, scaler = prepare_pruned_features(df)
-    
-    # Label distribution
-    print(f"\nLabel distribution:")
-    for label in sorted(y.unique(), reverse=True):
-        count = (y == label).sum()
-        pct = 100 * count / len(y)
-        label_name = ['L0', 'L1', 'L2', 'L3', 'L4'][label] if label < 5 else f'L{label}'
-        print(f"  {label_name}: {count:>6,} ({pct:>4.1f}%)")
-    
-    # Split data
-    print(f"\nSplitting data (80% train, 20% test)...")
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
-    print(f"Train: {len(X_train):>6,} samples")
-    print(f"Test:  {len(X_test):>6,} samples")
-    
-    # Train model
-    model = train_model_with_regularization(X_train, y_train, X_test, y_test)
-    
-    # Evaluate
-    metrics = evaluate_model(model, X_test, y_test, X.columns.tolist())
-    
-    # Save model
-    model_dir = Path(__file__).parent.parent / 'models'
-    model_dir.mkdir(exist_ok=True)
-    
-    model_path = model_dir / 'ltr_ranker_pruned.model'
-    metadata_path = model_dir / 'ltr_metadata_pruned.pkl'
-    
-    model.save_model(str(model_path))
-    
-    metadata = {
-        'training_date': datetime.now().isoformat(),
-        'feature_names': X.columns.tolist(),
-        'n_features': len(X.columns),
-        'n_train': len(X_train),
-        'n_test': len(X_test),
-        'scaler': scaler,
-        'metrics': metrics,
-        'hyperparameters': {
-            'eta': 0.05,
-            'max_depth': 5,
-            'min_child_weight': 5,
-            'alpha': 0.1,
-            'lambda': 2.0
-        },
-        'removed_features': [
-            'epss_percentile', 'kev_x_epss', 'healthcare_x_cvss', 'cvss_high',
-            'chpl_flag', 'chpl_healthcare', 'chpl_x_attack', 'attack_flag', 'attack_healthcare'
-        ]
-    }
-    
-    with open(metadata_path, 'wb') as f:
-        pickle.dump(metadata, f)
-    
-    print(f"\nPruned model saved: {model_path}")
-    print(f"Metadata saved: {metadata_path}")
-    
-    print("\n" + "="*70)
-    print("[OK] Training complete!")
-    print("="*70)
-    print(f"\nModel summary:")
-    print(f"  Features: {len(X.columns)} (pruned from 23)")
-    print(f"  NDCG@10: {metrics['ndcg_10']:.4f}")
-    print(f"  Regularization: STRONG (min_child_weight=5, max_depth=5)")
-    print(f"\nCompare with original model NDCG@10=1.0000")
+def main() -> int:
+    logger.info("="*70)
+    logger.info("OPTIMIZED LTR MODEL TRAINING")
+    logger.info("Features: 14 (pruned from 23)")
+    logger.info("Regularization: STRONG (min_child_weight=5, max_depth=5, L1/L2)")
+    logger.info("="*70)
+
+    try:
+        # Load data
+        df = load_training_data()
+
+        # Prepare pruned features
+        X, y, scaler = prepare_pruned_features(df)
+
+        # Label distribution
+        logger.info("Label distribution:")
+        for label in sorted(y.unique(), reverse=True):
+            count = (y == label).sum()
+            pct = 100 * count / len(y)
+            label_name = ['L0', 'L1', 'L2', 'L3', 'L4'][label] if label < 5 else f'L{label}'
+            logger.info(f"  {label_name}: {count:>6,} ({pct:>4.1f}%)")
+
+        # Split data
+        logger.info("Splitting data (80% train, 20% test)...")
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42, stratify=y
+        )
+        logger.info(f"Train: {len(X_train):>6,} samples")
+        logger.info(f"Test:  {len(X_test):>6,} samples")
+
+        # Train model
+        model = train_model_with_regularization(X_train, y_train, X_test, y_test)
+
+        # Evaluate
+        metrics = evaluate_model(model, X_test, y_test, X.columns.tolist())
+
+        # Save model
+        model_dir = Path(__file__).parent.parent / 'models'
+        model_dir.mkdir(exist_ok=True)
+
+        model_path = model_dir / 'ltr_ranker_pruned.model'
+        metadata_path = model_dir / 'ltr_metadata_pruned.pkl'
+
+        try:
+            model.save_model(str(model_path))
+            logger.info(f"Pruned model saved: {model_path}")
+        except Exception:
+            logger.exception("Failed to save model to %s", model_path)
+            return 1
+
+        metadata = {
+            'training_date': datetime.now().isoformat(),
+            'feature_names': X.columns.tolist(),
+            'n_features': len(X.columns),
+            'n_train': len(X_train),
+            'n_test': len(X_test),
+            'scaler': scaler,
+            'metrics': metrics,
+            'hyperparameters': {
+                'eta': 0.05,
+                'max_depth': 5,
+                'min_child_weight': 5,
+                'alpha': 0.1,
+                'lambda': 2.0
+            },
+            'removed_features': [
+                'epss_percentile', 'kev_x_epss', 'healthcare_x_cvss', 'cvss_high',
+                'chpl_flag', 'chpl_healthcare', 'chpl_x_attack', 'attack_flag', 'attack_healthcare'
+            ]
+        }
+
+        try:
+            with open(metadata_path, 'wb') as f:
+                pickle.dump(metadata, f)
+            logger.info(f"Metadata saved: {metadata_path}")
+        except Exception:
+            logger.exception("Failed to save metadata to %s", metadata_path)
+            return 1
+
+        logger.info("="*70)
+        logger.info("[OK] Training complete!")
+        logger.info("="*70)
+        logger.info(f"Model summary: {len(X.columns)} features, NDCG@10={metrics['ndcg_10']:.4f}")
+        return 0
+
+    except Exception:
+        logger.exception("Training failed")
+        return 1
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

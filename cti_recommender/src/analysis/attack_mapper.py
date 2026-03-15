@@ -14,6 +14,14 @@ import re
 import pandas as pd
 from typing import List, Dict, Set
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 class AttackMapper:
     """Maps CVEs to MITRE ATT&CK techniques using cached data."""
     
@@ -21,12 +29,16 @@ class AttackMapper:
         """Load ATT&CK techniques from cache."""
         if cache_path is None:
             cache_path = Path(__file__).parent.parent.parent / 'cache' / 'attack' / 'attack_techniques.pkl.gz'
-        
-        with gzip.open(cache_path, 'rb') as f:
-            self.techniques_df = pickle.load(f)
-        
-        print(f"Loaded {len(self.techniques_df)} ATT&CK techniques from cache")
-        
+
+        try:
+            with gzip.open(cache_path, 'rb') as f:
+                self.techniques_df = pickle.load(f)
+        except Exception:
+            logger.exception("Failed to load ATT&CK cache from %s", cache_path)
+            raise
+
+        logger.info(f"Loaded {len(self.techniques_df)} ATT&CK techniques from cache")
+
         # Build lookup dictionaries for fast matching
         self._build_lookups()
     
@@ -63,7 +75,7 @@ class AttackMapper:
                 name
             ))
         
-        print(f"Built {len(self.technique_patterns)} technique patterns for matching")
+        logger.info(f"Built {len(self.technique_patterns)} technique patterns for matching")
     
     def map_cve_to_techniques(self, description: str) -> Dict:
         """

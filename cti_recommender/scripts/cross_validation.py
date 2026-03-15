@@ -53,9 +53,14 @@ def load_data():
     WHERE c.cvss IS NOT NULL
     """
     
-    df = pd.read_sql_query(query, db.conn)
-    db.close()
-    
+    try:
+        df = pd.read_sql_query(query, db.conn)
+    except Exception:
+        logger.exception("Failed to load enriched CVE data from database")
+        raise
+    finally:
+        db.close()
+
     df['published'] = pd.to_datetime(df['published'], errors='coerce')
     logger.info(f"Loaded {len(df):,} CVEs", extra={'cve_count': len(df)})
     return df
@@ -163,82 +168,93 @@ def evaluate_fold(model, X_val, y_val):
         'p_20': p_20
     }
 
-def main():
+def main() -> int:
     logger.info("="*70)
     logger.info("5-FOLD CROSS-VALIDATION")
     logger.info("="*70)
-    
-    # Load data
-    df = load_data()
-    
-    # Prepare all features once
-    logger.info("Preparing features...")
-    X, y, _ = prepare_features(df)
-    
-    logger.info("Label distribution:")
-    label_counts = y.value_counts().sort_index()
-    for label, count in label_counts.items():
-        logger.info(f"  Label {label}: {count}")
-    
-    # 5-fold cross-validation
-    kfold = KFold(n_splits=5, shuffle=True, random_state=42)
-    
-    fold_results = []
-    
-    logger.info("="*70)
-    logger.info("Training 5 folds...")
-    logger.info("="*70)
-    
-    for fold_idx, (train_idx, val_idx) in enumerate(kfold.split(X), 1):
-        logger.info(f"Fold {fold_idx}/5:")
-        
-        X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
-        y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
-        
-        # Scale within fold
-        scaler = StandardScaler()
-        continuous_cols = ['cvss', 'epss_score', 'epss_percentile', 'attack_technique_count', 
-                           'healthcare_x_cvss', 'kev_x_epss', 'attack_count_x_healthcare', 'days_since_2018']
-        X_train[continuous_cols] = scaler.fit_transform(X_train[continuous_cols])
-        X_val[continuous_cols] = scaler.transform(X_val[continuous_cols])
-        
-        # Compute sample weights
-        sample_weights = compute_class_weights(y_train)
-        
-        # Train
-        model = train_fold(X_train, y_train, X_val, y_val, sample_weights)
-        
-        # Evaluate
-        results = evaluate_fold(model, X_val, y_val)
-        fold_results.append(results)
-        
-        logger.info(f"  NDCG@10: {results['ndcg_10']:.4f}  P@20: {results['p_20']*100:.1f}%", 
-                   extra={'fold': fold_idx, 'ndcg_10': results['ndcg_10'], 'p_20': results['p_20']})
-    
-    # Aggregate results
-    logger.info("="*70)
-    logger.info("CROSS-VALIDATION RESULTS")
-    logger.info("="*70)
-    
-    results_df = pd.DataFrame(fold_results)
-    
-    logger.info(f"NDCG@5:  {results_df['ndcg_5'].mean():.4f} ± {results_df['ndcg_5'].std():.4f}")
-    logger.info(f"NDCG@10: {results_df['ndcg_10'].mean():.4f} ± {results_df['ndcg_10'].std():.4f}")
-    logger.info(f"NDCG@20: {results_df['ndcg_20'].mean():.4f} ± {results_df['ndcg_20'].std():.4f}")
-    logger.info(f"P@20:    {results_df['p_20'].mean()*100:.1f}% ± {results_df['p_20'].std()*100:.1f}%")
-    
-    logger.info("Per-fold breakdown:")
-    for fold_idx, row in results_df.iterrows():
-        logger.info(f"  Fold {fold_idx+1}: NDCG@10={row['ndcg_10']:.4f}, P@20={row['p_20']*100:.1f}%")
-    
-    # Save results
-    output_path = Path(__file__).parent.parent / 'outputs' / 'cv_results.csv'
-    results_df.to_csv(output_path, index=False)
-    logger.info(f"Results saved: {output_path}")
-    
-    logger.info("="*70)
-    logger.info("[OK] Cross-validation complete!")
-    logger.info("="*70)
+
+    try:
+        # Load data
+        df = load_data()
+
+        # Prepare all features once
+        logger.info("Preparing features...")
+        X, y, _ = prepare_features(df)
+
+        logger.info("Label distribution:")
+        label_counts = y.value_counts().sort_index()
+        for label, count in label_counts.items():
+            logger.info(f"  Label {label}: {count}")
+
+        # 5-fold cross-validation
+        kfold = KFold(n_splits=5, shuffle=True, random_state=42)
+
+        fold_results = []
+
+        logger.info("="*70)
+        logger.info("Training 5 folds...")
+        logger.info("="*70)
+
+        for fold_idx, (train_idx, val_idx) in enumerate(kfold.split(X), 1):
+            logger.info(f"Fold {fold_idx}/5:")
+
+            X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
+            y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
+
+            # Scale within fold
+            scaler = StandardScaler()
+            continuous_cols = ['cvss', 'epss_score', 'epss_percentile', 'attack_technique_count',
+                               'healthcare_x_cvss', 'kev_x_epss', 'attack_count_x_healthcare', 'days_since_2018']
+            X_train[continuous_cols] = scaler.fit_transform(X_train[continuous_cols])
+            X_val[continuous_cols] = scaler.transform(X_val[continuous_cols])
+
+            # Compute sample weights
+            sample_weights = compute_class_weights(y_train)
+
+            # Train
+            model = train_fold(X_train, y_train, X_val, y_val, sample_weights)
+
+            # Evaluate
+            results = evaluate_fold(model, X_val, y_val)
+            fold_results.append(results)
+
+            logger.info(f"  NDCG@10: {results['ndcg_10']:.4f}  P@20: {results['p_20']*100:.1f}%",
+                       extra={'fold': fold_idx, 'ndcg_10': results['ndcg_10'], 'p_20': results['p_20']})
+
+        # Aggregate results
+        logger.info("="*70)
+        logger.info("CROSS-VALIDATION RESULTS")
+        logger.info("="*70)
+
+        results_df = pd.DataFrame(fold_results)
+
+        logger.info(f"NDCG@5:  {results_df['ndcg_5'].mean():.4f} ± {results_df['ndcg_5'].std():.4f}")
+        logger.info(f"NDCG@10: {results_df['ndcg_10'].mean():.4f} ± {results_df['ndcg_10'].std():.4f}")
+        logger.info(f"NDCG@20: {results_df['ndcg_20'].mean():.4f} ± {results_df['ndcg_20'].std():.4f}")
+        logger.info(f"P@20:    {results_df['p_20'].mean()*100:.1f}% ± {results_df['p_20'].std()*100:.1f}%")
+
+        logger.info("Per-fold breakdown:")
+        for fold_idx, row in results_df.iterrows():
+            logger.info(f"  Fold {fold_idx+1}: NDCG@10={row['ndcg_10']:.4f}, P@20={row['p_20']*100:.1f}%")
+
+        # Save results
+        output_path = Path(__file__).parent.parent / 'outputs' / 'cv_results.csv'
+        try:
+            results_df.to_csv(output_path, index=False)
+            logger.info(f"Results saved: {output_path}")
+        except Exception:
+            logger.exception("Failed to save CV results to %s", output_path)
+            return 1
+
+        logger.info("="*70)
+        logger.info("[OK] Cross-validation complete!")
+        logger.info("="*70)
+        return 0
+
+    except Exception:
+        logger.exception("Cross-validation failed")
+        return 1
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
