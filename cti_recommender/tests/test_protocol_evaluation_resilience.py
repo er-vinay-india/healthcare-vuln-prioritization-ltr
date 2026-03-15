@@ -235,3 +235,51 @@ class TestEvaluateProductionImproved:
             result = mod.main()
 
         assert result == 1
+
+    def test_evaluate_model_computes_metrics_and_kev_counts(self):
+        import scripts.evaluation.evaluate_production_improved as mod
+
+        test_df = pd.DataFrame(
+            {
+                "f1": [1.0, 2.0, 3.0, 4.0],
+                "kev_flag": [0, 1, 1, 0],
+            }
+        )
+        fake_model = MagicMock()
+        fake_model.predict.return_value = np.array([0.1, 0.8, 0.7, 0.2])
+
+        with patch.object(mod, "ndcg_at_k", return_value=0.5), \
+             patch.object(mod, "precision_at_k", return_value=0.25):
+            results, preds = mod.evaluate_model(fake_model, test_df, ["f1"])
+
+        assert set(["NDCG@5", "NDCG@10", "NDCG@20", "NDCG@50", "P@5", "P@10", "P@20", "P@50"]).issubset(results)
+        assert results["KEV_total"] == 2
+        assert int(results["KEV_captured_top20"]) == 2
+        assert len(preds) == 4
+
+    def test_print_comparison_table_handles_zero_old_values(self, capsys):
+        import scripts.evaluation.evaluate_production_improved as mod
+
+        old_results = {
+            "NDCG@5": 0.0,
+            "NDCG@10": 0.0,
+            "NDCG@20": 0.0,
+            "P@10": 0.0,
+            "P@20": 0.0,
+            "KEV_captured_top20": 0.0,
+            "KEV_total": 4.0,
+        }
+        new_results = {
+            "NDCG@5": 0.4,
+            "NDCG@10": 0.5,
+            "NDCG@20": 0.6,
+            "P@10": 0.3,
+            "P@20": 0.25,
+            "KEV_captured_top20": 2.0,
+            "KEV_total": 4.0,
+        }
+
+        mod.print_comparison_table(old_results, new_results)
+        output = capsys.readouterr().out
+        assert "RESULTS COMPARISON" in output
+        assert "+2 CVEs" in output
