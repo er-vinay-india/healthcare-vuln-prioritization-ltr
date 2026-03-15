@@ -236,20 +236,29 @@ class CVEDatabase:
             cursor.execute(query, (cve_id, *fields.values()))
             count += 1
         
-        self.conn.commit()
-        logger.info("Upserted enrichment records", extra={"count": count})
+        try:
+            self.conn.commit()
+            logger.info("Upserted enrichment records", extra={"count": count})
+        except Exception as e:
+            logger.error("Enrichment commit failed", extra={"error": str(e)}, exc_info=True)
+            self.conn.rollback()
+            raise
         return count
     
-    def log_fetch(self, start_date: str, end_date: str, cve_count: int, 
-                  fetch_type: str = 'manual', status: str = 'success', 
+    def log_fetch(self, start_date: str, end_date: str, cve_count: int,
+                  fetch_type: str = 'manual', status: str = 'success',
                   error_message: str = None):
         """Log a fetch operation"""
         cursor = self.conn.cursor()
-        cursor.execute("""
-            INSERT INTO fetch_log (start_date, end_date, cve_count, fetch_type, status, error_message)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (start_date, end_date, cve_count, fetch_type, status, error_message))
-        self.conn.commit()
+        try:
+            cursor.execute("""
+                INSERT INTO fetch_log (start_date, end_date, cve_count, fetch_type, status, error_message)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (start_date, end_date, cve_count, fetch_type, status, error_message))
+            self.conn.commit()
+        except Exception as e:
+            logger.error("Failed to log fetch entry", extra={"error": str(e)}, exc_info=True)
+            self.conn.rollback()
     
     def get_last_fetch_date(self, fetch_type: str = None) -> Optional[datetime]:
         """Get the end date of the last successful fetch"""
@@ -334,7 +343,11 @@ class CVEDatabase:
             query += " LIMIT ?"
             params.append(limit)
         
-        df = pd.read_sql_query(query, self.conn, params=params)
+        try:
+            df = pd.read_sql_query(query, self.conn, params=params)
+        except Exception as e:
+            logger.error("CVE query failed", extra={"error": str(e)}, exc_info=True)
+            raise
         logger.info("Queried CVEs from database", extra={"count": len(df)})
         return df
     

@@ -44,8 +44,12 @@ except ImportError:
     HAS_HEALTHCARE_OSINT = False
 
 # Basic logger for the module
-logger = logging.getLogger("cti_recommender")
-logging.basicConfig(level=logging.INFO)
+try:
+    from src.utils.logging_config import get_logger as _get_logger
+    logger = _get_logger("cti_recommender")
+except Exception:
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("cti_recommender")
 
 # Defaults (can be overridden by passing args to functions)
 NVD_API_URL = settings.NVD_API_BASE
@@ -80,8 +84,11 @@ def _is_valid(path: Path, ttl_seconds: int) -> bool:
 
 def save_cache(df: pd.DataFrame, key: str) -> None:
     path = _cache_path(key)
-    df.to_pickle(path, compression="gzip")
-    logger.info("Saved cache: %s", path)
+    try:
+        df.to_pickle(path, compression="gzip")
+        logger.info("Saved cache: %s", path)
+    except Exception:
+        logger.exception("Failed to save cache: %s", path)
 
 
 def load_cache(key: str) -> Optional[pd.DataFrame]:
@@ -200,8 +207,8 @@ def fetch_nvd_date_range(start_date: str, end_date: str, api_url: str = NVD_API_
             resp.raise_for_status()
             data = resp.json()
         except requests.exceptions.RequestException as e:
-            logger.error(f"NVD API error: {e}")
-            break
+            logger.exception(f"NVD API error fetching {start_date} to {end_date}: {e}")
+            raise
         
         vulnerabilities = data.get("vulnerabilities", [])
         if not vulnerabilities:
