@@ -14,7 +14,7 @@ def db_path():
 
 @pytest.fixture
 def expected_plot_path():
-    return "outputs/plots/cve_cvss_temporal_trends.html"
+    return "outputs/plots/cvss_temporal_trends.html"
 
 
 def test_cvss_temporal_data_requirements(db_path):

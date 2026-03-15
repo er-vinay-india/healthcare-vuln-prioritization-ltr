@@ -54,7 +54,6 @@ def test_cvss_decomposition():
     print("  ✓ CVSS vectors parsed correctly")
     print("  ✓ Derived CVSS score calculated correctly")
     print("  ✓ Impact scores calculated correctly")
-    return True
 
 
 def test_cwe_intelligence():
@@ -102,7 +101,6 @@ def test_cwe_intelligence():
     print("  ✓ CWE category classification working")
     print("  ✓ Multiple CWE handling working")
     print("  ✓ Severity scoring working")
-    return True
 
 
 def test_interaction_features():
@@ -136,7 +134,6 @@ def test_interaction_features():
     print("  ✓ Ultimate risk interaction working")
     print("  ✓ Network accessibility interaction working")
     print("  ✓ Auth-required interaction working")
-    return True
 
 
 def test_full_integration():
@@ -178,7 +175,6 @@ def test_full_integration():
         print(f"  ✓ cwe_is_top25: {df['cwe_is_top25'].mean()*100:.1f}% are Top 25")
     
     print(f"  ✓ Integration test passed")
-    return True
 
 
 def run_all_tests():
@@ -199,11 +195,8 @@ def run_all_tests():
     
     for name, test_func in tests:
         try:
-            if test_func():
-                passed += 1
-            else:
-                failed += 1
-                print(f"  ✗ {name} FAILED")
+            test_func()
+            passed += 1
         except Exception as e:
             failed += 1
             print(f"  ✗ {name} FAILED: {e}")

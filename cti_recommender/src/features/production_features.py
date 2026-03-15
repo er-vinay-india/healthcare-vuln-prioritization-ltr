@@ -205,8 +205,9 @@ class ProductionFeatureEngineer:
     def _extract_cvss_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Extract CVSS-based features."""
         result = df.copy()
-        
-        result['cvss'] = result.get('cvss', pd.Series(5.0, index=result.index)).fillna(5.0)
+
+        cvss_source = result['cvss'] if 'cvss' in result.columns else pd.Series(5.0, index=result.index, dtype=float)
+        result['cvss'] = pd.to_numeric(cvss_source, errors='coerce').fillna(5.0).astype(float)
         result['cvss_norm'] = result['cvss'] / 10.0
         result['cvss_critical'] = (result['cvss'] >= 9.0).astype(int)
         result['cvss_high'] = (result['cvss'] >= 7.0).astype(int)

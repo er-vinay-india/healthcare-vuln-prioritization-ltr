@@ -198,7 +198,7 @@ def main() -> int:
         for fold_idx, (train_idx, val_idx) in enumerate(kfold.split(X), 1):
             logger.info(f"Fold {fold_idx}/5:")
 
-            X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
+            X_train, X_val = X.iloc[train_idx].copy(), X.iloc[val_idx].copy()
             y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
 
             # Scale within fold
