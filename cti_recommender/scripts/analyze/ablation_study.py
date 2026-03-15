@@ -17,6 +17,14 @@ from datetime import datetime
 
 from src.core.cve_database import CVEDatabase
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 def load_data():
     """Load training data from database."""
     print("Loading data from database...")
@@ -41,8 +49,13 @@ def load_data():
     WHERE c.cvss IS NOT NULL
     """
     
-    df = pd.read_sql_query(query, db.conn)
-    db.close()
+    try:
+        df = pd.read_sql_query(query, db.conn)
+    except Exception:
+        logger.exception("Failed to load ablation study data from database")
+        raise
+    finally:
+        db.close()
     
     print(f"Loaded {len(df):,} CVEs")
     return df
@@ -300,5 +313,14 @@ def ablation_study():
     results_df.to_csv(output_dir / 'ablation_study_results.csv', index=False)
     print(f"\nResults saved: outputs/ablation_study_results.csv")
 
+def main() -> int:
+    try:
+        ablation_study()
+        return 0
+    except Exception:
+        logger.exception("Ablation study failed")
+        return 1
+
+
 if __name__ == '__main__':
-    ablation_study()
+    sys.exit(main())

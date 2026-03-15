@@ -24,6 +24,14 @@ import json
 import warnings
 warnings.filterwarnings('ignore')
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 # Local imports
 from src.core.cve_database import CVEDatabase
 from src.features.temporal_labeling import (
@@ -77,8 +85,13 @@ def load_data_from_db() -> pd.DataFrame:
     ORDER BY c.published DESC
     """
     
-    df = pd.read_sql_query(query, db.conn)
-    db.close()
+    try:
+        df = pd.read_sql_query(query, db.conn)
+    except Exception:
+        logger.exception("Failed to load leakage-free evaluation data from database")
+        raise
+    finally:
+        db.close()
     
     df['published'] = pd.to_datetime(df['published'], errors='coerce')
     
@@ -504,28 +517,31 @@ research validity and real-world applicability.*
         f.write(report)
 
 
-def main():
+def main() -> int:
     """Main entry point."""
     print("\n" + "=" * 70)
     print("LEAKAGE-FREE CVE PRIORITIZATION EVALUATION")
     print("=" * 70)
     print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
-    
-    # Run evaluation with default dates
-    # Note: Adjust these dates based on your data availability
-    results = run_leakage_free_evaluation(
-        train_end_date='2024-06-01',
-        test_start_date='2024-07-01',
-        horizon_days=30
-    )
-    
-    print("\n" + "=" * 70)
-    print("[OK] EVALUATION COMPLETE")
-    print("=" * 70)
-    
-    return results
+
+    try:
+        # Run evaluation with default dates
+        # Note: Adjust these dates based on your data availability
+        run_leakage_free_evaluation(
+            train_end_date='2024-06-01',
+            test_start_date='2024-07-01',
+            horizon_days=30
+        )
+
+        print("\n" + "=" * 70)
+        print("[OK] EVALUATION COMPLETE")
+        print("=" * 70)
+        return 0
+    except Exception:
+        logger.exception("Leakage-free evaluation failed")
+        return 1
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
