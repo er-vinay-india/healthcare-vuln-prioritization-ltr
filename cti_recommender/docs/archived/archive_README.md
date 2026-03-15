@@ -22,6 +22,7 @@ These documents were moved from active `docs/` in March 2026 as part of consolid
 - KT_GUIDE.md
 - PROJECT_REVIEW_2026.md
 - PROJECT_BRIEF.md
+- QUICK_FIX_GUIDE.md
 - QUICKSTART_DOCKER.md
 - REFACTOR_PLAN.md
 - RESEARCH_CONTEXT.md
