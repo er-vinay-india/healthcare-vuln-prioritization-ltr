@@ -1,5 +1,7 @@
 .PHONY: help build up down restart logs shell test test-fast test-metrics test-coverage cache-prepare enrich train cv ablation clean health jupyter stats
 
+COMPOSE := $(shell if command -v docker-compose >/dev/null 2>&1; then echo docker-compose; else echo docker compose; fi)
+
 # Default target
 .DEFAULT_GOAL := help
 
@@ -12,29 +14,32 @@ help: ## Show this help message
 # BUILD & START
 # ==============================================================================
 
-build: ## Build Docker image
+docker-check: ## Verify Docker daemon is running
+	@docker info >/dev/null 2>&1 || (echo "✗ Docker daemon is not running." && echo "  Start Docker Desktop, then rerun this command." && exit 1)
+
+build: docker-check ## Build Docker image
 	@echo "Building Docker image..."
-	@docker-compose build
+	@$(COMPOSE) build
 
 up: build ## Start services (production mode)
 	@echo "Starting services..."
-	@docker-compose up -d
+	@$(COMPOSE) up -d
 	@echo "✓ Services started at http://localhost:8000"
 
 dev: build ## Start services (development mode with hot-reload)
 	@echo "Starting development services..."
-	@docker-compose -f docker-compose.dev.yml up -d api-dev
+	@$(COMPOSE) -f docker-compose.dev.yml up -d api-dev
 	@echo "✓ Development server started at http://localhost:8000"
 	@echo "  (Source code mounted, auto-reload enabled)"
 
 down: ## Stop all services
 	@echo "Stopping services..."
-	@docker-compose down
-	@docker-compose -f docker-compose.dev.yml down 2>/dev/null || true
+	@$(COMPOSE) down
+	@$(COMPOSE) -f docker-compose.dev.yml down 2>/dev/null || true
 	@echo "✓ Services stopped"
 
 restart: ## Restart services
-	@docker-compose restart
+	@$(COMPOSE) restart
 	@echo "✓ Services restarted"
 
 # ==============================================================================
@@ -42,12 +47,12 @@ restart: ## Restart services
 # ==============================================================================
 
 logs: ## View logs (follows in real-time)
-	@docker-compose logs -f api || docker-compose -f docker-compose.dev.yml logs -f api-dev
+	@$(COMPOSE) logs -f api || $(COMPOSE) -f docker-compose.dev.yml logs -f api-dev
 
 status: ## Check container status
 	@echo "Container Status:"
-	@docker-compose ps
-	@docker-compose -f docker-compose.dev.yml ps 2>/dev/null || true
+	@$(COMPOSE) ps
+	@$(COMPOSE) -f docker-compose.dev.yml ps 2>/dev/null || true
 
 stats: ## Show resource usage
 	@docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" \
@@ -61,11 +66,11 @@ health: ## Check API health
 # ==============================================================================
 
 shell: ## Open interactive shell in container
-	@docker-compose exec api bash || docker-compose -f docker-compose.dev.yml exec api-dev bash
+	@$(COMPOSE) exec api bash || $(COMPOSE) -f docker-compose.dev.yml exec api-dev bash
 
 jupyter: ## Start Jupyter notebook server
 	@echo "Starting Jupyter notebook..."
-	@docker-compose -f docker-compose.dev.yml up -d jupyter
+	@$(COMPOSE) -f docker-compose.dev.yml up -d jupyter
 	@echo "✓ Jupyter available at http://localhost:8888"
 
 # ==============================================================================
@@ -74,26 +79,26 @@ jupyter: ## Start Jupyter notebook server
 
 cache-prepare: ## Prepare required cache artifacts before tests
 	@echo "Preparing cache for test suite..."
-	@docker-compose -f docker-compose.dev.yml run --rm test-runner \
+	@$(COMPOSE) -f docker-compose.dev.yml run --rm test-runner \
 		python scripts/prepare_test_cache.py --max-cves 30000 --min-size 1000000
 
 test: cache-prepare ## Run all tests
 	@echo "Running all tests..."
-	@docker-compose -f docker-compose.dev.yml run --rm test-runner pytest tests/ -v --tb=short
+	@$(COMPOSE) -f docker-compose.dev.yml run --rm test-runner pytest tests/ -v --tb=short
 
 test-fast: cache-prepare ## Run new tests only (99 tests, ~1 second)
 	@echo "Running new tests (healthcare, CV, ablation)..."
-	@docker-compose -f docker-compose.dev.yml run --rm test-runner \
+	@$(COMPOSE) -f docker-compose.dev.yml run --rm test-runner \
 		pytest tests/test_healthcare_mapper.py \
 		       tests/test_cross_validation.py \
 		       tests/test_ablation_study.py -v
 
 test-metrics: cache-prepare ## Run evaluation metrics tests
-	@docker-compose -f docker-compose.dev.yml run --rm test-runner \
+	@$(COMPOSE) -f docker-compose.dev.yml run --rm test-runner \
 		pytest tests/test_evaluation_metrics.py -v
 
 test-coverage: cache-prepare ## Run tests with coverage report
-	@docker-compose -f docker-compose.dev.yml run --rm test-runner \
+	@$(COMPOSE) -f docker-compose.dev.yml run --rm test-runner \
 		pytest tests/ --cov=src --cov-report=html --cov-report=term
 
 # ==============================================================================
@@ -102,38 +107,38 @@ test-coverage: cache-prepare ## Run tests with coverage report
 
 enrich: ## Run CVE enrichment with healthcare mapping
 	@echo "Running CVE enrichment..."
-	@docker-compose run --rm api python scripts/enrich_cves.py
+	@$(COMPOSE) run --rm api python scripts/enrich_cves.py
 
 train: ## Train LTR model
 	@echo "Training LTR model..."
-	@docker-compose run --rm api python scripts/train_ltr.py
+	@$(COMPOSE) run --rm api python scripts/train_ltr.py
 
 cv: ## Run 5-fold cross-validation
 	@echo "Running cross-validation..."
-	@docker-compose run --rm api python scripts/cross_validation.py
+	@$(COMPOSE) run --rm api python scripts/cross_validation.py
 
 ablation: ## Run ablation study (7 feature variants)
 	@echo "Running ablation study..."
-	@docker-compose run --rm api python scripts/analyze/ablation_study.py
+	@$(COMPOSE) run --rm api python scripts/analyze/ablation_study.py
 
 temporal: ## Run temporal validation
 	@echo "Running temporal validation..."
-	@docker-compose run --rm api python scripts/temporal_validation.py
+	@$(COMPOSE) run --rm api python scripts/temporal_validation.py
 
 evaluate: ## Evaluate leakage-free performance
 	@echo "Evaluating model..."
-	@docker-compose run --rm api python scripts/evaluate_leakage_free.py
+	@$(COMPOSE) run --rm api python scripts/evaluate_leakage_free.py
 
 report: ## Generate evaluation report
 	@echo "Generating report..."
-	@docker-compose run --rm api python scripts/generate_report.py
+	@$(COMPOSE) run --rm api python scripts/generate_report.py
 
 # ==============================================================================
 # DATABASE
 # ==============================================================================
 
 db-status: ## Check database status
-	@docker-compose run --rm api python scripts/check_db_status.py
+	@$(COMPOSE) run --rm api python scripts/check_db_status.py
 
 db-backup: ## Backup database to host
 	@echo "Backing up database..."
@@ -141,7 +146,7 @@ db-backup: ## Backup database to host
 	@echo "✓ Backup complete"
 
 db-shell: ## Open SQLite shell
-	@docker-compose run --rm api sqlite3 /app/data/cve_database.db
+	@$(COMPOSE) run --rm api sqlite3 /app/data/cve_database.db
 
 # ==============================================================================
 # CLEANUP
@@ -149,8 +154,8 @@ db-shell: ## Open SQLite shell
 
 clean: ## Clean up containers and volumes
 	@echo "Cleaning up..."
-	@docker-compose down -v
-	@docker-compose -f docker-compose.dev.yml down -v 2>/dev/null || true
+	@$(COMPOSE) down -v
+	@$(COMPOSE) -f docker-compose.dev.yml down -v 2>/dev/null || true
 	@echo "✓ Cleanup complete"
 
 clean-cache: ## Clean Python cache files
@@ -172,17 +177,17 @@ demo: build ## Quick demo: build, start, test (for thesis examiners)
 	@echo "=========================================="
 	@echo ""
 	@echo "[1/4] Building Docker image..."
-	@docker-compose build
+	@$(COMPOSE) build
 	@echo ""
 	@echo "[2/4] Starting services..."
-	@docker-compose up -d
+	@$(COMPOSE) up -d
 	@sleep 3
 	@echo ""
 	@echo "[3/4] Running health check..."
 	@curl -sf http://localhost:8000/health && echo "\n✓ API is healthy" || echo "✗ API failed"
 	@echo ""
 	@echo "[4/4] Running tests (99 tests)..."
-	@docker-compose -f docker-compose.dev.yml run --rm test-runner \
+	@$(COMPOSE) -f docker-compose.dev.yml run --rm test-runner \
 		pytest tests/test_healthcare_mapper.py \
 		       tests/test_cross_validation.py \
 		       tests/test_ablation_study.py -v
