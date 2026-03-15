@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ===========================================================================
   # CTI Recommender - DEVELOPMENT MODE
