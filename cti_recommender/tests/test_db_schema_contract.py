@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sqlite3
+from unittest.mock import patch
 
 import scripts.check_db_status as mod
 
@@ -124,3 +125,27 @@ def test_get_epss_coverage_returns_expected_metrics() -> None:
     assert result["epss_date_present"] == 2
     assert result["epss_score_gt0"] == 1
     assert result["epss_coverage_pct"] == 66.67
+
+
+def test_main_routes_to_schema_contract_mode() -> None:
+    with patch.object(mod, "_print_schema_contract_status", return_value=0) as mock_schema:
+        result = mod.main(["--schema-contract-only"])
+
+    assert result == 0
+    mock_schema.assert_called_once_with()
+
+
+def test_main_routes_to_epss_coverage_mode() -> None:
+    with patch.object(mod, "_print_epss_coverage", return_value=0) as mock_epss:
+        result = mod.main(["--epss-coverage-only"])
+
+    assert result == 0
+    mock_epss.assert_called_once_with()
+
+
+def test_main_runs_full_status_by_default() -> None:
+    with patch.object(mod, "check_db_status", return_value=None) as mock_status:
+        result = mod.main([])
+
+    assert result == 0
+    mock_status.assert_called_once_with()
