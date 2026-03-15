@@ -6,6 +6,7 @@ for the vulnerability recommender system.
 from __future__ import annotations
 
 import logging
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timezone, timedelta
@@ -383,49 +384,60 @@ def generate_quality_report(
     if output_path:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        with open(output_path, 'w') as f:
-            f.write("="*70 + "\n")
-            f.write("DATA QUALITY REPORT\n")
-            f.write(f"Generated: {datetime.now().isoformat()}\n")
-            f.write("="*70 + "\n\n")
-            
-            for dataset_name, report in reports.items():
-                if isinstance(report, DataQualityReport):
-                    f.write(f"\n{dataset_name.upper()} DATASET\n")
-                    f.write("-"*70 + "\n")
-                    
-                    f.write("\nStatistics:\n")
-                    for key, value in report.stats.items():
-                        f.write(f"  {key}: {value}\n")
-                    
-                    if report.errors:
-                        f.write(f"\nErrors ({len(report.errors)}):\n")
-                        for err in report.errors:
-                            f.write(f"  - {err}\n")
-                    
-                    if report.warnings:
-                        f.write(f"\nWarnings ({len(report.warnings)}):\n")
-                        for warn in report.warnings:
-                            f.write(f"  - {warn}\n")
-                    
-                    f.write("\n")
-                elif dataset_name == 'audit':
-                    f.write("\nTOP RECOMMENDATIONS AUDIT\n")
-                    f.write("-"*70 + "\n")
-                    f.write(f"Total: {report['total']}\n")
-                    f.write(f"KEV-flagged: {report['kev_count']}\n")
-                    f.write(f"High CVSS: {report['high_cvss_count']}\n")
-                    f.write(f"Healthcare keywords: {report['healthcare_keywords_count']}\n")
+        try:
+            with open(output_path, 'w') as f:
+                f.write("="*70 + "\n")
+                f.write("DATA QUALITY REPORT\n")
+                f.write(f"Generated: {datetime.now().isoformat()}\n")
+                f.write("="*70 + "\n\n")
+
+                for dataset_name, report in reports.items():
+                    if isinstance(report, DataQualityReport):
+                        f.write(f"\n{dataset_name.upper()} DATASET\n")
+                        f.write("-"*70 + "\n")
+
+                        f.write("\nStatistics:\n")
+                        for key, value in report.stats.items():
+                            f.write(f"  {key}: {value}\n")
+
+                        if report.errors:
+                            f.write(f"\nErrors ({len(report.errors)}):\n")
+                            for err in report.errors:
+                                f.write(f"  - {err}\n")
+
+                        if report.warnings:
+                            f.write(f"\nWarnings ({len(report.warnings)}):\n")
+                            for warn in report.warnings:
+                                f.write(f"  - {warn}\n")
+
+                        f.write("\n")
+                    elif dataset_name == 'audit':
+                        f.write("\nTOP RECOMMENDATIONS AUDIT\n")
+                        f.write("-"*70 + "\n")
+                        f.write(f"Total: {report['total']}\n")
+                        f.write(f"KEV-flagged: {report['kev_count']}\n")
+                        f.write(f"High CVSS: {report['high_cvss_count']}\n")
+                        f.write(f"Healthcare keywords: {report['healthcare_keywords_count']}\n")
+        except Exception:
+            logger.exception("Failed to write quality report to %s", output_path)
+            raise
         
         print(f"[OK] Report saved to: {output_path}")
     
     return reports
 
 
+def main() -> int:
+    try:
+        print("Data Quality Module - use via import in your scripts")
+        print("Example:")
+        print("  from data_quality import generate_quality_report")
+        print("  reports = generate_quality_report(nvd_df, kev_df, chpl_df, attack_df, top20_df, 'outputs/quality_report.txt')")
+        return 0
+    except Exception:
+        logger.exception("Data quality module execution failed")
+        return 1
+
+
 if __name__ == "__main__":
-    # Example usage
-    print("Data Quality Module - use via import in your scripts")
-    print("Example:")
-    print("  from data_quality import generate_quality_report")
-    print("  reports = generate_quality_report(nvd_df, kev_df, chpl_df, attack_df, top20_df, 'outputs/quality_report.txt')")
+    sys.exit(main())

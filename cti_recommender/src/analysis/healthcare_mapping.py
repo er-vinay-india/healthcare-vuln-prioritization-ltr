@@ -6,6 +6,7 @@ to healthcare sector relevance for improved vulnerability prioritization.
 from __future__ import annotations
 
 import logging
+import sys
 from pathlib import Path
 from typing import Dict, List, Set, Optional
 import re
@@ -317,7 +318,11 @@ class HealthcareMapper:
         df = pd.DataFrame(records)
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(output_path, index=False)
+        try:
+            df.to_csv(output_path, index=False)
+        except Exception:
+            logger.exception("Failed to export healthcare mapping CSV to %s", output_path)
+            raise
         
         logger.info(f"Exported {len(records)} mapping patterns to {output_path}")
         return df
@@ -381,27 +386,36 @@ def analyze_healthcare_coverage(df: pd.DataFrame, mapper: HealthcareMapper,
     return analysis
 
 
+def main() -> int:
+    try:
+        # Example usage and testing
+        mapper = HealthcareMapper()
+
+        # Export default mappings
+        output_path = Path("data/config/healthcare_mapping.csv")
+        mapper.export_mapping_csv(output_path)
+        print(f"[OK] Exported healthcare mappings to {output_path}")
+
+        # Test examples
+        test_cases = [
+            "Epic Systems electronic health record vulnerability",
+            "Philips MRI system buffer overflow",
+            "Generic WordPress plugin XSS",
+            "Cerner HIPAA patient data exposure",
+            "Microsoft Windows kernel vulnerability"
+        ]
+
+        print("\n[TEST] Testing healthcare detection:")
+        for test in test_cases:
+            score = mapper.get_healthcare_score(test)
+            vendor = mapper.check_vendor_match(test)
+            product = mapper.check_product_match(test)
+            print(f"  Score: {score:.2f} | Vendor: {vendor or 'None':<15} | Product: {product} | {test[:60]}")
+        return 0
+    except Exception:
+        logger.exception("Healthcare mapping module execution failed")
+        return 1
+
+
 if __name__ == "__main__":
-    # Example usage and testing
-    mapper = HealthcareMapper()
-    
-    # Export default mappings
-    output_path = Path("data/config/healthcare_mapping.csv")
-    mapper.export_mapping_csv(output_path)
-    print(f"[OK] Exported healthcare mappings to {output_path}")
-    
-    # Test examples
-    test_cases = [
-        "Epic Systems electronic health record vulnerability",
-        "Philips MRI system buffer overflow",
-        "Generic WordPress plugin XSS",
-        "Cerner HIPAA patient data exposure",
-        "Microsoft Windows kernel vulnerability"
-    ]
-    
-    print("\n[TEST] Testing healthcare detection:")
-    for test in test_cases:
-        score = mapper.get_healthcare_score(test)
-        vendor = mapper.check_vendor_match(test)
-        product = mapper.check_product_match(test)
-        print(f"  Score: {score:.2f} | Vendor: {vendor or 'None':<15} | Product: {product} | {test[:60]}")
+    sys.exit(main())
