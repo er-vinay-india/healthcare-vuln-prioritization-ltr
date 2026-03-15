@@ -27,6 +27,14 @@ from src.evaluation.metrics import ndcg_at_k, precision_at_k
 
 import lightgbm as lgb
 
+try:
+    from src.utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 
 def load_data():
     """Load recent CVE data."""
@@ -55,8 +63,13 @@ def load_data():
     ORDER BY c.published
     """
     
-    df = pd.read_sql_query(query, db.conn)
-    db.close()
+    try:
+        df = pd.read_sql_query(query, db.conn)
+    except Exception:
+        logger.exception("Failed to load fast comparison data")
+        raise
+    finally:
+        db.close()
     
     df['published'] = pd.to_datetime(df['published'])
     df['cvss'] = pd.to_numeric(df['cvss'], errors='coerce')
@@ -165,97 +178,104 @@ def print_comparison(old_results, new_results):
     print(f"Total KEV: {old_results['KEV_total']}\n")
 
 
-def main():
+def main() -> int:
     """Main evaluation."""
-    
-    # Load and split
-    df = load_data()
-    train_df, val_df, test_df = create_splits(df)
-    
-    # === OLD FEATURES (13) ===
-    print("\n" + "=" * 80)
-    print("EXTRACTING OLD FEATURES (13)")
-    print("=" * 80)
-    
-    train_old = extract_old_features(train_df)
-    val_old = extract_old_features(val_df)
-    test_old = extract_old_features(test_df)
-    old_features = get_old_features()
-    
-    print(f"✓ Extracted {len(old_features)} OLD features")
-    
-    print(f"\n → Training OLD model...")
-    model_old = train_fast(train_old, val_old, old_features)
-    
-    print(f" → Evaluating OLD model...")
-    old_results, _ = evaluate(model_old, test_old, old_features)
-    
-    # === NEW FEATURES ===
-    print("\n" + "=" * 80)
-    print("EXTRACTING NEW FEATURES")
-    print("=" * 80)
-    
-    # Use train data for historical risk scores
-    historical = train_df[train_df['kev_flag'].notna()].copy()
-    engineer = ProductionFeatureEngineer(historical_data=historical)
-    
-    print("Extracting features (optimized)...")
-    train_new = engineer.extract_features(train_df)
-    val_new = engineer.extract_features(val_df)
-    test_new = engineer.extract_features(test_df)
-    new_features = engineer.get_feature_columns()
-    
-    print(f"✓ Extracted {len(new_features)} NEW features")
-    
-    # Show feature groups
-    groups = engineer.get_feature_importance_groups()
-    print(f"\nFeature groups:")
-    for group_name, group_feats in groups.items():
-        print(f"  • {group_name}: {len(group_feats)} features")
-    
-    print(f"\n → Training NEW model...")
-    model_new = train_fast(train_new, val_new, new_features)
-    
-    print(f" → Evaluating NEW model...")
-    new_results, _ = evaluate(model_new, test_new, new_features)
-    
-    # === COMPARISON ===
-    print_comparison(old_results, new_results)
-    
-    # === SAVE ===
-    output_dir = Path(__file__).parent.parent / 'outputs'
-    output_dir.mkdir(exist_ok=True)
-    
-    comparison_df = pd.DataFrame({
-        'OLD_13_features': old_results,
-        'NEW_28_features': new_results
-    }).T
-    
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_path = output_dir / f'fast_comparison_{timestamp}.csv'
-    comparison_df.to_csv(output_path)
-    
-    print(f"✓ Results saved: {output_path}")
-    
-    # === SUMMARY ===
-    print("\n" + "=" * 80)
-    print("SUMMARY")
-    print("=" * 80)
-    
-    improvement = (new_results['NDCG@20'] / old_results['NDCG@20'] - 1) * 100 if old_results['NDCG@20'] > 0 else 0
-    
-    print(f"\nOLD Model (13 basic features):")
-    print(f"  NDCG@20 = {old_results['NDCG@20']:.4f}")
-    print(f"  KEV captured (top 20) = {old_results['KEV_top20']:.0f}/{old_results['KEV_total']:.0f}")
-    
-    print(f"\nNEW Model ({len(new_features)} enriched features):")
-    print(f"  NDCG@20 = {new_results['NDCG@20']:.4f}")
-    print(f"  KEV captured (top 20) = {new_results['KEV_top20']:.0f}/{new_results['KEV_total']:.0f}")
-    
-    print(f"\n→ IMPROVEMENT: {improvement:.1f}% increase in NDCG@20")
-    print(f"→ Additional KEV CVEs captured: +{int(new_results['KEV_top20'] - old_results['KEV_top20'])}")
-    print()
+    try:
+        # Load and split
+        df = load_data()
+        train_df, val_df, test_df = create_splits(df)
+
+        # === OLD FEATURES (13) ===
+        print("\n" + "=" * 80)
+        print("EXTRACTING OLD FEATURES (13)")
+        print("=" * 80)
+
+        train_old = extract_old_features(train_df)
+        val_old = extract_old_features(val_df)
+        test_old = extract_old_features(test_df)
+        old_features = get_old_features()
+
+        print(f"✓ Extracted {len(old_features)} OLD features")
+
+        print(f"\n → Training OLD model...")
+        model_old = train_fast(train_old, val_old, old_features)
+
+        print(f" → Evaluating OLD model...")
+        old_results, _ = evaluate(model_old, test_old, old_features)
+
+        # === NEW FEATURES ===
+        print("\n" + "=" * 80)
+        print("EXTRACTING NEW FEATURES")
+        print("=" * 80)
+
+        # Use train data for historical risk scores
+        historical = train_df[train_df['kev_flag'].notna()].copy()
+        engineer = ProductionFeatureEngineer(historical_data=historical)
+
+        print("Extracting features (optimized)...")
+        train_new = engineer.extract_features(train_df)
+        val_new = engineer.extract_features(val_df)
+        test_new = engineer.extract_features(test_df)
+        new_features = engineer.get_feature_columns()
+
+        print(f"✓ Extracted {len(new_features)} NEW features")
+
+        # Show feature groups
+        groups = engineer.get_feature_importance_groups()
+        print(f"\nFeature groups:")
+        for group_name, group_feats in groups.items():
+            print(f"  • {group_name}: {len(group_feats)} features")
+
+        print(f"\n → Training NEW model...")
+        model_new = train_fast(train_new, val_new, new_features)
+
+        print(f" → Evaluating NEW model...")
+        new_results, _ = evaluate(model_new, test_new, new_features)
+
+        # === COMPARISON ===
+        print_comparison(old_results, new_results)
+
+        # === SAVE ===
+        output_dir = Path(__file__).parent.parent / 'outputs'
+        output_dir.mkdir(exist_ok=True)
+
+        comparison_df = pd.DataFrame({
+            'OLD_13_features': old_results,
+            'NEW_28_features': new_results
+        }).T
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_path = output_dir / f'fast_comparison_{timestamp}.csv'
+        try:
+            comparison_df.to_csv(output_path)
+            print(f"✓ Results saved: {output_path}")
+        except Exception:
+            logger.exception("Failed to save fast comparison results to %s", output_path)
+            return 1
+
+        # === SUMMARY ===
+        print("\n" + "=" * 80)
+        print("SUMMARY")
+        print("=" * 80)
+
+        improvement = (new_results['NDCG@20'] / old_results['NDCG@20'] - 1) * 100 if old_results['NDCG@20'] > 0 else 0
+
+        print(f"\nOLD Model (13 basic features):")
+        print(f"  NDCG@20 = {old_results['NDCG@20']:.4f}")
+        print(f"  KEV captured (top 20) = {old_results['KEV_top20']:.0f}/{old_results['KEV_total']:.0f}")
+
+        print(f"\nNEW Model ({len(new_features)} enriched features):")
+        print(f"  NDCG@20 = {new_results['NDCG@20']:.4f}")
+        print(f"  KEV captured (top 20) = {new_results['KEV_top20']:.0f}/{new_results['KEV_total']:.0f}")
+
+        print(f"\n→ IMPROVEMENT: {improvement:.1f}% increase in NDCG@20")
+        print(f"→ Additional KEV CVEs captured: +{int(new_results['KEV_top20'] - old_results['KEV_top20'])}")
+        print()
+        return 0
+    except Exception:
+        logger.exception("Fast comparison evaluation failed")
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

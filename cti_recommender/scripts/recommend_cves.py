@@ -46,13 +46,21 @@ class HealthcareCVERecommender:
         
         # Load model
         self.model = xgb.Booster()
-        self.model.load_model(str(model_path))
+        try:
+            self.model.load_model(str(model_path))
+        except Exception:
+            logger.exception("Failed to load model artifact: %s", model_path)
+            raise
         
         # Load metadata
         self.metadata = {}
         if metadata_path is not None and Path(metadata_path).exists():
-            with open(metadata_path, 'rb') as f:
-                self.metadata = pickle.load(f)
+            try:
+                with open(metadata_path, 'rb') as f:
+                    self.metadata = pickle.load(f)
+            except Exception:
+                logger.exception("Failed to load model metadata: %s", metadata_path)
+                raise
 
         model_feature_names = self.model.feature_names or []
         self.feature_names = self.metadata.get('feature_names') or model_feature_names
@@ -208,8 +216,13 @@ class HealthcareCVERecommender:
         ORDER BY c.published DESC
         """
         
-        df = pd.read_sql_query(query, db.conn, params=[cutoff_date, min_cvss])
-        db.close()
+        try:
+            df = pd.read_sql_query(query, db.conn, params=[cutoff_date, min_cvss])
+        except Exception:
+            logger.exception("Failed to load CVEs for recommendation")
+            raise
+        finally:
+            db.close()
         
         if len(df) == 0:
             logger.warning(f"No CVEs found in last {days_back} days with CVSS >= {min_cvss}", 
@@ -224,36 +237,41 @@ class HealthcareCVERecommender:
         
         return recommendations
 
-def main():
+def main() -> int:
     """Demo: Recommend recent healthcare CVEs."""
     logger.info("="*70)
     logger.info("HEALTHCARE CVE RECOMMENDER")
     logger.info("="*70)
     
-    # Initialize recommender
-    recommender = HealthcareCVERecommender()
-    
-    # Get recommendations for last 30 days
-    logger.info("Top 20 healthcare CVEs from last 30 days:")
-    logger.info("="*70)
-    
-    recommendations = recommender.recommend_from_db(days_back=30, top_k=20, min_cvss=7.0)
-    
-    if len(recommendations) > 0:
-        # Display recommendations
-        display_cols = ['cve_id', 'cvss', 'model_score', 'kev_flag', 'is_healthcare', 'label', 'published_str']
-        logger.info(f"\n{recommendations[display_cols].to_string(index=False)}")
-        
-        # Summary statistics
+    try:
+        # Initialize recommender
+        recommender = HealthcareCVERecommender()
+
+        # Get recommendations for last 30 days
+        logger.info("Top 20 healthcare CVEs from last 30 days:")
         logger.info("="*70)
-        logger.info("Summary:")
-        logger.info(f"  Total analyzed: {len(recommendations):,}", extra={'total': len(recommendations)})
-        logger.info(f"  Healthcare CVEs: {recommendations['is_healthcare'].sum()}", extra={'healthcare_count': int(recommendations['is_healthcare'].sum())})
-        logger.info(f"  KEV-flagged: {recommendations['kev_flag'].sum()}", extra={'kev_count': int(recommendations['kev_flag'].sum())})
-        logger.info(f"  Avg CVSS: {recommendations['cvss'].mean():.1f}", extra={'avg_cvss': recommendations['cvss'].mean()})
-        logger.info(f"  Avg Model Score: {recommendations['model_score'].mean():.2f}", extra={'avg_score': recommendations['model_score'].mean()})
-    
-    logger.info("="*70)
+
+        recommendations = recommender.recommend_from_db(days_back=30, top_k=20, min_cvss=7.0)
+
+        if len(recommendations) > 0:
+            # Display recommendations
+            display_cols = ['cve_id', 'cvss', 'model_score', 'kev_flag', 'is_healthcare', 'label', 'published_str']
+            logger.info(f"\n{recommendations[display_cols].to_string(index=False)}")
+
+            # Summary statistics
+            logger.info("="*70)
+            logger.info("Summary:")
+            logger.info(f"  Total analyzed: {len(recommendations):,}", extra={'total': len(recommendations)})
+            logger.info(f"  Healthcare CVEs: {recommendations['is_healthcare'].sum()}", extra={'healthcare_count': int(recommendations['is_healthcare'].sum())})
+            logger.info(f"  KEV-flagged: {recommendations['kev_flag'].sum()}", extra={'kev_count': int(recommendations['kev_flag'].sum())})
+            logger.info(f"  Avg CVSS: {recommendations['cvss'].mean():.1f}", extra={'avg_cvss': recommendations['cvss'].mean()})
+            logger.info(f"  Avg Model Score: {recommendations['model_score'].mean():.2f}", extra={'avg_score': recommendations['model_score'].mean()})
+
+        logger.info("="*70)
+        return 0
+    except Exception:
+        logger.exception("Healthcare CVE recommendation run failed")
+        return 1
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
