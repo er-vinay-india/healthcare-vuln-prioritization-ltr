@@ -88,9 +88,13 @@ class EnsembleRanker:
             from sklearn.linear_model import Ridge as RidgeRegressor
             ridge = RidgeRegressor(alpha=1.0, fit_intercept=False, positive=True)
             ridge.fit(X, labels)
-            self.weights = ridge.coef_
-            # Normalize to sum to 1
-            self.weights = self.weights / self.weights.sum()
+            self.weights = ridge.coef_.astype(float)
+            # Normalize to sum to 1 with robust fallback for degenerate fits.
+            weight_sum = float(self.weights.sum())
+            if (not np.isfinite(weight_sum)) or weight_sum <= 0:
+                self.weights = np.ones(n_models, dtype=float) / n_models
+            else:
+                self.weights = self.weights / weight_sum
         
         elif self.method == 'meta_learning':
             # Train meta-model on base predictions
