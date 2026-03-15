@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs shell test test-fast test-metrics test-coverage cache-prepare enrich train cv ablation clean health jupyter stats doctor
+.PHONY: help build up up-daemon daemon down restart logs shell test test-fast test-metrics test-coverage cache-prepare enrich train cv ablation clean health jupyter stats doctor
 
 COMPOSE := $(shell if command -v docker-compose >/dev/null 2>&1; then echo docker-compose; else echo docker compose; fi)
 
@@ -25,6 +25,13 @@ up: build ## Start services (production mode)
 	@echo "Starting services..."
 	@$(COMPOSE) up -d
 	@echo "✓ Services started at http://localhost:8000"
+
+up-daemon: build ## Start services in daemon mode (detached)
+	@echo "Starting services in daemon mode..."
+	@$(COMPOSE) up -d
+	@echo "✓ Services running in daemon mode at http://localhost:8000"
+
+daemon: up-daemon ## Alias for detached startup
 
 dev: build ## Start services (development mode with hot-reload)
 	@echo "Starting development services..."
