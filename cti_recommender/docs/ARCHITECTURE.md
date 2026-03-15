@@ -130,13 +130,7 @@ See `DOCKER_GUIDE.md` for runtime and troubleshooting details.
 
 ## Diagrams
 
-Rendered and source diagrams are kept in `docs/diagrams/`:
-- project architecture
-- notebook pipeline
-- data pipeline
-- evaluation strategies
-- LTR model
-- examiner flowchart
+Rendered and source diagrams are kept in `docs/diagrams/`.
 
 ---
 
