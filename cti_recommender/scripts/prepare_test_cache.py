@@ -82,7 +82,7 @@ def main() -> int:
 
     print(f"[INFO] Warming EPSS cache using {len(cve_ids):,} CVEs...")
     fetcher = EPSSFetcher()
-    fetcher.fetch_epss_bulk(cve_ids, use_cache=True, show_progress=True)
+    fetcher.fetch_epss_bulk(cve_ids, use_cache=True, show_progress=True, fail_fast=True)
 
     if not persistent_path.exists():
         raise RuntimeError("EPSS persistent cache was not created")

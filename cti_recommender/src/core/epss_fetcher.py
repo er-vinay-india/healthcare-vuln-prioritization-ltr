@@ -119,7 +119,13 @@ class EPSSFetcher:
             logger.warning("Persistent cache write error", 
                           extra={"error": str(e)})
     
-    def fetch_epss_bulk(self, cve_list: List[str], use_cache: bool = True, show_progress: bool = True) -> Dict[str, dict]:
+    def fetch_epss_bulk(
+        self,
+        cve_list: List[str],
+        use_cache: bool = True,
+        show_progress: bool = True,
+        fail_fast: bool = False,
+    ) -> Dict[str, dict]:
         """
         Fetch EPSS scores for multiple CVEs in bulk
         
@@ -176,7 +182,7 @@ class EPSSFetcher:
             batch = cves_to_fetch[i:i + batch_size]
             batch_num = i // batch_size + 1
             
-            batch_result = self._fetch_batch(batch)
+            batch_result = self._fetch_batch(batch, fail_fast=fail_fast)
             result.update(batch_result)
             fetched_count += len(batch_result)
             
@@ -233,7 +239,7 @@ class EPSSFetcher:
         
         return result
     
-    def _fetch_batch(self, cve_batch: List[str]) -> Dict[str, dict]:
+    def _fetch_batch(self, cve_batch: List[str], fail_fast: bool = False) -> Dict[str, dict]:
         """Fetch EPSS scores for a batch of CVEs"""
         try:
             # Build query parameters: ?cve=CVE-2023-1,CVE-2023-2,...
@@ -242,7 +248,7 @@ class EPSSFetcher:
             
             # Use ResilientAPIClient if available
             if USE_RESILIENT_CLIENT:
-                data = self.client.get('/epss', params=params, timeout=30)
+                data = self.client.get('', params=params)
             else:
                 response = self.session.get(self.api_base, params=params, timeout=30)
                 response.raise_for_status()
@@ -263,6 +269,8 @@ class EPSSFetcher:
             return result
             
         except Exception as e:
+            if fail_fast:
+                raise RuntimeError(f"EPSS API error for batch: {e}") from e
             logger.warning("API error for batch", extra={"error": str(e)})
             return {}
     

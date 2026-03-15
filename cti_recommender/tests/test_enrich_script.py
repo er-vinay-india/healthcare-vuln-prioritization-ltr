@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 import subprocess
+import pandas as pd
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -126,7 +127,11 @@ class TestSkipEPSSBehavior:
         mock_db.return_value = mock_db_instance
         
         import pandas as pd
-        mock_df = pd.DataFrame({'cve_id': ['CVE-2023-0001']})
+        mock_df = pd.DataFrame({
+            'cve_id': ['CVE-2023-0001'],
+            'description': ['sample description'],
+            'cvss': [7.5],
+        })
         mock_read_sql.return_value = mock_df
         
         mock_kev.return_value = set()
@@ -153,6 +158,74 @@ class TestEPSSFieldHandling:
         
         # This behavior is implemented in the script around line 320-328
         pass
+
+
+class TestPipelineHardening:
+    """Tests for validation and fail-fast hardening"""
+
+    def test_fetch_epss_bulk_empty_input(self):
+        """Empty EPSS request should return empty result safely."""
+        from scripts.enrich_cves import fetch_epss_bulk
+
+        result = fetch_epss_bulk([])
+        assert result == {}
+
+    def test_fetch_epss_bulk_invalid_batch_size(self):
+        """Invalid batch sizes should fail fast with clear error."""
+        from scripts.enrich_cves import fetch_epss_bulk
+
+        with pytest.raises(ValueError, match="batch_size must be > 0"):
+            fetch_epss_bulk(["CVE-2023-0001"], batch_size=0)
+
+    @patch('scripts.enrich_cves.EPSSFetcher')
+    def test_fetch_epss_bulk_raises_on_batch_error(self, mock_fetcher_cls):
+        """EPSS batch failure must raise RuntimeError (fail-fast)."""
+        from scripts.enrich_cves import fetch_epss_bulk
+
+        fetcher = mock_fetcher_cls.return_value
+        fetcher.fetch_epss_bulk.side_effect = RuntimeError("boom")
+
+        with pytest.raises(RuntimeError, match="EPSS fetch failed at batch 1/1"):
+            fetch_epss_bulk(["CVE-2023-0001"], batch_size=100)
+
+    @patch('scripts.enrich_cves.pd.read_sql_query')
+    @patch('scripts.enrich_cves.fetch_kev_catalog')
+    @patch('scripts.enrich_cves.HealthcareMapper')
+    @patch('scripts.enrich_cves.HealthcareCuratedDataset')
+    @patch('scripts.enrich_cves.CVEDatabase')
+    def test_enrich_database_missing_required_columns_raises(
+        self,
+        mock_db_cls,
+        mock_curated_cls,
+        mock_mapper_cls,
+        mock_kev,
+        mock_read_sql,
+    ):
+        """Query result missing mandatory columns should raise ValueError."""
+        from scripts.enrich_cves import enrich_database
+
+        db = mock_db_cls.return_value
+        db.conn = MagicMock()
+        db.get_statistics.return_value = {'total_cves': 1}
+
+        mock_kev.return_value = set()
+        mock_read_sql.return_value = pd.DataFrame({'cve_id': ['CVE-2023-0001'], 'description': ['d']})
+
+        with pytest.raises(ValueError, match="missing required columns"):
+            enrich_database(limit=1, skip_epss=True, skip_attack=True, skip_chpl=True)
+
+        assert db.close.called, "Database connection should be closed in finally block"
+
+    @patch('scripts.enrich_cves.logger')
+    def test_validate_enrichment_handles_zero_total(self, mock_logger):
+        """Validation should not divide by zero when table is empty."""
+        from scripts.enrich_cves import validate_enrichment
+
+        db = MagicMock()
+        db.conn.execute.return_value.fetchone.return_value = (0, 0, 0, 0, 0, 0, 0, None, None)
+
+        result = validate_enrichment(db)
+        assert result is False
 
 
 if __name__ == "__main__":
