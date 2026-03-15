@@ -10,9 +10,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from scripts.evaluate_fast_comparison import create_splits, load_data, train_fast
+from scripts.evaluation.evaluate_fast_comparison import create_splits, load_data, train_fast
 from src.evaluation.metrics import ndcg_at_k, precision_at_k
 from src.features.production_features import ProductionFeatureEngineer
 

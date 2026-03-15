@@ -144,7 +144,7 @@ Most analysis scripts output to:
 ## Dependencies
 
 All scripts require:
-- Database enrichment completed (`scripts/enrich_cves.py`)
+- Database enrichment completed (`scripts/data/enrich_cves.py`)
 - Core modules: `src/core/cve_database.py`, `src/analysis/*`
 - Standard ML libraries: pandas, numpy, scikit-learn, matplotlib
 

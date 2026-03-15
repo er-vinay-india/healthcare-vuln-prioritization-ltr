@@ -8,7 +8,7 @@ import pytest
 
 class TestLeakageFreeEvaluation:
     def test_load_data_from_db_re_raises_and_closes_db(self):
-        import scripts.evaluate_leakage_free as mod
+        import scripts.evaluation.evaluate_leakage_free as mod
 
         mock_db = MagicMock()
         with patch.object(mod, "CVEDatabase", return_value=mock_db), \
@@ -19,7 +19,7 @@ class TestLeakageFreeEvaluation:
         mock_db.close.assert_called_once()
 
     def test_main_returns_nonzero_when_pipeline_fails(self):
-        import scripts.evaluate_leakage_free as mod
+        import scripts.evaluation.evaluate_leakage_free as mod
 
         with patch.object(mod, "run_leakage_free_evaluation", side_effect=RuntimeError("boom")):
             result = mod.main()

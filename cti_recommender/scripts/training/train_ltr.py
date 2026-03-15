@@ -6,7 +6,7 @@ Adds stronger regularization to prevent overfitting.
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import pandas as pd
 import numpy as np
@@ -257,7 +257,7 @@ def main() -> int:
         metrics = evaluate_model(model, X_test, y_test, X.columns.tolist())
 
         # Save model
-        model_dir = Path(__file__).parent.parent / 'models'
+        model_dir = Path(__file__).resolve().parents[2] / 'models'
         model_dir.mkdir(exist_ok=True)
 
         model_path = model_dir / 'ltr_ranker_pruned.model'

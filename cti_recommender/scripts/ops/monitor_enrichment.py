@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.core.cve_database import CVEDatabase
 

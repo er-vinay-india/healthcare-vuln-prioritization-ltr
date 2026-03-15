@@ -10,7 +10,7 @@ import pytest
 
 class TestScientificProtocol:
     def test_main_returns_nonzero_when_features_missing(self):
-        import scripts.run_scientific_protocol as mod
+        import scripts.evaluation.run_scientific_protocol as mod
 
         with patch.object(mod, "_load_latest_features", return_value=pd.DataFrame({"published": []})), \
              patch("sys.argv", ["run_scientific_protocol.py"]):
@@ -21,7 +21,7 @@ class TestScientificProtocol:
 
 class TestEvaluateProductionImproved:
     def test_load_data_from_db_re_raises_and_closes_db(self):
-        import scripts.evaluate_production_improved as mod
+        import scripts.evaluation.evaluate_production_improved as mod
 
         mock_db = MagicMock()
         with patch.object(mod, "CVEDatabase", return_value=mock_db), \
@@ -32,7 +32,7 @@ class TestEvaluateProductionImproved:
         mock_db.close.assert_called_once()
 
     def test_main_returns_nonzero_when_load_fails(self):
-        import scripts.evaluate_production_improved as mod
+        import scripts.evaluation.evaluate_production_improved as mod
 
         with patch.object(mod, "load_data_from_db", side_effect=RuntimeError("db offline")):
             result = mod.main()
@@ -40,7 +40,7 @@ class TestEvaluateProductionImproved:
         assert result == 1
 
     def test_main_returns_nonzero_when_output_write_fails(self):
-        import scripts.evaluate_production_improved as mod
+        import scripts.evaluation.evaluate_production_improved as mod
 
         base_df = pd.DataFrame(
             {

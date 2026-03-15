@@ -47,7 +47,7 @@ pip install -r requirements.txt
 
 3. Set up the database:
 ```bash
-python scripts/refresh_cves.py
+python scripts/data/refresh_cves.py
 ```
 
 ### Usage
@@ -68,7 +68,7 @@ For production use:
 
 ```bash
 # Get recommendations for recent CVEs
-python scripts/recommend_cves.py --days 30
+python scripts/evaluation/recommend_cves.py --days 30
 
 # Start the API server
 python src/api/main.py

@@ -1,5 +1,5 @@
 """
-Tests for scripts/enrich_cves.py
+Tests for scripts/data/enrich_cves.py
 
 Tests command-line flags and enrichment pipeline functionality
 """
@@ -21,7 +21,7 @@ class TestEnrichmentScriptFlags:
     def test_help_shows_skip_epss_flag(self):
         """Verify --skip-epss flag appears in help output"""
         result = subprocess.run(
-            [sys.executable, 'scripts/enrich_cves.py', '--help'],
+            [sys.executable, 'scripts/data/enrich_cves.py', '--help'],
             cwd=project_root,
             capture_output=True,
             text=True
@@ -32,7 +32,7 @@ class TestEnrichmentScriptFlags:
     def test_help_shows_skip_attack_flag(self):
         """Verify --skip-attack flag is available"""
         result = subprocess.run(
-            [sys.executable, 'scripts/enrich_cves.py', '--help'],
+            [sys.executable, 'scripts/data/enrich_cves.py', '--help'],
             cwd=project_root,
             capture_output=True,
             text=True
@@ -42,7 +42,7 @@ class TestEnrichmentScriptFlags:
     def test_help_shows_skip_chpl_flag(self):
         """Verify --skip-chpl flag is available"""
         result = subprocess.run(
-            [sys.executable, 'scripts/enrich_cves.py', '--help'],
+            [sys.executable, 'scripts/data/enrich_cves.py', '--help'],
             cwd=project_root,
             capture_output=True,
             text=True
@@ -55,7 +55,7 @@ class TestEnrichmentFunctionSignature:
     
     def test_enrich_database_accepts_skip_epss(self):
         """Verify enrich_database accepts skip_epss parameter"""
-        from scripts.enrich_cves import enrich_database
+        from scripts.data.enrich_cves import enrich_database
         import inspect
         
         sig = inspect.signature(enrich_database)
@@ -69,7 +69,7 @@ class TestEnrichmentFunctionSignature:
     
     def test_skip_epss_default_value(self):
         """Verify skip_epss defaults to False"""
-        from scripts.enrich_cves import enrich_database
+        from scripts.data.enrich_cves import enrich_database
         import inspect
         
         sig = inspect.signature(enrich_database)
@@ -79,14 +79,14 @@ class TestEnrichmentFunctionSignature:
 class TestSkipEPSSBehavior:
     """Test skip_epss flag behavior"""
     
-    @patch('scripts.enrich_cves.CVEDatabase')
-    @patch('scripts.enrich_cves.HealthcareCuratedDataset')
-    @patch('scripts.enrich_cves.HealthcareMapper')
-    @patch('scripts.enrich_cves.fetch_kev_catalog')
-    @patch('scripts.enrich_cves.pd.read_sql_query')
+    @patch('scripts.data.enrich_cves.CVEDatabase')
+    @patch('scripts.data.enrich_cves.HealthcareCuratedDataset')
+    @patch('scripts.data.enrich_cves.HealthcareMapper')
+    @patch('scripts.data.enrich_cves.fetch_kev_catalog')
+    @patch('scripts.data.enrich_cves.pd.read_sql_query')
     def test_skip_epss_prevents_fetch(self, mock_read_sql, mock_kev, mock_mapper, mock_curated, mock_db):
         """Verify skip_epss=True prevents EPSS fetching"""
-        from scripts.enrich_cves import enrich_database
+        from scripts.data.enrich_cves import enrich_database
         
         # Setup mocks
         mock_db_instance = MagicMock()
@@ -100,7 +100,7 @@ class TestSkipEPSSBehavior:
         mock_kev.return_value = set()
         
         # Mock fetch_epss_bulk to track if it's called
-        with patch('scripts.enrich_cves.fetch_epss_bulk') as mock_fetch_epss:
+        with patch('scripts.data.enrich_cves.fetch_epss_bulk') as mock_fetch_epss:
             try:
                 enrich_database(limit=10, skip_epss=True, skip_attack=True, skip_chpl=True)
             except Exception:
@@ -110,15 +110,15 @@ class TestSkipEPSSBehavior:
             # EPSS fetch should NOT be called when skip_epss=True
             assert not mock_fetch_epss.called, "fetch_epss_bulk should not be called when skip_epss=True"
     
-    @patch('scripts.enrich_cves.CVEDatabase')
-    @patch('scripts.enrich_cves.HealthcareCuratedDataset')
-    @patch('scripts.enrich_cves.HealthcareMapper')
-    @patch('scripts.enrich_cves.fetch_kev_catalog')
-    @patch('scripts.enrich_cves.pd.read_sql_query')
-    @patch('scripts.enrich_cves.fetch_epss_bulk')
+    @patch('scripts.data.enrich_cves.CVEDatabase')
+    @patch('scripts.data.enrich_cves.HealthcareCuratedDataset')
+    @patch('scripts.data.enrich_cves.HealthcareMapper')
+    @patch('scripts.data.enrich_cves.fetch_kev_catalog')
+    @patch('scripts.data.enrich_cves.pd.read_sql_query')
+    @patch('scripts.data.enrich_cves.fetch_epss_bulk')
     def test_skip_epss_false_calls_fetch(self, mock_fetch_epss, mock_read_sql, mock_kev, mock_mapper, mock_curated, mock_db):
         """Verify skip_epss=False calls EPSS fetching"""
-        from scripts.enrich_cves import enrich_database
+        from scripts.data.enrich_cves import enrich_database
         
         # Setup mocks
         mock_db_instance = MagicMock()
@@ -165,22 +165,22 @@ class TestPipelineHardening:
 
     def test_fetch_epss_bulk_empty_input(self):
         """Empty EPSS request should return empty result safely."""
-        from scripts.enrich_cves import fetch_epss_bulk
+        from scripts.data.enrich_cves import fetch_epss_bulk
 
         result = fetch_epss_bulk([])
         assert result == {}
 
     def test_fetch_epss_bulk_invalid_batch_size(self):
         """Invalid batch sizes should fail fast with clear error."""
-        from scripts.enrich_cves import fetch_epss_bulk
+        from scripts.data.enrich_cves import fetch_epss_bulk
 
         with pytest.raises(ValueError, match="batch_size must be > 0"):
             fetch_epss_bulk(["CVE-2023-0001"], batch_size=0)
 
-    @patch('scripts.enrich_cves.EPSSFetcher')
+    @patch('scripts.data.enrich_cves.EPSSFetcher')
     def test_fetch_epss_bulk_raises_on_batch_error(self, mock_fetcher_cls):
         """EPSS batch failure must raise RuntimeError (fail-fast)."""
-        from scripts.enrich_cves import fetch_epss_bulk
+        from scripts.data.enrich_cves import fetch_epss_bulk
 
         fetcher = mock_fetcher_cls.return_value
         fetcher.fetch_epss_bulk.side_effect = RuntimeError("boom")
@@ -188,11 +188,11 @@ class TestPipelineHardening:
         with pytest.raises(RuntimeError, match="EPSS fetch failed at batch 1/1"):
             fetch_epss_bulk(["CVE-2023-0001"], batch_size=100)
 
-    @patch('scripts.enrich_cves.pd.read_sql_query')
-    @patch('scripts.enrich_cves.fetch_kev_catalog')
-    @patch('scripts.enrich_cves.HealthcareMapper')
-    @patch('scripts.enrich_cves.HealthcareCuratedDataset')
-    @patch('scripts.enrich_cves.CVEDatabase')
+    @patch('scripts.data.enrich_cves.pd.read_sql_query')
+    @patch('scripts.data.enrich_cves.fetch_kev_catalog')
+    @patch('scripts.data.enrich_cves.HealthcareMapper')
+    @patch('scripts.data.enrich_cves.HealthcareCuratedDataset')
+    @patch('scripts.data.enrich_cves.CVEDatabase')
     def test_enrich_database_missing_required_columns_raises(
         self,
         mock_db_cls,
@@ -202,7 +202,7 @@ class TestPipelineHardening:
         mock_read_sql,
     ):
         """Query result missing mandatory columns should raise ValueError."""
-        from scripts.enrich_cves import enrich_database
+        from scripts.data.enrich_cves import enrich_database
 
         db = mock_db_cls.return_value
         db.conn = MagicMock()
@@ -216,10 +216,10 @@ class TestPipelineHardening:
 
         assert db.close.called, "Database connection should be closed in finally block"
 
-    @patch('scripts.enrich_cves.logger')
+    @patch('scripts.data.enrich_cves.logger')
     def test_validate_enrichment_handles_zero_total(self, mock_logger):
         """Validation should not divide by zero when table is empty."""
-        from scripts.enrich_cves import validate_enrichment
+        from scripts.data.enrich_cves import validate_enrichment
 
         db = MagicMock()
         db.conn.execute.return_value.fetchone.return_value = (0, 0, 0, 0, 0, 0, 0, None, None)

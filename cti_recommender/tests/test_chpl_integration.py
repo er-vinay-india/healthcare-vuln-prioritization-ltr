@@ -174,7 +174,7 @@ class TestCHPLEnrichmentPipeline:
         if chpl_count == 0 and total > 0:
             pytest.skip(
                 f"Database has {total:,} CVEs but 0 CHPL enrichments. "
-                "Run 'python scripts/enrich_cves.py' without --skip-chpl to enable CHPL enrichment."
+                "Run 'python scripts/data/enrich_cves.py' without --skip-chpl to enable CHPL enrichment."
             )
 
 

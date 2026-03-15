@@ -8,13 +8,13 @@ import pytest
 
 
 # ---------------------------------------------------------------------------
-# scripts/train_ltr.py
+# scripts/training/train_ltr.py
 # ---------------------------------------------------------------------------
 
 class TestTrainLTR:
     def test_load_training_data_propagates_query_error(self):
         """load_training_data must re-raise DB query errors."""
-        import scripts.train_ltr as ltr
+        import scripts.training.train_ltr as ltr
 
         with patch.object(ltr, "CVEDatabase") as mock_cls, \
              patch("pandas.read_sql_query", side_effect=RuntimeError("db exploded")):
@@ -24,7 +24,7 @@ class TestTrainLTR:
 
     def test_load_training_data_closes_db_on_query_error(self):
         """db.close() must be called even when the query raises."""
-        import scripts.train_ltr as ltr
+        import scripts.training.train_ltr as ltr
 
         mock_db = MagicMock()
         with patch.object(ltr, "CVEDatabase", return_value=mock_db), \
@@ -35,7 +35,7 @@ class TestTrainLTR:
 
     def test_main_returns_nonzero_on_load_failure(self):
         """main() must return 1 when load_training_data raises."""
-        import scripts.train_ltr as ltr
+        import scripts.training.train_ltr as ltr
 
         with patch.object(ltr, "load_training_data", side_effect=RuntimeError("no db")):
             result = ltr.main()
@@ -43,7 +43,7 @@ class TestTrainLTR:
 
     def test_main_returns_nonzero_on_model_save_failure(self, tmp_path):
         """main() must return 1 when model.save_model raises."""
-        import scripts.train_ltr as ltr
+        import scripts.training.train_ltr as ltr
         import pandas as pd
         import numpy as np
 
@@ -63,13 +63,13 @@ class TestTrainLTR:
 
 
 # ---------------------------------------------------------------------------
-# scripts/temporal_validation.py
+# scripts/training/temporal_validation.py
 # ---------------------------------------------------------------------------
 
 class TestTemporalValidation:
     def test_load_temporal_data_propagates_query_error(self):
         """load_temporal_data must re-raise DB query errors."""
-        import scripts.temporal_validation as tv
+        import scripts.training.temporal_validation as tv
 
         with patch.object(tv, "CVEDatabase") as mock_cls, \
              patch("pandas.read_sql_query", side_effect=RuntimeError("timeout")):
@@ -79,7 +79,7 @@ class TestTemporalValidation:
 
     def test_load_temporal_data_closes_db_on_error(self):
         """db.close() must be called in the finally block."""
-        import scripts.temporal_validation as tv
+        import scripts.training.temporal_validation as tv
 
         mock_db = MagicMock()
         with patch.object(tv, "CVEDatabase", return_value=mock_db), \
@@ -90,7 +90,7 @@ class TestTemporalValidation:
 
     def test_main_returns_nonzero_on_load_failure(self):
         """main() must return 1 when load_temporal_data raises."""
-        import scripts.temporal_validation as tv
+        import scripts.training.temporal_validation as tv
 
         with patch.object(tv, "load_temporal_data", side_effect=RuntimeError("bad db")):
             result = tv.main()
@@ -98,13 +98,13 @@ class TestTemporalValidation:
 
 
 # ---------------------------------------------------------------------------
-# scripts/cross_validation.py
+# scripts/training/cross_validation.py
 # ---------------------------------------------------------------------------
 
 class TestCrossValidation:
     def test_load_data_propagates_query_error(self):
         """load_data must re-raise DB query errors."""
-        import scripts.cross_validation as cv
+        import scripts.training.cross_validation as cv
 
         with patch.object(cv, "CVEDatabase") as mock_cls, \
              patch("pandas.read_sql_query", side_effect=RuntimeError("conn refused")):
@@ -114,7 +114,7 @@ class TestCrossValidation:
 
     def test_load_data_closes_db_on_error(self):
         """db.close() must be called even when query raises."""
-        import scripts.cross_validation as cv
+        import scripts.training.cross_validation as cv
 
         mock_db = MagicMock()
         with patch.object(cv, "CVEDatabase", return_value=mock_db), \
@@ -125,7 +125,7 @@ class TestCrossValidation:
 
     def test_main_returns_nonzero_on_load_failure(self):
         """main() must return 1 when load_data raises."""
-        import scripts.cross_validation as cv
+        import scripts.training.cross_validation as cv
 
         with patch.object(cv, "load_data", side_effect=RuntimeError("no data")):
             result = cv.main()
@@ -133,7 +133,7 @@ class TestCrossValidation:
 
     def test_main_returns_nonzero_on_csv_save_failure(self, tmp_path):
         """main() must return 1 when CSV save raises."""
-        import scripts.cross_validation as cv
+        import scripts.training.cross_validation as cv
         import pandas as pd
         import numpy as np
 

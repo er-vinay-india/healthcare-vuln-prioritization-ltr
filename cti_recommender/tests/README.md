@@ -89,8 +89,8 @@ CHPL enrichments: 0 (0.00%)
 
 **Action Required:**
 ```bash
-python scripts/enrich_cves.py  # WITHOUT --skip-chpl
-python scripts/check_db_status.py
+python scripts/data/enrich_cves.py  # WITHOUT --skip-chpl
+python scripts/ops/check_db_status.py
 pytest tests/test_chpl_integration.py -v
 ```
 
@@ -270,7 +270,7 @@ pytest tests/ --tb=short --maxfail=5
 
 1. **Fix CHPL Enrichment** (CRITICAL)
    ```bash
-   python scripts/enrich_cves.py
+   python scripts/data/enrich_cves.py
    pytest tests/test_chpl_integration.py
    ```
 

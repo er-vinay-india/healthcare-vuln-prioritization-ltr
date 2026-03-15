@@ -5,7 +5,7 @@ Reports mean NDCG ± standard deviation for robust performance estimates.
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import pandas as pd
 import numpy as np
@@ -238,7 +238,7 @@ def main() -> int:
             logger.info(f"  Fold {fold_idx+1}: NDCG@10={row['ndcg_10']:.4f}, P@20={row['p_20']*100:.1f}%")
 
         # Save results
-        output_path = Path(__file__).parent.parent / 'outputs' / 'cv_results.csv'
+        output_path = Path(__file__).resolve().parents[2] / 'outputs' / 'cv_results.csv'
         try:
             results_df.to_csv(output_path, index=False)
             logger.info(f"Results saved: {output_path}")

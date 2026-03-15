@@ -7,7 +7,7 @@ echo "==================================================================="
 echo ""
 
 # Check if process is running
-if ps aux | grep -q "[p]ython scripts/enrich_cves.py"; then
+if ps aux | grep -q "[p]ython scripts/data/enrich_cves.py"; then
     echo "[OK] Enrichment process is RUNNING"
     echo ""
 else

@@ -122,7 +122,7 @@ jupyter: ## Start Jupyter notebook server
 cache-prepare: ## Prepare required cache artifacts before tests
 	@echo "Preparing cache for test suite..."
 	@$(COMPOSE) -f docker-compose.dev.yml run --rm test-runner \
-		python scripts/prepare_test_cache.py --max-cves 30000 --min-size 1000000
+		python scripts/data/prepare_test_cache.py --max-cves 30000 --min-size 1000000
 
 test: cache-prepare ## Run all tests
 	@echo "Running all tests..."
@@ -149,15 +149,15 @@ test-coverage: cache-prepare ## Run tests with coverage report
 
 enrich: ## Run CVE enrichment with healthcare mapping
 	@echo "Running CVE enrichment..."
-	@$(COMPOSE) run --rm api python scripts/enrich_cves.py
+	@$(COMPOSE) run --rm api python scripts/data/enrich_cves.py
 
 train: ## Train LTR model
 	@echo "Training LTR model..."
-	@$(COMPOSE) run --rm api python scripts/train_ltr.py
+	@$(COMPOSE) run --rm api python scripts/training/train_ltr.py
 
 cv: ## Run 5-fold cross-validation
 	@echo "Running cross-validation..."
-	@$(COMPOSE) run --rm api python scripts/cross_validation.py
+	@$(COMPOSE) run --rm api python scripts/training/cross_validation.py
 
 ablation: ## Run ablation study (7 feature variants)
 	@echo "Running ablation study..."
@@ -165,22 +165,22 @@ ablation: ## Run ablation study (7 feature variants)
 
 temporal: ## Run temporal validation
 	@echo "Running temporal validation..."
-	@$(COMPOSE) run --rm api python scripts/temporal_validation.py
+	@$(COMPOSE) run --rm api python scripts/training/temporal_validation.py
 
 evaluate: ## Evaluate leakage-free performance
 	@echo "Evaluating model..."
-	@$(COMPOSE) run --rm api python scripts/evaluate_leakage_free.py
+	@$(COMPOSE) run --rm api python scripts/evaluation/evaluate_leakage_free.py
 
 report: ## Generate evaluation report
 	@echo "Generating report..."
-	@$(COMPOSE) run --rm api python scripts/generate_report.py
+	@$(COMPOSE) run --rm api python scripts/evaluation/generate_report.py
 
 # ==============================================================================
 # DATABASE
 # ==============================================================================
 
 db-status: ## Check database status
-	@$(COMPOSE) run --rm api python scripts/check_db_status.py
+	@$(COMPOSE) run --rm api python scripts/ops/check_db_status.py
 
 db-backup: ## Backup database to host
 	@echo "Backing up database..."

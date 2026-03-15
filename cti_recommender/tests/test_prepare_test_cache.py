@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-from scripts.prepare_test_cache import seed_epss_cache_from_db
+from scripts.data.prepare_test_cache import seed_epss_cache_from_db
 
 
 def _create_db_with_enrichments(db_path: Path) -> None:

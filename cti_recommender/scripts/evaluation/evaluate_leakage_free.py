@@ -14,7 +14,7 @@ Date: January 27, 2026
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import pandas as pd
 import numpy as np
@@ -216,7 +216,7 @@ def run_leakage_free_evaluation(
         Dict with all results
     """
     if output_dir is None:
-        output_dir = Path(__file__).parent.parent / 'outputs'
+        output_dir = Path(__file__).resolve().parents[2] / 'outputs'
     output_dir.mkdir(exist_ok=True)
     
     results = {

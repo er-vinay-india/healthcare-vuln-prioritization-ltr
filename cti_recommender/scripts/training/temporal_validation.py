@@ -5,7 +5,7 @@ Train on 2018-2024, test on 2025 with pruned features and strong regularization.
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import pandas as pd
 import numpy as np

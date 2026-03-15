@@ -9,7 +9,7 @@ import pytest
 
 class TestEvaluateHealthcareSubgroup:
     def test_main_returns_nonzero_on_load_failure(self):
-        import scripts.evaluate_healthcare_subgroup as mod
+        import scripts.evaluation.evaluate_healthcare_subgroup as mod
 
         with patch.object(mod, "load_data", side_effect=RuntimeError("db down")):
             result = mod.main()
@@ -19,7 +19,7 @@ class TestEvaluateHealthcareSubgroup:
 
 class TestEvaluateFastComparison:
     def test_load_data_re_raises_query_error_and_closes_db(self):
-        import scripts.evaluate_fast_comparison as mod
+        import scripts.evaluation.evaluate_fast_comparison as mod
 
         mock_db = MagicMock()
         with patch.object(mod, "CVEDatabase", return_value=mock_db), \
@@ -30,7 +30,7 @@ class TestEvaluateFastComparison:
         mock_db.close.assert_called_once()
 
     def test_main_returns_nonzero_when_output_save_fails(self):
-        import scripts.evaluate_fast_comparison as mod
+        import scripts.evaluation.evaluate_fast_comparison as mod
 
         df = pd.DataFrame(
             {
@@ -63,7 +63,7 @@ class TestEvaluateFastComparison:
 
 class TestRecommendCVEs:
     def test_recommend_from_db_re_raises_query_error_and_closes_db(self):
-        import scripts.recommend_cves as mod
+        import scripts.evaluation.recommend_cves as mod
 
         fake_recommender = mod.HealthcareCVERecommender.__new__(mod.HealthcareCVERecommender)
         fake_recommender.recommend = MagicMock()
@@ -77,7 +77,7 @@ class TestRecommendCVEs:
         mock_db.close.assert_called_once()
 
     def test_main_returns_nonzero_when_recommender_init_fails(self):
-        import scripts.recommend_cves as mod
+        import scripts.evaluation.recommend_cves as mod
 
         with patch.object(mod, "HealthcareCVERecommender", side_effect=RuntimeError("missing model")):
             result = mod.main()

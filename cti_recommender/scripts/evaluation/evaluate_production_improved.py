@@ -12,7 +12,7 @@ Date: 2026-03-03
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import pandas as pd
 import numpy as np
@@ -322,7 +322,7 @@ def main() -> int:
         ablation_results = run_ablation_study(train_df, val_df, test_df)
 
         # === SAVE RESULTS ===
-        output_dir = Path(__file__).parent.parent / 'outputs'
+        output_dir = Path(__file__).resolve().parents[2] / 'outputs'
         output_dir.mkdir(exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

@@ -9,7 +9,7 @@ This directory contains utility scripts for the CTI Recommender project.
 #### `backfill_cves.py`
 Backfills CVE data from NVD API for specified date ranges.
 ```bash
-python scripts/backfill_cves.py --start-date 2024-01-01 --end-date 2024-12-31
+python scripts/data/backfill_cves.py --start-date 2024-01-01 --end-date 2024-12-31
 ```
 
 #### `enrich_cves.py`
@@ -21,19 +21,19 @@ Enriches CVE database with data from multiple threat intelligence sources:
 - Healthcare context patterns
 
 ```bash
-python scripts/enrich_cves.py
+python scripts/data/enrich_cves.py
 ```
 
 #### `recommend_cves.py`
 Generates prioritized CVE recommendations for healthcare environments.
 ```bash
-python scripts/recommend_cves.py --top-k 20
+python scripts/evaluation/recommend_cves.py --top-k 20
 ```
 
 #### `refresh_cves.py`
 Refreshes CVE data from NVD API (daily updates).
 ```bash
-python scripts/refresh_cves.py
+python scripts/data/refresh_cves.py
 ```
 
 ### Model Operations
@@ -41,7 +41,7 @@ python scripts/refresh_cves.py
 #### `train_ltr.py`
 Trains the Learning-to-Rank (LambdaMART) model.
 ```bash
-python scripts/train_ltr.py
+python scripts/training/train_ltr.py
 ```
 
 ### Evaluation & Analysis
@@ -49,19 +49,19 @@ python scripts/train_ltr.py
 #### `temporal_validation.py`
 Performs temporal validation to check for data leakage.
 ```bash
-python scripts/temporal_validation.py
+python scripts/training/temporal_validation.py
 ```
 
 #### `cross_validation.py`
 Runs k-fold cross-validation on the LTR model.
 ```bash
-python scripts/cross_validation.py
+python scripts/training/cross_validation.py
 ```
 
 #### `generate_report.py`
 Generates comprehensive evaluation reports.
 ```bash
-python scripts/generate_report.py
+python scripts/evaluation/generate_report.py
 ```
 
 ### Maintenance & Diagnostics
@@ -69,7 +69,7 @@ python scripts/generate_report.py
 #### `check_db_status.py`
 Checks database status and statistics.
 ```bash
-python scripts/check_db_status.py
+python scripts/ops/check_db_status.py
 ```
 
 ## Cache Management
@@ -96,7 +96,7 @@ Available cache sources: `nvd`, `epss`, `kev`, `attack`, `chpl`
 ### Refresh Cache
 ```bash
 # Re-fetch all enrichment data
-python scripts/enrich_cves.py
+python scripts/data/enrich_cves.py
 ```
 
 ## Common Workflows
@@ -104,37 +104,37 @@ python scripts/enrich_cves.py
 ### Initial Setup
 ```bash
 # 1. Backfill CVE data
-python scripts/backfill_cves.py --start-date 2018-01-01 --end-date 2025-01-20
+python scripts/data/backfill_cves.py --start-date 2018-01-01 --end-date 2025-01-20
 
 # 2. Enrich CVEs with threat intelligence
-python scripts/enrich_cves.py
+python scripts/data/enrich_cves.py
 
 # 3. Train LTR model
-python scripts/train_ltr.py
+python scripts/training/train_ltr.py
 ```
 
 ### Daily Updates
 ```bash
 # 1. Refresh latest CVEs
-python scripts/refresh_cves.py
+python scripts/data/refresh_cves.py
 
 # 2. Re-enrich (updates EPSS, KEV)
-python scripts/enrich_cves.py
+python scripts/data/enrich_cves.py
 
 # 3. Generate recommendations
-python scripts/recommend_cves.py --top-k 20
+python scripts/evaluation/recommend_cves.py --top-k 20
 ```
 
 ### Model Evaluation
 ```bash
 # Temporal validation
-python scripts/temporal_validation.py
+python scripts/training/temporal_validation.py
 
 # Cross-validation
-python scripts/cross_validation.py
+python scripts/training/cross_validation.py
 
 # Generate report
-python scripts/generate_report.py
+python scripts/evaluation/generate_report.py
 ```
 
 ### Troubleshooting
@@ -143,17 +143,17 @@ python scripts/generate_report.py
 ```bash
 # If cache is corrupted, clear and rebuild
 python -c "from src.utils.cache_manager import clear_cache; clear_cache('epss', confirm=True)"
-python scripts/enrich_cves.py
+python scripts/data/enrich_cves.py
 ```
 
 #### Database Issues
 ```bash
 # Check database status
-python scripts/check_db_status.py
+python scripts/ops/check_db_status.py
 
 # Rebuild database if needed
 rm data/cve_database.db
-python scripts/backfill_cves.py --start-date 2018-01-01 --end-date 2025-01-20
+python scripts/data/backfill_cves.py --start-date 2018-01-01 --end-date 2025-01-20
 ```
 
 ## Notes

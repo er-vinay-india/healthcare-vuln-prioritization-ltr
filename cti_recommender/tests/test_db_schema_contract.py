@@ -4,7 +4,7 @@ from __future__ import annotations
 import sqlite3
 from unittest.mock import patch
 
-import scripts.check_db_status as mod
+import scripts.ops.check_db_status as mod
 
 
 def _create_valid_schema(conn: sqlite3.Connection) -> None:
