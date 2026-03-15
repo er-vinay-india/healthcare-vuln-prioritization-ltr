@@ -247,8 +247,8 @@ make test         # Run all tests
 
 ### Documentation
 
-- **Quick Start:** [QUICKSTART_DOCKER.md](QUICKSTART_DOCKER.md) - 5 minute setup
-- **Full Guide:** [DOCKER_GUIDE.md](DOCKER_GUIDE.md) - Complete documentation
+- **Quick Start:** [QUICKSTART_DOCKER.md](docs/QUICKSTART_DOCKER.md) - 5 minute setup
+- **Full Guide:** [DOCKER_GUIDE.md](docs/DOCKER_GUIDE.md) - Complete documentation
 - **Verification:** Run `./verify-docker.sh` to check setup
 
 ### Alternative: Using Script
