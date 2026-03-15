@@ -16,7 +16,6 @@
 ## Technical & Research
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) - current system architecture and structure
-- [RESEARCH_CONTEXT.md](RESEARCH_CONTEXT.md) - research framing and background
 - [PROJECT_BRIEF.md](PROJECT_BRIEF.md) - concise project overview, data flow, and results
 
 ## Diagrams

@@ -492,7 +492,7 @@ Conclusion: Model generalizes well to future data
 - `outputs/feature_correlation_heatmap.png` - Feature redundancy analysis
 
 ### Research Documentation
-- `docs/RESEARCH_CONTEXT.md` - Literature review & gaps identified
+- `docs/archived/RESEARCH_CONTEXT.md` - Literature review and historical research framing
 - `docs/PROJECT_BRIEF.md` - Data flow, model comparison, interpretation
 - `docs/archived/PROJECT_REVIEW_2026.md` - Historical project status and roadmap snapshot
 
