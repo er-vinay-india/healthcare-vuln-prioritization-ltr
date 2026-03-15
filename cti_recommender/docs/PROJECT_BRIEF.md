@@ -1,4 +1,4 @@
-# CTI Healthcare Vulnerability Recommender - Examiner Presentation
+# CTI Healthcare Vulnerability Recommender - Project Brief
 
 **Author:** Vinay Kumar Sharma  
 **Date:** January 19, 2026  
@@ -493,7 +493,7 @@ Conclusion: Model generalizes well to future data
 
 ### Research Documentation
 - `docs/RESEARCH_CONTEXT.md` - Literature review & gaps identified
-- `docs/EXAMINER_PRESENTATION.md` - Data flow, model comparison, interpretation
+- `docs/PROJECT_BRIEF.md` - Data flow, model comparison, interpretation
 - `docs/archived/PROJECT_REVIEW_2026.md` - Historical project status and roadmap snapshot
 
 ---

@@ -17,11 +17,7 @@
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) - current system architecture and structure
 - [RESEARCH_CONTEXT.md](RESEARCH_CONTEXT.md) - research framing and background
-- [EXAMINER_PRESENTATION.md](EXAMINER_PRESENTATION.md) - evaluation-facing summary
-
-## Maintenance
-
-- [todo_categorization.md](todo_categorization.md) - actionable cleanup/work items
+- [PROJECT_BRIEF.md](PROJECT_BRIEF.md) - concise project overview, data flow, and results
 
 ## Diagrams
 

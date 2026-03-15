@@ -221,4 +221,4 @@ healthcare_cves = df[df['is_healthcare'] == 1]
 
 ---
 
-**Questions? See:** `docs/EXAMINER_PRESENTATION.md` Section "Outcome Interpretation"
+**Questions? See:** `docs/PROJECT_BRIEF.md` Section "Outcome Interpretation"

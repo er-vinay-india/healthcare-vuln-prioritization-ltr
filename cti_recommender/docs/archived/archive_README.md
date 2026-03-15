@@ -23,6 +23,7 @@ These documents were moved from active `docs/` in March 2026 as part of consolid
 - PROJECT_REVIEW_2026.md
 - QUICKSTART_DOCKER.md
 - REFACTOR_PLAN.md
+- todo_categorization.md
 - todo_audit.txt
 
 ## Archived subfolders
@@ -47,5 +48,4 @@ Use these files first:
 - ../ARCHITECTURE.md
 - ../SCORING_EXPLANATION.md
 - ../RESEARCH_CONTEXT.md
-- ../EXAMINER_PRESENTATION.md
-- ../todo_categorization.md
+- ../PROJECT_BRIEF.md
