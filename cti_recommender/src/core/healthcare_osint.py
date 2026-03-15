@@ -22,7 +22,12 @@ import requests
 
 from config.settings import settings
 
-logger = logging.getLogger("healthcare_osint")
+try:
+    from src.utils.logging_config import get_logger as _get_logger
+    logger = _get_logger("healthcare_osint")
+except Exception:
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("healthcare_osint")
 
 CACHE_DIR = settings.get_cache_dir() / "healthcare_osint"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -53,8 +58,11 @@ def _is_valid(path: Path, ttl_seconds: int) -> bool:
 
 def _save_cache(df: pd.DataFrame, key: str) -> None:
     path = _cache_path(key)
-    df.to_pickle(path, compression="gzip")
-    logger.info("Saved healthcare OSINT cache: %s", path)
+    try:
+        df.to_pickle(path, compression="gzip")
+        logger.info("Saved healthcare OSINT cache: %s", path)
+    except Exception:
+        logger.exception("Failed to save healthcare OSINT cache: %s", path)
 
 
 def _load_cache(key: str) -> Optional[pd.DataFrame]:

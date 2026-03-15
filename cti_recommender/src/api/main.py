@@ -96,7 +96,11 @@ def get_database() -> CVEDatabase:
     """Dependency: Get database connection"""
     global _db
     if _db is None:
-        _db = CVEDatabase(db_path=settings.get_database_path())
+        try:
+            _db = CVEDatabase(db_path=settings.get_database_path())
+        except Exception as e:
+            logger.exception(f"Failed to open database: {e}")
+            raise RuntimeError(f"Database unavailable: {e}") from e
     return _db
 
 
@@ -880,6 +884,10 @@ def prepare_features(df: pd.DataFrame, feature_names: Optional[List[str]] = None
 
     missing_prod = sorted(target - set(production_features.columns))
     missing_legacy = sorted(target - set(legacy_features.columns))
+    logger.exception(
+        "Unable to prepare model features. Missing from production: %s; missing from legacy: %s",
+        missing_prod, missing_legacy
+    )
     raise ValueError(
         "Unable to prepare expected model features. "
         f"Missing from production: {missing_prod}; missing from legacy: {missing_legacy}"
