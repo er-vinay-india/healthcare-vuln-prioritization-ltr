@@ -44,12 +44,6 @@ Trains the Learning-to-Rank (LambdaMART) model.
 python scripts/train_ltr.py
 ```
 
-#### `rescore_weights.py`
-Recalculates feature weights for the scoring function.
-```bash
-python scripts/rescore_weights.py
-```
-
 ### Evaluation & Analysis
 
 #### `temporal_validation.py`
@@ -70,39 +64,7 @@ Generates comprehensive evaluation reports.
 python scripts/generate_report.py
 ```
 
-### Maintenance & Testing
-
-#### `test_cache.py` (NEW)
-Tests cache functionality with dry-run simulations (no modifications).
-
-**Basic usage:**
-```bash
-python scripts/test_cache.py
-```
-
-**Advanced options:**
-```bash
-# Verbose mode with detailed info
-python scripts/test_cache.py --verbose
-
-# Include fallback mechanism test
-python scripts/test_cache.py --test-fallback
-
-# Custom cache freshness threshold
-python scripts/test_cache.py --max-age 14
-```
-
-**What it tests:**
-- [OK] Cache status (size, files, age)
-- [OK] Cache freshness validation
-- [OK] Fallback mechanism simulation
-- [OK] Cache operations (dry run)
-
-**Features:**
--  **Safe Mode**: No actual cache modifications
-- [STATS] **Detailed Reports**: Shows cache size, age, and freshness
-- [TEST] **Fallback Testing**: Validates cache miss/hit scenarios
-- [TIP] **Command Reference**: Shows actual commands for cache operations
+### Maintenance & Diagnostics
 
 #### `check_db_status.py`
 Checks database status and statistics.
@@ -115,18 +77,6 @@ python scripts/check_db_status.py
 ### View Cache Status
 ```bash
 python -m src.utils.cache_manager
-```
-
-### Test Cache (Dry Run)
-```bash
-# Run all tests (safe, no modifications)
-python scripts/test_cache.py
-
-# With fallback mechanism test
-python scripts/test_cache.py --test-fallback
-
-# Verbose output
-python scripts/test_cache.py --verbose
 ```
 
 ### Clear Cache (Requires Confirmation)
@@ -191,9 +141,6 @@ python scripts/generate_report.py
 
 #### Cache Issues
 ```bash
-# Check cache status
-python scripts/test_cache.py --verbose
-
 # If cache is corrupted, clear and rebuild
 python -c "from src.utils.cache_manager import clear_cache; clear_cache('epss', confirm=True)"
 python scripts/enrich_cves.py
