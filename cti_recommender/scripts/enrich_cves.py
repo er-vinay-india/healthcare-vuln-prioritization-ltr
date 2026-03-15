@@ -25,6 +25,7 @@ from src.core.multi_level_labels import compute_multi_level_labels
 from src.analysis.healthcare_mapping import HealthcareMapper
 from src.analysis.attack_mapper import AttackMapper
 from src.analysis.chpl_mapper import CHPLMapper
+from config.settings import settings
 
 try:
     from src.utils.logging_config import get_logger
@@ -44,7 +45,7 @@ def fetch_kev_catalog() -> set:
     """
     logger.info("Fetching CISA KEV catalog...")
     
-    url = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+    url = settings.KEV_CATALOG_URL
     
     try:
         response = requests.get(url, timeout=30)

@@ -29,6 +29,7 @@ from src.models.schemas import (
     EnrichmentResult
 )
 from src.core.cve_database import CVEDatabase
+from src.features.production_features import ProductionFeatureEngineer
 from src.utils.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -36,6 +37,7 @@ logger = get_logger(__name__)
 # Global state
 _model = None
 _scaler = None
+_model_feature_names = None
 _db = None
 _rate_limit_state = {}
 
@@ -100,7 +102,7 @@ def get_database() -> CVEDatabase:
 
 def load_model():
     """Load trained model and scaler"""
-    global _model, _scaler
+    global _model, _scaler, _model_feature_names
     
     if _model is None:
         model_path = settings.get_model_path(pruned=True)
@@ -116,6 +118,25 @@ def load_model():
                 warnings.filterwarnings("ignore", message=".*Unknown file format.*", category=UserWarning)
                 _model.load_model(str(model_path))
             logger.info(f"Loaded model from {model_path}")
+
+            # Prefer feature names from metadata (authoritative), then model payload.
+            _model_feature_names = _model.feature_names
+            metadata_candidates = [
+                settings.PROJECT_ROOT / "models/ltr_metadata_pruned.pkl",
+                settings.PROJECT_ROOT / "models/ltr_metadata.pkl",
+            ]
+            for meta_path in metadata_candidates:
+                if meta_path.exists():
+                    try:
+                        with open(meta_path, 'rb') as f:
+                            metadata = pickle.load(f)
+                        names = metadata.get('feature_names')
+                        if names:
+                            _model_feature_names = names
+                            logger.info(f"Loaded feature schema from {meta_path.name} ({len(names)} features)")
+                            break
+                    except Exception as meta_err:
+                        logger.warning(f"Metadata load warning ({meta_path.name}): {meta_err}")
             
             # Try to load scaler if exists
             scaler_path = settings.PROJECT_ROOT / settings.SCALER_PATH
@@ -240,8 +261,10 @@ async def get_recommendations(
             e.is_healthcare,
             e.is_curated,
             e.attack_technique_count,
+            e.chpl_flag,
             e.label,
             c.cvss,
+            c.cwe,
             CAST(c.published AS TEXT) as published_str,
             c.description
         FROM enrichments e
@@ -274,11 +297,12 @@ async def get_recommendations(
             raise HTTPException(status_code=404, detail="No CVEs found matching criteria")
         
         # Prepare features (same as training)
-        features_df = prepare_features(df)
+        features_df = prepare_features(df, feature_names=_model_feature_names)
         
         # Get predictions
         import xgboost as xgb
-        dmatrix = xgb.DMatrix(features_df)
+        feature_names = features_df.columns.tolist() if hasattr(features_df, 'columns') else None
+        dmatrix = xgb.DMatrix(features_df, feature_names=feature_names)
         scores = model.predict(dmatrix)
         
         # Sort by score and take top N
@@ -453,6 +477,9 @@ async def predict_scores(
             e.cve_id,
             c.cvss,
             datetime(c.published) as published,
+            CAST(c.published AS TEXT) as published_str,
+            c.cwe,
+            c.description,
             e.epss_score,
             e.epss_percentile,
             e.kev_flag,
@@ -468,31 +495,12 @@ async def predict_scores(
         
         if df.empty:
             raise HTTPException(status_code=404, detail="No CVEs found")
-        
-        # Create features using modular function
-        from src.features.engineering import create_all_features
-        
-        FEATURE_COLS = [
-            'cvss_norm', 'epss_score', 'epss_percentile', 'kev_flag',
-            'days_since_published', 'recency_score', 'attack_technique_count',
-            'has_attack', 'chpl_flag', 'is_healthcare',
-            'cvss_epss_product', 'kev_healthcare_interaction'
-        ]
-        
-        df = create_all_features(df, FEATURE_COLS)
-        
-        # Get predictions using LightGBM
-        import lightgbm as lgb
-        X = df[FEATURE_COLS].values
-        
-        # Load LightGBM model if not already loaded
-        model_path = Path("models/ltr_model_conf_weighted.pkl")
-        if model_path.exists():
-            with open(model_path, 'rb') as f:
-                lgb_model = pickle.load(f)
-            scores = lgb_model.predict(X)
-        else:
-            raise HTTPException(status_code=500, detail="Model not found")
+
+        features_df = prepare_features(df, feature_names=_model_feature_names)
+
+        import xgboost as xgb
+        dmatrix = xgb.DMatrix(features_df, feature_names=features_df.columns.tolist())
+        scores = model.predict(dmatrix)
         
         # Build response
         result = {
@@ -581,6 +589,8 @@ async def get_top_cves(
             e.cve_id,
             c.cvss,
             datetime(c.published) as published,
+            CAST(c.published AS TEXT) as published_str,
+            c.cwe,
             c.description,
             e.epss_score,
             e.epss_percentile,
@@ -621,26 +631,12 @@ async def get_top_cves(
         
         if df.empty:
             raise HTTPException(status_code=404, detail="No CVEs found matching criteria")
-        
-        # Create features and score
-        from src.features.engineering import create_all_features
-        
-        FEATURE_COLS = [
-            'cvss_norm', 'epss_score', 'epss_percentile', 'kev_flag',
-            'days_since_published', 'recency_score', 'attack_technique_count',
-            'has_attack', 'chpl_flag', 'is_healthcare',
-            'cvss_epss_product', 'kev_healthcare_interaction'
-        ]
-        
-        df = create_all_features(df, FEATURE_COLS)
-        
-        # Get predictions
-        model_path = Path("models/ltr_model_conf_weighted.pkl")
-        with open(model_path, 'rb') as f:
-            lgb_model = pickle.load(f)
-        
-        X = df[FEATURE_COLS].values
-        df['ltr_score'] = lgb_model.predict(X)
+
+        features_df = prepare_features(df, feature_names=_model_feature_names)
+
+        import xgboost as xgb
+        dmatrix = xgb.DMatrix(features_df, feature_names=features_df.columns.tolist())
+        df['ltr_score'] = model.predict(dmatrix)
         
         # Sort by score and take top K
         top_df = df.nlargest(limit, 'ltr_score')
@@ -710,6 +706,8 @@ async def explain_prediction(
             e.cve_id,
             c.cvss,
             datetime(c.published) as published,
+            CAST(c.published AS TEXT) as published_str,
+            c.cwe,
             c.description,
             e.epss_score,
             e.epss_percentile,
@@ -724,41 +722,29 @@ async def explain_prediction(
         """
         
         cve_id = request.cve_id
-        df = pd.read_sql_query(query, db.conn, params=[cve_id.upper()])
+        raw_df = pd.read_sql_query(query, db.conn, params=[cve_id.upper()])
         
-        if df.empty:
+        if raw_df.empty:
             raise HTTPException(status_code=404, detail=f"CVE not found: {cve_id}")
-        
-        # Create features
-        from src.features.engineering import create_all_features
-        
-        FEATURE_COLS = [
-            'cvss_norm', 'epss_score', 'epss_percentile', 'kev_flag',
-            'days_since_published', 'recency_score', 'attack_technique_count',
-            'has_attack', 'chpl_flag', 'is_healthcare',
-            'cvss_epss_product', 'kev_healthcare_interaction'
-        ]
-        
-        df = create_all_features(df, FEATURE_COLS)
-        
-        # Get model prediction
-        model_path = Path("models/ltr_model_conf_weighted.pkl")
-        with open(model_path, 'rb') as f:
-            model = pickle.load(f)
-        
-        X = df[FEATURE_COLS].values
-        score = model.predict(X)[0]
+
+        model, scaler = load_model()
+        features_df = prepare_features(raw_df, feature_names=_model_feature_names)
+
+        import xgboost as xgb
+        feature_cols = features_df.columns.tolist()
+        dmatrix = xgb.DMatrix(features_df, feature_names=feature_cols)
+        score = model.predict(dmatrix)[0]
         
         # Compute SHAP values (if shap available)
         try:
             import shap
             explainer = shap.TreeExplainer(model)
-            shap_values = explainer.shap_values(X)
+            shap_values = explainer.shap_values(features_df)
             
             # Build explanation
             feature_importance = {
                 feat: float(shap_val)
-                for feat, shap_val in zip(FEATURE_COLS, shap_values[0])
+                for feat, shap_val in zip(feature_cols, shap_values[0])
             }
             
             # Sort by absolute importance
@@ -777,20 +763,24 @@ async def explain_prediction(
                     for feat, val in sorted_features[:3]
                 ],
                 'feature_values': {
-                    feat: float(df[feat].values[0])
-                    for feat in FEATURE_COLS
+                    feat: float(features_df[feat].values[0])
+                    for feat in feature_cols
                 },
                 'cve_details': {
-                    'cvss': float(df['cvss'].values[0]) if pd.notna(df['cvss'].values[0]) else None,
-                    'kev_flag': bool(df['kev_flag'].values[0]),
-                    'is_healthcare': bool(df['is_healthcare'].values[0]),
-                    'label': int(df['label'].values[0]) if pd.notna(df['label'].values[0]) else None
+                    'cvss': float(raw_df['cvss'].values[0]) if pd.notna(raw_df['cvss'].values[0]) else None,
+                    'kev_flag': bool(raw_df['kev_flag'].values[0]),
+                    'is_healthcare': bool(raw_df['is_healthcare'].values[0]),
+                    'label': int(raw_df['label'].values[0]) if pd.notna(raw_df['label'].values[0]) else None
                 }
             }
             
         except ImportError:
-            # Fallback: Use feature importance from model
-            feature_importance = dict(zip(FEATURE_COLS, model.feature_importances_))
+            # Fallback: Use model gain importance when SHAP is not installed.
+            importance_map = model.get_score(importance_type='gain')
+            feature_importance = {
+                feat: float(importance_map.get(feat, 0.0))
+                for feat in feature_cols
+            }
             
             explanation = {
                 'cve_id': cve_id.upper(),
@@ -798,14 +788,14 @@ async def explain_prediction(
                 'feature_importance': feature_importance,
                 'note': 'SHAP not available, showing feature importance instead',
                 'feature_values': {
-                    feat: float(df[feat].values[0])
-                    for feat in FEATURE_COLS
+                    feat: float(features_df[feat].values[0])
+                    for feat in feature_cols
                 },
                 'cve_details': {
-                    'cvss': float(df['cvss'].values[0]) if pd.notna(df['cvss'].values[0]) else None,
-                    'kev_flag': bool(df['kev_flag'].values[0]),
-                    'is_healthcare': bool(df['is_healthcare'].values[0]),
-                    'label': int(df['label'].values[0]) if pd.notna(df['label'].values[0]) else None
+                    'cvss': float(raw_df['cvss'].values[0]) if pd.notna(raw_df['cvss'].values[0]) else None,
+                    'kev_flag': bool(raw_df['kev_flag'].values[0]),
+                    'is_healthcare': bool(raw_df['is_healthcare'].values[0]),
+                    'label': int(raw_df['label'].values[0]) if pd.notna(raw_df['label'].values[0]) else None
                 }
             }
         
@@ -819,7 +809,7 @@ async def explain_prediction(
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-def prepare_features(df: pd.DataFrame) -> pd.DataFrame:
+def prepare_features(df: pd.DataFrame, feature_names: Optional[List[str]] = None) -> pd.DataFrame:
     """
     Prepare features for model inference (matches training)
     
@@ -829,30 +819,71 @@ def prepare_features(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         Feature DataFrame with correct column names
     """
-    features = pd.DataFrame({
-        'kev_flag': df['kev_flag'],
-        'epss_score': df['epss_score'].fillna(0.0),
-        'is_healthcare': df['is_healthcare'],
-        'is_curated': df['is_curated'],
-        'attack_technique_count': df['attack_technique_count'].fillna(0).astype(int),
-        'cvss': df['cvss'].fillna(0.0),
+    def _col(name: str, default):
+        if name in df.columns:
+            return df[name]
+        return pd.Series(default, index=df.index)
+
+    # Current leakage-free production feature extraction.
+    prod_input = df.copy()
+    if 'published' not in prod_input.columns and 'published_str' in prod_input.columns:
+        prod_input['published'] = prod_input['published_str']
+    if 'published' not in prod_input.columns:
+        prod_input['published'] = pd.Series(pd.NaT, index=prod_input.index)
+    prod_input['published'] = pd.to_datetime(prod_input['published'], errors='coerce')
+
+    for required in ['cwe', 'description', 'cvss', 'is_healthcare', 'chpl_flag', 'attack_technique_count']:
+        if required not in prod_input.columns:
+            prod_input[required] = np.nan if required in ['cwe', 'description'] else 0
+
+    production_features = ProductionFeatureEngineer().extract_features(prod_input)
+
+    # Legacy feature extraction retained for backward compatibility with older xgboost artifacts.
+    legacy_features = pd.DataFrame({
+        'kev_flag': _col('kev_flag', 0),
+        'epss_score': _col('epss_score', 0.0).fillna(0.0),
+        'epss_percentile': _col('epss_percentile', 0.0).fillna(0.0),
+        'is_healthcare': _col('is_healthcare', 0),
+        'is_curated': _col('is_curated', 0),
+        'chpl_flag': _col('chpl_flag', 0).fillna(0).astype(int),
+        'attack_flag': _col('attack_flag', 0).fillna(0).astype(int),
+        'attack_technique_count': _col('attack_technique_count', 0).fillna(0).astype(int),
+        'cvss': _col('cvss', 0.0).fillna(0.0),
     })
-    
-    # Engineered features
-    features['cvss_critical'] = (features['cvss'] >= 9.0).astype(int)
-    features['epss_high'] = (features['epss_score'] >= 0.1).astype(int)
-    features['healthcare_critical'] = (features['is_healthcare'] & features['cvss_critical']).astype(int)
-    features['kev_healthcare'] = (features['kev_flag'] & features['is_healthcare']).astype(int)
-    features['attack_multi'] = (features['attack_technique_count'] > 1).astype(int)
-    features['attack_count_x_healthcare'] = features['attack_technique_count'] * features['is_healthcare']
-    
-    # Recency features
-    df['published'] = pd.to_datetime(df['published_str'], errors='coerce')
+    legacy_features['cvss_high'] = (legacy_features['cvss'] >= 7.0).astype(int)
+    legacy_features['cvss_critical'] = (legacy_features['cvss'] >= 9.0).astype(int)
+    legacy_features['epss_high'] = (legacy_features['epss_score'] >= 0.1).astype(int)
+    legacy_features['healthcare_critical'] = (legacy_features['is_healthcare'] & legacy_features['cvss_critical']).astype(int)
+    legacy_features['kev_healthcare'] = (legacy_features['kev_flag'] & legacy_features['is_healthcare']).astype(int)
+    legacy_features['chpl_healthcare'] = (legacy_features['chpl_flag'] & legacy_features['is_healthcare']).astype(int)
+    legacy_features['attack_healthcare'] = (legacy_features['attack_flag'] & legacy_features['is_healthcare']).astype(int)
+    legacy_features['attack_multi'] = (legacy_features['attack_technique_count'] > 1).astype(int)
+    legacy_features['healthcare_x_cvss'] = legacy_features['is_healthcare'] * legacy_features['cvss']
+    legacy_features['kev_x_epss'] = legacy_features['kev_flag'] * legacy_features['epss_score']
+    legacy_features['chpl_x_attack'] = legacy_features['chpl_flag'] * legacy_features['attack_flag']
+    legacy_features['attack_count_x_healthcare'] = legacy_features['attack_technique_count'] * legacy_features['is_healthcare']
+
+    published_series = _col('published_str', pd.NaT)
+    published = pd.to_datetime(published_series, errors='coerce')
     baseline_date = pd.to_datetime('2018-01-01')
-    features['days_since_2018'] = (df['published'] - baseline_date).dt.days.fillna(0).astype(int)
-    features['is_recent'] = (features['days_since_2018'] > 2500).astype(int)
-    
-    return features
+    legacy_features['days_since_2018'] = (published - baseline_date).dt.days.fillna(0).astype(int)
+    legacy_features['is_recent'] = (legacy_features['days_since_2018'] > 2500).astype(int)
+
+    if not feature_names:
+        return production_features[ProductionFeatureEngineer().get_feature_columns()].fillna(0)
+
+    target = set(feature_names)
+    if target.issubset(set(production_features.columns)):
+        return production_features[feature_names].fillna(0)
+    if target.issubset(set(legacy_features.columns)):
+        return legacy_features[feature_names].fillna(0)
+
+    missing_prod = sorted(target - set(production_features.columns))
+    missing_legacy = sorted(target - set(legacy_features.columns))
+    raise ValueError(
+        "Unable to prepare expected model features. "
+        f"Missing from production: {missing_prod}; missing from legacy: {missing_legacy}"
+    )
 
 
 if __name__ == "__main__":

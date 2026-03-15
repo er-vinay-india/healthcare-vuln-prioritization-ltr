@@ -11,6 +11,80 @@ import numpy as np
 import lightgbm as lgb
 
 
+def diagnose_feature_matrix(df: pd.DataFrame, feature_cols: List[str], *, label: str = "train") -> Dict[str, List[str]]:
+    """Print lightweight feature quality diagnostics before model training."""
+    missing_cols = [c for c in feature_cols if c not in df.columns]
+    if missing_cols:
+        raise KeyError(f"Missing feature columns in {label} data: {missing_cols}")
+
+    stats = df[feature_cols]
+    nunique = stats.nunique(dropna=False)
+    zero_variance = nunique[nunique <= 1].index.tolist()
+
+    # Use non-null denominator to avoid penalizing sparse columns with nulls.
+    non_zero_rate = {}
+    for col in feature_cols:
+        s = stats[col].fillna(0)
+        non_zero_rate[col] = float((s != 0).mean())
+    mostly_zero = [c for c in feature_cols if non_zero_rate[c] < 0.01]
+
+    print(f"\nFeature diagnostics ({label}):")
+    print(f"  Total configured features: {len(feature_cols)}")
+    print(f"  Zero-variance features: {len(zero_variance)}")
+    print(f"  Mostly-zero (<1% non-zero): {len(mostly_zero)}")
+    if zero_variance:
+        print(f"  [WARN] Zero-variance: {zero_variance[:10]}{' ...' if len(zero_variance) > 10 else ''}")
+    if mostly_zero:
+        print(f"  [INFO] Mostly-zero: {mostly_zero[:10]}{' ...' if len(mostly_zero) > 10 else ''}")
+
+    return {
+        'zero_variance': zero_variance,
+        'mostly_zero': mostly_zero,
+    }
+
+
+def _coerce_pair_to_numeric(
+    train_df: pd.DataFrame,
+    val_df: pd.DataFrame,
+    feature_cols: List[str],
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Coerce feature columns to numeric values consistently for LightGBM.
+
+    This prevents notebook-only preprocessing drift (e.g., string categories).
+    """
+    train_out = train_df.copy()
+    val_out = val_df.copy()
+
+    for col in feature_cols:
+        t = train_out[col]
+        v = val_out[col]
+
+        if pd.api.types.is_numeric_dtype(t):
+            train_out[col] = pd.to_numeric(t, errors='coerce')
+            val_out[col] = pd.to_numeric(v, errors='coerce')
+            continue
+
+        # Try numeric conversion first (handles numeric strings cleanly).
+        t_num = pd.to_numeric(t, errors='coerce')
+        v_num = pd.to_numeric(v, errors='coerce')
+        if t_num.notna().mean() > 0.95 and v_num.notna().mean() > 0.95:
+            train_out[col] = t_num
+            val_out[col] = v_num
+            continue
+
+        # Fallback: shared categorical encoding over train+val to keep mapping stable.
+        combined = pd.concat([t.astype(str), v.astype(str)], ignore_index=True).fillna('nan')
+        categories = pd.Index(combined.unique())
+        mapping = {cat: idx for idx, cat in enumerate(categories)}
+
+        train_out[col] = t.astype(str).map(mapping).astype(float)
+        val_out[col] = v.astype(str).map(mapping).astype(float)
+
+    train_out[feature_cols] = train_out[feature_cols].fillna(0.0)
+    val_out[feature_cols] = val_out[feature_cols].fillna(0.0)
+    return train_out, val_out
+
+
 def prepare_ranking_data(
     df: pd.DataFrame,
     feature_cols: List[str],
@@ -99,6 +173,12 @@ def train_lambdarank(
     
     if params:
         default_params.update(params)
+
+    # Ensure all feature columns are numeric in both splits.
+    train_df, val_df = _coerce_pair_to_numeric(train_df, val_df, feature_cols)
+
+    diagnose_feature_matrix(train_df, feature_cols, label='train')
+    diagnose_feature_matrix(val_df, feature_cols, label='validation')
     
     # Prepare training data
     print("\nPreparing training data...")
@@ -201,12 +281,14 @@ def get_default_ltr_params() -> Dict:
         'metric': 'ndcg',
         'ndcg_eval_at': [5, 10, 20],
         'boosting_type': 'gbdt',
-        'num_leaves': 31,
+        # Slightly higher capacity + lower split threshold helps sparse but useful signals compete.
+        'num_leaves': 63,
         'learning_rate': 0.05,
-        'feature_fraction': 0.9,
+        'feature_fraction': 1.0,
         'bagging_fraction': 0.8,
         'bagging_freq': 5,
         'verbose': -1,
         'max_depth': 6,
-        'min_data_in_leaf': 50,
+        'min_data_in_leaf': 10,
+        'min_gain_to_split': 0.0,
     }

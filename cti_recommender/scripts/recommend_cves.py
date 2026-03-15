@@ -14,6 +14,7 @@ import pickle
 from datetime import datetime, timedelta
 
 from src.core.cve_database import CVEDatabase
+from src.features.production_features import ProductionFeatureEngineer
 
 try:
     from src.utils.logging_config import get_logger
@@ -28,44 +29,66 @@ class HealthcareCVERecommender:
     
     def __init__(self, model_path=None, metadata_path=None):
         """Initialize recommender with trained model."""
+        model_dir = Path(__file__).parent.parent / 'models'
         if model_path is None:
-            model_dir = Path(__file__).parent.parent / 'models'
-            model_path = model_dir / 'ltr_ranker.model'
-            metadata_path = model_dir / 'ltr_metadata.pkl'
+            # Prefer pruned model if present, then fallback to legacy artifact.
+            pruned_model = model_dir / 'ltr_ranker_pruned.model'
+            legacy_model = model_dir / 'ltr_ranker.model'
+            model_path = pruned_model if pruned_model.exists() else legacy_model
+
+        if metadata_path is None:
+            pruned_meta = model_dir / 'ltr_metadata_pruned.pkl'
+            legacy_meta = model_dir / 'ltr_metadata.pkl'
+            if pruned_meta.exists():
+                metadata_path = pruned_meta
+            elif legacy_meta.exists():
+                metadata_path = legacy_meta
         
         # Load model
         self.model = xgb.Booster()
         self.model.load_model(str(model_path))
         
         # Load metadata
-        with open(metadata_path, 'rb') as f:
-            self.metadata = pickle.load(f)
-        
-        self.feature_names = self.metadata['feature_names']
+        self.metadata = {}
+        if metadata_path is not None and Path(metadata_path).exists():
+            with open(metadata_path, 'rb') as f:
+                self.metadata = pickle.load(f)
+
+        model_feature_names = self.model.feature_names or []
+        self.feature_names = self.metadata.get('feature_names') or model_feature_names
         self.scaler = self.metadata.get('scaler', None)
-        
-        logger.info(f"Loaded model trained on {self.metadata['training_date'][:10]}")
-        logger.info(f"Model performance: NDCG@10 = {self.metadata['metrics']['ndcg_10']:.4f}", 
-                   extra={'ndcg_10': self.metadata['metrics']['ndcg_10']})
+        self.production_engineer = ProductionFeatureEngineer()
+
+        if self.metadata.get('training_date'):
+            logger.info(f"Loaded model trained on {self.metadata['training_date'][:10]}")
+        if self.metadata.get('metrics', {}).get('ndcg_10') is not None:
+            logger.info(
+                f"Model performance: NDCG@10 = {self.metadata['metrics']['ndcg_10']:.4f}",
+                extra={'ndcg_10': self.metadata['metrics']['ndcg_10']}
+            )
         if self.scaler is not None:
             logger.info("Feature scaler loaded for inference")
-        else:
-            logger.warning("[WARN]  Warning: No scaler found in metadata (old model?)")
-    
-    def prepare_features(self, df):
-        """Extract features from CVE dataframe (same as training)."""
+        logger.info(f"Loaded model artifact: {Path(model_path).name}")
+
+    def _prepare_legacy_features(self, df):
+        """Build legacy feature set for backward compatibility with old artifacts."""
+        def _col(name, default):
+            if name in df.columns:
+                return df[name]
+            return pd.Series(default, index=df.index)
+
         features = pd.DataFrame({
-            'kev_flag': df['kev_flag'],
-            'epss_score': df['epss_score'].fillna(0.0),
-            'epss_percentile': df['epss_percentile'].fillna(0.0),
-            'is_healthcare': df['is_healthcare'],
-            'is_curated': df['is_curated'],
-            'chpl_flag': df['chpl_flag'].fillna(0).astype(int),
-            'attack_flag': df['attack_flag'].fillna(0).astype(int),
-            'attack_technique_count': df['attack_technique_count'].fillna(0).astype(int),
-            'cvss': df['cvss'].fillna(0.0),
+            'kev_flag': _col('kev_flag', 0),
+            'epss_score': _col('epss_score', 0.0).fillna(0.0),
+            'epss_percentile': _col('epss_percentile', 0.0).fillna(0.0),
+            'is_healthcare': _col('is_healthcare', 0),
+            'is_curated': _col('is_curated', 0),
+            'chpl_flag': _col('chpl_flag', 0).fillna(0).astype(int),
+            'attack_flag': _col('attack_flag', 0).fillna(0).astype(int),
+            'attack_technique_count': _col('attack_technique_count', 0).fillna(0).astype(int),
+            'cvss': _col('cvss', 0.0).fillna(0.0),
         })
-        
+
         # Engineered features
         features['cvss_high'] = (features['cvss'] >= 7.0).astype(int)
         features['cvss_critical'] = (features['cvss'] >= 9.0).astype(int)
@@ -79,24 +102,63 @@ class HealthcareCVERecommender:
         features['kev_x_epss'] = features['kev_flag'] * features['epss_score']
         features['chpl_x_attack'] = features['chpl_flag'] * features['attack_flag']
         features['attack_count_x_healthcare'] = features['attack_technique_count'] * features['is_healthcare']
-        
+
         # Recency
-        if 'published_str' in df.columns:
-            df['published'] = pd.to_datetime(df['published_str'], errors='coerce')
-            baseline_date = pd.to_datetime('2018-01-01')
-            features['days_since_2018'] = (df['published'] - baseline_date).dt.days.fillna(0).astype(int)
-            features['is_recent'] = (features['days_since_2018'] > 2500).astype(int)
-        else:
-            features['days_since_2018'] = 0
-            features['is_recent'] = 0
-        
-        # Apply same scaling as training
+        published_series = df['published_str'] if 'published_str' in df.columns else _col('published', pd.NaT)
+        published = pd.to_datetime(published_series, errors='coerce')
+        baseline_date = pd.to_datetime('2018-01-01')
+        features['days_since_2018'] = (published - baseline_date).dt.days.fillna(0).astype(int)
+        features['is_recent'] = (features['days_since_2018'] > 2500).astype(int)
+
         if self.scaler is not None:
-            continuous_cols = ['cvss', 'epss_score', 'epss_percentile', 'attack_technique_count',
-                             'healthcare_x_cvss', 'kev_x_epss', 'attack_count_x_healthcare', 'days_since_2018']
-            features[continuous_cols] = self.scaler.transform(features[continuous_cols])
-        
-        return features[self.feature_names]
+            continuous_cols = [
+                'cvss', 'epss_score', 'epss_percentile', 'attack_technique_count',
+                'healthcare_x_cvss', 'kev_x_epss', 'attack_count_x_healthcare', 'days_since_2018'
+            ]
+            scaled_cols = [c for c in continuous_cols if c in features.columns]
+            if scaled_cols:
+                features[scaled_cols] = self.scaler.transform(features[scaled_cols])
+
+        return features
+
+    def _prepare_production_features(self, df):
+        """Build current production features from leakage-free feature engineer."""
+        prepared = df.copy()
+        if 'published' not in prepared.columns and 'published_str' in prepared.columns:
+            prepared['published'] = prepared['published_str']
+        if 'published' not in prepared.columns:
+            prepared['published'] = pd.Series(pd.NaT, index=prepared.index)
+        prepared['published'] = pd.to_datetime(prepared['published'], errors='coerce')
+
+        for col in ['cwe', 'description', 'cvss', 'is_healthcare', 'chpl_flag', 'attack_technique_count']:
+            if col not in prepared.columns:
+                prepared[col] = np.nan if col in ['cwe', 'description'] else 0
+
+        engineered = self.production_engineer.extract_features(prepared)
+        return engineered
+    
+    def prepare_features(self, df):
+        """Extract features from CVE dataframe using model-driven schema selection."""
+        production_features = self._prepare_production_features(df)
+        legacy_features = self._prepare_legacy_features(df)
+
+        if not self.feature_names:
+            # Safe default when model metadata is unavailable.
+            self.feature_names = self.production_engineer.get_feature_columns()
+
+        target_features = set(self.feature_names)
+        if target_features.issubset(set(production_features.columns)):
+            return production_features[self.feature_names].fillna(0)
+        if target_features.issubset(set(legacy_features.columns)):
+            return legacy_features[self.feature_names].fillna(0)
+
+        missing_from_prod = sorted(target_features - set(production_features.columns))
+        missing_from_legacy = sorted(target_features - set(legacy_features.columns))
+        raise ValueError(
+            "Unable to prepare model features. "
+            f"Missing from production features: {missing_from_prod}. "
+            f"Missing from legacy features: {missing_from_legacy}."
+        )
     
     def recommend(self, df, top_k=50):
         """Recommend top-K CVEs from dataframe."""
@@ -136,6 +198,7 @@ class HealthcareCVERecommender:
             e.attack_technique_count,
             e.label,
             c.cvss,
+            c.cwe,
             CAST(c.published AS TEXT) as published_str,
             c.description
         FROM enrichments e

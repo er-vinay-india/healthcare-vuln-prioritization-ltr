@@ -175,7 +175,7 @@ class ResilientAPIClient:
         
         # Set default headers
         self.session.headers.update({
-            'User-Agent': 'CTI-Healthcare-Recommender/1.0',
+            'User-Agent': settings.HTTP_USER_AGENT,
             'Accept': 'application/json'
         })
         

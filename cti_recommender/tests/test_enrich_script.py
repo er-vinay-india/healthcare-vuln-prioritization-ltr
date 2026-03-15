@@ -20,7 +20,7 @@ class TestEnrichmentScriptFlags:
     def test_help_shows_skip_epss_flag(self):
         """Verify --skip-epss flag appears in help output"""
         result = subprocess.run(
-            ['python', 'scripts/enrich_cves.py', '--help'],
+            [sys.executable, 'scripts/enrich_cves.py', '--help'],
             cwd=project_root,
             capture_output=True,
             text=True
@@ -31,7 +31,7 @@ class TestEnrichmentScriptFlags:
     def test_help_shows_skip_attack_flag(self):
         """Verify --skip-attack flag is available"""
         result = subprocess.run(
-            ['python', 'scripts/enrich_cves.py', '--help'],
+            [sys.executable, 'scripts/enrich_cves.py', '--help'],
             cwd=project_root,
             capture_output=True,
             text=True
@@ -41,7 +41,7 @@ class TestEnrichmentScriptFlags:
     def test_help_shows_skip_chpl_flag(self):
         """Verify --skip-chpl flag is available"""
         result = subprocess.run(
-            ['python', 'scripts/enrich_cves.py', '--help'],
+            [sys.executable, 'scripts/enrich_cves.py', '--help'],
             cwd=project_root,
             capture_output=True,
             text=True

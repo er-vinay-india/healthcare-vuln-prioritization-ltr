@@ -9,7 +9,7 @@ pickles to remain compatible with the existing workspace cache files.
 from __future__ import annotations
 
 import logging
-import os
+import re
 import time
 from pathlib import Path
 from typing import Optional, List, Dict
@@ -18,9 +18,13 @@ import pandas as pd
 import requests
 from dateutil.parser import parse as parse_date
 from datetime import datetime, timezone
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+from config.settings import settings
 
 # Import EPSS fetcher for exploit prediction scores
 try:
@@ -29,13 +33,25 @@ try:
 except ImportError:
     HAS_EPSS = False
 
+try:
+    from .healthcare_osint import (
+        get_cisa_ics_cached,
+        get_openfda_enforcement_cached,
+        get_openfda_events_cached,
+    )
+    HAS_HEALTHCARE_OSINT = True
+except ImportError:
+    HAS_HEALTHCARE_OSINT = False
+
 # Basic logger for the module
 logger = logging.getLogger("cti_recommender")
 logging.basicConfig(level=logging.INFO)
 
 # Defaults (can be overridden by passing args to functions)
-NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
-CISA_KEV_URL = "https://www.cisa.gov/sites/default/files/csv/known_exploited_vulnerabilities.csv"
+NVD_API_URL = settings.NVD_API_BASE
+CISA_KEV_URL = settings.KEV_CATALOG_CSV_URL
+ATTACK_ENTERPRISE_URL = settings.MITRE_ATTACK_ENTERPRISE_URL
+CHPL_API_BASE_URL = settings.CHPL_API_BASE
 CACHE_DIR = Path("cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -46,7 +62,7 @@ def _requests_session(retries: int = 3, backoff_factor: float = 0.3, status_forc
     adapter = HTTPAdapter(max_retries=retry)
     s.mount("https://", adapter)
     s.mount("http://", adapter)
-    s.headers.update({"User-Agent": "cti-recommender/1.0 (+https://example.com)"})
+    s.headers.update({"User-Agent": settings.HTTP_USER_AGENT})
     return s
 
 
@@ -85,16 +101,16 @@ def fetch_nvd_recent_cves(days_back: int = 7, api_url: str = NVD_API_URL, api_ke
     Args:
         days_back: Number of days to look back
         api_url: NVD API URL
-        api_key: NVD API key (optional, reads from NVD_API_KEY env var if not provided)
+        api_key: NVD API key (optional, uses centralized settings if not provided)
         session: Requests session
     """
     logger.info("Fetching NVD CVEs for last %sd", days_back)
     if session is None:
         session = _requests_session()
     
-    # Get API key from environment if not provided
+    # Get API key from centralized settings if not provided
     if api_key is None:
-        api_key = os.environ.get("NVD_API_KEY")
+        api_key = settings.NVD_API_KEY
     
     # Add API key header if available (increases rate limit from 5 to 50 requests/30s)
     if api_key:
@@ -138,7 +154,7 @@ def fetch_nvd_date_range(start_date: str, end_date: str, api_url: str = NVD_API_
         start_date: Start date in ISO format (YYYY-MM-DD or ISO 8601)
         end_date: End date in ISO format (YYYY-MM-DD or ISO 8601)
         api_url: NVD API URL
-        api_key: NVD API key (optional, reads from NVD_API_KEY env var)
+        api_key: NVD API key (optional, uses centralized settings if not provided)
         session: Requests session
     
     Returns:
@@ -148,9 +164,9 @@ def fetch_nvd_date_range(start_date: str, end_date: str, api_url: str = NVD_API_
     if session is None:
         session = _requests_session()
     
-    # Get API key from environment if not provided
+    # Get API key from centralized settings if not provided
     if api_key is None:
-        api_key = os.environ.get("NVD_API_KEY")
+        api_key = settings.NVD_API_KEY
     
     # Add API key header if available
     if api_key:
@@ -308,7 +324,7 @@ def get_kev_cached(ttl_days: int = 1) -> pd.DataFrame:
 
 # --- CHPL fetcher + cache helpers ---
 
-def fetch_chpl_products(api_base: str = "https://chpl.healthit.gov/rest", api_key: Optional[str] = None, session: Optional[requests.Session] = None, page_size: int = 100, max_pages: Optional[int] = None) -> pd.DataFrame:
+def fetch_chpl_products(api_base: Optional[str] = None, api_key: Optional[str] = None, session: Optional[requests.Session] = None, page_size: int = 100, max_pages: Optional[int] = None) -> pd.DataFrame:
     """Fetch product list from CHPL using the documented /search/v3 endpoint.
 
     This implementation follows the CHPL OpenAPI docs: it calls GET /search/v3 with
@@ -319,12 +335,14 @@ def fetch_chpl_products(api_base: str = "https://chpl.healthit.gov/rest", api_ke
 
     Returns a DataFrame with columns 'product', 'developer' and raw data in 'raw'.
     """
+    if not api_base:
+        api_base = CHPL_API_BASE_URL
+
     logger.info("Fetching CHPL products from %s (using /search/v3)", api_base)
     if session is None:
         session = _requests_session()
     if api_key is None:
-        import os
-        api_key = os.environ.get("CHPL_API_KEY")
+        api_key = settings.CHPL_API_KEY
 
     # Respect CHPL doc: max page size is 100
     if page_size is None or page_size <= 0:
@@ -552,13 +570,16 @@ def get_chpl_cached(ttl_days: int = 7) -> pd.DataFrame:
 
 # --- MITRE ATT&CK fetcher + cache helpers ---
 
-def fetch_attack_techniques(url: str = "https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json", session: Optional[requests.Session] = None) -> pd.DataFrame:
+def fetch_attack_techniques(url: Optional[str] = None, session: Optional[requests.Session] = None) -> pd.DataFrame:
     """Fetch MITRE ATT&CK Enterprise techniques (attack-pattern objects) from the public CTI repo.
 
     This fetcher retrieves the enterprise-attack JSON and extracts objects of
     type `attack-pattern`, returning a DataFrame with `id`, `name`, `description`,
     `aliases`, and `raw` columns for downstream mapping heuristics.
     """
+    if not url:
+        url = ATTACK_ENTERPRISE_URL
+
     logger.info("Fetching MITRE ATT&CK enterprise techniques from %s", url)
     if session is None:
         session = _requests_session()
@@ -628,38 +649,84 @@ def build_simple_score(df: pd.DataFrame, w_recency: float = 0.4, w_kev: float = 
 # --- Healthcare-focused features and baseline scorer ---
 
 def load_healthcare_patterns(path: Optional[Path] = None) -> List[str]:
-    """Return a list of lowercase substring patterns to identify healthcare-relevant items.
+    """Return lowercase patterns to identify healthcare-relevant CVEs.
 
-    If a CSV is provided, it should contain a column named 'pattern'. Otherwise, a small
-    default set of common healthcare vendor/product tokens is returned.
+    Load order:
+    1) CSV mapping (explicit `path` or configured `settings.HEALTHCARE_MAPPING_PATH`)
+    2) Structured healthcare vocab from `src.analysis.healthcare_mapping`
+    3) Small hardcoded fallback list (only if prior sources unavailable)
     """
-    defaults = [
-        "epic",
-        "cerner",
-        "medtronic",
-        "philips",
-        "siemens",
-        "athenahealth",
-        "meditech",
-        "allscripts",
-        "pacs",
-        "ehr",
-        "dell_emc",
-    ]
-    if path is None:
-        return defaults
-    try:
-        df = pd.read_csv(path)
-        if 'pattern' in df.columns:
-            return [str(x).lower().strip() for x in df['pattern'].dropna().unique().tolist()]
+    patterns: List[str] = []
+
+    # Try CSV mapping first (explicit path, then configured path).
+    csv_candidates: List[Path] = []
+    if path is not None:
+        csv_candidates.append(Path(path))
+    else:
+        configured = settings.HEALTHCARE_MAPPING_PATH
+        if configured.is_absolute():
+            csv_candidates.append(configured)
         else:
-            return defaults
+            csv_candidates.append(settings.PROJECT_ROOT / configured)
+            csv_candidates.append(Path(configured))
+
+    for csv_path in csv_candidates:
+        try:
+            if not csv_path.exists():
+                continue
+            df = pd.read_csv(csv_path)
+            if 'pattern' not in df.columns:
+                logger.warning("Healthcare mapping file missing 'pattern' column: %s", csv_path)
+                continue
+
+            if 'active' in df.columns:
+                active_mask = df['active'].astype(str).str.lower().isin(['true', '1', 'yes', 'y'])
+                df = df[active_mask]
+
+            csv_patterns = [str(x).lower().strip() for x in df['pattern'].dropna().tolist() if str(x).strip()]
+            patterns.extend(csv_patterns)
+            logger.info("Loaded %d healthcare patterns from %s", len(csv_patterns), csv_path)
+            break
+        except Exception:
+            logger.exception('Failed to load healthcare patterns from %s', csv_path)
+
+    # Merge structured vocabulary from healthcare mapping module.
+    try:
+        from src.analysis.healthcare_mapping import (
+            HEALTHCARE_VENDORS,
+            HEALTHCARE_PRODUCTS,
+            HEALTHCARE_KEYWORDS,
+        )
+
+        for vendor_terms in HEALTHCARE_VENDORS.values():
+            patterns.extend([str(v).lower().strip() for v in vendor_terms if str(v).strip()])
+
+        for product_terms in HEALTHCARE_PRODUCTS.values():
+            patterns.extend([str(p).lower().strip() for p in product_terms if str(p).strip()])
+
+        patterns.extend([str(k).lower().strip() for k in HEALTHCARE_KEYWORDS if str(k).strip()])
     except Exception:
-        logger.exception('Failed to load healthcare patterns from %s; using defaults', path)
-        return defaults
+        logger.exception("Failed to load structured healthcare vocab; continuing with available patterns")
+
+    # Last-resort fallback to ensure non-empty behavior.
+    if not patterns:
+        patterns = [str(p).lower().strip() for p in settings.HEALTHCARE_PATTERN_FALLBACK if str(p).strip()]
+
+    # Deduplicate while preserving order.
+    deduped = list(dict.fromkeys(patterns))
+    logger.info("Using %d healthcare patterns for matching", len(deduped))
+    return deduped
 
 
-def build_healthcare_features(df: pd.DataFrame, kev_df: Optional[pd.DataFrame] = None, patterns: Optional[List[str]] = None, chpl_df: Optional[pd.DataFrame] = None, attack_df: Optional[pd.DataFrame] = None, add_epss: bool = True) -> pd.DataFrame:
+def build_healthcare_features(
+    df: pd.DataFrame,
+    kev_df: Optional[pd.DataFrame] = None,
+    patterns: Optional[List[str]] = None,
+    chpl_df: Optional[pd.DataFrame] = None,
+    attack_df: Optional[pd.DataFrame] = None,
+    add_epss: bool = True,
+    include_osint: bool = True,
+) -> pd.DataFrame:
     """Add features useful for healthcare-focused scoring.
 
     Features added:
@@ -668,6 +735,7 @@ def build_healthcare_features(df: pd.DataFrame, kev_df: Optional[pd.DataFrame] =
     - kev_flag (0/1)
     - epss_score (0..1) - exploit prediction if add_epss=True
     - is_healthcare (0/1) based on substring matching against descriptions or patterns
+    - healthcare_osint_flag (0/1) based on openFDA/CISA-derived healthcare terms
     - chpl_flag (0/1) exact-match signal derived from CHPL product/developer names
     - attack_flag (0/1) based on ATT&CK technique name/alias presence in description
     """
@@ -722,20 +790,125 @@ def build_healthcare_features(df: pd.DataFrame, kev_df: Optional[pd.DataFrame] =
         patterns = load_healthcare_patterns()
     patterns = [p.lower() for p in patterns if p]
 
+    compiled_patterns = []
+    for p in patterns:
+        # Use boundary-aware matching for textual patterns to avoid false hits
+        # like "his" matching "this" or "lis" matching "list".
+        if re.fullmatch(r"[a-z0-9_\-\s]+", p):
+            patt = re.escape(p).replace(r"\ ", r"\s+")
+            compiled_patterns.append(re.compile(rf"\b{patt}\b", flags=re.IGNORECASE))
+        else:
+            compiled_patterns.append(None)
+
     def _is_healthcare(desc: Optional[str]) -> int:
         if not isinstance(desc, str):
             return 0
         text = desc.lower()
-        for p in patterns:
-            if p in text:
+        for i, p in enumerate(patterns):
+            cp = compiled_patterns[i]
+            if cp is not None:
+                if cp.search(text):
+                    return 1
+            elif p in text:
                 return 1
         return 0
 
+    osint_terms: List[str] = []
+    if include_osint and HAS_HEALTHCARE_OSINT:
+        try:
+            # Fetch from cache-first adapters. These are best-effort by design.
+            _ = get_cisa_ics_cached()
+            openfda_enf = get_openfda_enforcement_cached()
+            openfda_evt = get_openfda_events_cached()
+
+            stop_words = {str(w).lower() for w in settings.HEALTHCARE_OSINT_STOP_WORDS if str(w).strip()}
+
+            def _expand_osint_terms(text_value: str) -> List[str]:
+                text_value = str(text_value).strip().lower()
+                if not text_value:
+                    return []
+                terms = []
+                # Keep full phrase only when short enough to be usable as a match key.
+                if len(text_value) <= 80:
+                    terms.append(text_value)
+                tokens = re.findall(r"[a-z][a-z0-9_-]{3,}", text_value)
+                tokens = [t for t in tokens if t not in stop_words]
+
+                # Add short phrases for higher precision than single-token matching.
+                for i in range(len(tokens) - 1):
+                    phrase = f"{tokens[i]} {tokens[i + 1]}"
+                    if len(phrase) >= 8:
+                        terms.append(phrase)
+                return terms
+
+            for col in ("recalling_firm", "product_description"):
+                if col in openfda_enf.columns:
+                    for v in openfda_enf[col].dropna().astype(str).head(500):
+                        osint_terms.extend(_expand_osint_terms(v))
+
+            if "device" in openfda_evt.columns:
+                for device_blob in openfda_evt["device"].dropna().astype(str).head(500):
+                    # Event payloads are serialized dict/list strings in this dataset.
+                    for m in re.findall(r"'(?:brand_name|generic_name|device_name)'\s*:\s*'([^']+)'", device_blob):
+                        osint_terms.extend(_expand_osint_terms(m))
+
+            # Deduplicate and avoid extremely long fragments that cause noisy matching.
+            osint_terms = sorted({t for t in osint_terms if 5 <= len(t) <= 80})[: settings.HEALTHCARE_OSINT_MAX_TERMS]
+            logger.info("Using %d healthcare OSINT terms for matching", len(osint_terms))
+        except Exception:
+            logger.exception("Failed to load healthcare OSINT terms; continuing without OSINT signal")
+            osint_terms = []
+
+    def _osint_healthcare(desc: Optional[str]) -> int:
+        if not isinstance(desc, str) or not osint_terms:
+            return 0
+        text = desc.lower()
+        for t in osint_terms:
+            if t in text:
+                return 1
+        return 0
+
+    def _has_health_anchor(desc: Optional[str]) -> int:
+        if not isinstance(desc, str):
+            return 0
+        text = desc.lower()
+        anchors = [str(a).lower() for a in settings.HEALTHCARE_OSINT_ANCHOR_TERMS if str(a).strip()]
+        return int(any(a in text for a in anchors))
+
     # Try multiple description fields if present
     if 'description_en' in df.columns:
-        df['is_healthcare'] = df['description_en'].apply(_is_healthcare).astype(int)
+        desc_series = df['description_en']
     else:
-        df['is_healthcare'] = df.get('description', '').fillna('').astype(str).apply(_is_healthcare).astype(int)
+        desc_series = df.get('description', '').fillna('').astype(str)
+
+    df['healthcare_pattern_flag'] = desc_series.apply(_is_healthcare).astype(int)
+
+    # NLP-based fuzzy matching against OSINT terms (char n-grams are robust to punctuation/casing noise).
+    if include_osint and osint_terms:
+        try:
+            desc_text = desc_series.fillna('').astype(str).str.lower()
+            vectorizer = TfidfVectorizer(analyzer='char_wb', ngram_range=(3, 5), min_df=1)
+            osint_matrix = vectorizer.fit_transform(osint_terms)
+            desc_matrix = vectorizer.transform(desc_text)
+            sim = cosine_similarity(desc_matrix, osint_matrix)
+            max_sim = sim.max(axis=1)
+            df['healthcare_osint_similarity'] = max_sim
+            anchor_flag = desc_series.apply(_has_health_anchor).astype(int)
+            substring_flag = desc_series.apply(_osint_healthcare).astype(int)
+            fuzzy_flag = (
+                df['healthcare_osint_similarity'] >= settings.HEALTHCARE_OSINT_SIMILARITY_THRESHOLD
+            ).astype(int)
+            # Require healthcare anchors for fuzzy matches to reduce false positives.
+            df['healthcare_osint_flag'] = (((substring_flag == 1) | (fuzzy_flag == 1)) & (anchor_flag == 1)).astype(int)
+        except Exception:
+            logger.exception("NLP OSINT matching failed; falling back to substring matching")
+            df['healthcare_osint_flag'] = desc_series.apply(_osint_healthcare).astype(int)
+            df['healthcare_osint_similarity'] = 0.0
+    else:
+        df['healthcare_osint_flag'] = 0
+        df['healthcare_osint_similarity'] = 0.0
+
+    df['is_healthcare'] = ((df['healthcare_pattern_flag'] == 1) | (df['healthcare_osint_flag'] == 1)).astype(int)
 
     # ATT&CK mapping: simple heuristic using technique names, aliases, and CAPEC IDs
     if attack_df is not None and not attack_df.empty:

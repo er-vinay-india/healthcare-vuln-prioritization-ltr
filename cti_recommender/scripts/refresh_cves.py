@@ -4,7 +4,6 @@ Weekly CVE Database Refresh
 Fetches new CVEs since last successful fetch
 """
 
-import os
 import sys
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
@@ -18,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.core.cve_database import CVEDatabase
 from src.core import cti_recommender
+from config.settings import settings
 
 try:
     from src.utils.logging_config import get_logger
@@ -35,13 +35,13 @@ def refresh_cves(api_key: str = None, days_back: int = None):
     Refresh CVE database with new entries
     
     Args:
-        api_key: NVD API key (optional, reads from NVD_API_KEY env var)
+        api_key: NVD API key (optional, uses centralized settings if not provided)
         days_back: Override automatic date detection (for testing)
     """
     
-    # Get API key from environment if not provided
+    # Get API key from centralized settings if not provided
     if api_key is None:
-        api_key = os.environ.get("NVD_API_KEY")
+        api_key = settings.NVD_API_KEY
     
     logger.info("="*70)
     logger.info("CVE DATABASE REFRESH")
@@ -135,7 +135,7 @@ if __name__ == "__main__":
 """)
     
     # Check for API key
-    api_key = os.environ.get("NVD_API_KEY")
+    api_key = settings.NVD_API_KEY
     if api_key:
         logger.info(f"[OK] NVD API Key: {'*' * 20}{api_key[-4:]}")
     else:

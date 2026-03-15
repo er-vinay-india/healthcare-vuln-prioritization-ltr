@@ -47,6 +47,9 @@ cache/**/*.pkl.gz
 cache/**/*.json
 cache/**/*.parquet
 
+# Archive (historical files)
+archive/
+
 # Outputs (optional - keep latest results)
 outputs/merged.csv.gz
 

@@ -40,7 +40,43 @@ class Settings(BaseSettings):
     
     # CISA KEV Catalog
     KEV_CATALOG_URL: str = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+    KEV_CATALOG_CSV_URL: str = "https://www.cisa.gov/sites/default/files/csv/known_exploited_vulnerabilities.csv"
     KEV_TIMEOUT: int = 30
+
+    # Additional healthcare-relevant open-source feeds
+    CISA_ICS_ADVISORIES_URL: str = "https://www.cisa.gov/cybersecurity-advisories/all.xml"
+    CISA_ICS_ADVISORIES_FALLBACK_URLS: tuple = (
+        "https://www.cisa.gov/uscert/ics/advisories",
+        "https://www.cisa.gov/cybersecurity-advisories/all.xml",
+    )
+    OPENFDA_API_KEY: Optional[str] = None
+    OPENFDA_DEVICE_ENFORCEMENT_URL: str = "https://api.fda.gov/device/enforcement.json"
+    OPENFDA_DEVICE_EVENT_URL: str = "https://api.fda.gov/device/event.json"
+    HEALTHCARE_OSINT_TIMEOUT: int = 30
+    HEALTHCARE_OSINT_CACHE_TTL_DAYS: int = 7
+    HEALTHCARE_OSINT_MAX_RECORDS: int = 1000
+    HEALTHCARE_OSINT_MAX_TERMS: int = 3000
+    HEALTHCARE_OSINT_SIMILARITY_THRESHOLD: float = 0.60
+    HEALTHCARE_OSINT_STOP_WORDS: tuple = (
+        "the", "and", "with", "for", "that", "this", "from", "firm", "initiated",
+        "voluntary", "class", "device", "devices", "product", "report",
+        "initial", "submission", "event", "unknown", "none", "other", "data",
+    )
+    HEALTHCARE_OSINT_ANCHOR_TERMS: tuple = (
+        "healthcare", "hospital", "clinic", "patient", "clinical", "medical",
+        "ehr", "emr", "pacs", "radiology", "dialysis", "catheter",
+        "infusion", "insulin", "ventilator", "medtronic", "philips", "siemens",
+    )
+
+    # MITRE ATT&CK Enterprise dataset
+    MITRE_ATTACK_ENTERPRISE_URL: str = "https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json"
+
+    # CHPL API
+    CHPL_API_BASE: str = "https://chpl.healthit.gov/rest"
+    CHPL_API_KEY: Optional[str] = None
+
+    # Shared HTTP client identity
+    HTTP_USER_AGENT: str = "CTI-Healthcare-Recommender/1.0"
     
     # ============================================================================
     # CACHING CONFIGURATION
@@ -98,6 +134,20 @@ class Settings(BaseSettings):
     OUTPUTS_DIR: Path = Path("outputs")
     CURATED_DATA_PATH: Path = Path("data/curated_healthcare_breaches.json")
     HEALTHCARE_MAPPING_PATH: Path = Path("data/config/healthcare_mapping.csv")
+    HEALTHCARE_PATTERN_FALLBACK: tuple = (
+        "medical",
+        "epic",
+        "cerner",
+        "medtronic",
+        "philips",
+        "siemens",
+        "athenahealth",
+        "meditech",
+        "allscripts",
+        "pacs",
+        "ehr",
+        "dell_emc",
+    )
     
     # ============================================================================
     # VALIDATION & TESTING

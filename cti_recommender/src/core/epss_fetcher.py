@@ -30,16 +30,18 @@ class EPSSFetcher:
     """Fetches and caches EPSS scores from FIRST.org API"""
     
     def __init__(self, cache_dir: Optional[Path] = None):
+        default_api_base = settings.EPSS_API_BASE if settings else "https://api.first.org/data/v1/epss"
+
         # Use centralized settings if available
         if cache_dir is None and settings:
             self.cache_dir = settings.get_cache_dir() / "epss"
-            self.api_base = settings.EPSS_API_BASE
+            self.api_base = default_api_base
         elif cache_dir is None:
             self.cache_dir = Path("cache/epss")
-            self.api_base = "https://api.first.org/data/v1/epss"
+            self.api_base = default_api_base
         else:
             self.cache_dir = Path(cache_dir)
-            self.api_base = "https://api.first.org/data/v1/epss"
+            self.api_base = default_api_base
         
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.persistent_cache_path = self.cache_dir / "epss_persistent.json"
@@ -54,7 +56,7 @@ class EPSSFetcher:
             import requests
             self.session = requests.Session()
             self.session.headers.update({
-                'User-Agent': 'CTI-Healthcare-Recommender/1.0',
+                'User-Agent': settings.HTTP_USER_AGENT if settings else 'CTI-Healthcare-Recommender/1.0',
                 'Accept': 'application/json'
             })
             logger.info("EPSS Fetcher initialized", 

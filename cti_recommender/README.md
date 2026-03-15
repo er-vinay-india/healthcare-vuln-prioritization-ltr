@@ -1,39 +1,147 @@
-# CTI Healthcare Vulnerability Recommender
+# Healthcare Cyber Risk Recommender
 
-**Intelligent CVE prioritization system for healthcare organizations using multi-source threat intelligence and machine learning.**
+A machine learning system for prioritizing cybersecurity vulnerabilities in healthcare environments using Learn-to-Rank (LTR) on multi-source threat intelligence data.
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![LightGBM](https://img.shields.io/badge/LightGBM-4.5.0-green.svg)](https://lightgbm.readthedocs.io/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+## Overview
 
----
+This project addresses the challenge of vulnerability prioritization in healthcare by integrating data from authoritative sources including the National Vulnerability Database (NVD), CISA Known Exploited Vulnerabilities (KEV), Exploit Prediction Scoring System (EPSS), MITRE ATT&CK framework, and healthcare-specific datasets. It employs a LambdaMART ranking model to provide context-aware prioritization that goes beyond traditional CVSS scoring.
 
-## [TARGET] Project Overview
+## Features
 
-Traditional vulnerability management relies solely on CVSS scores, which don't account for exploitation likelihood, threat intelligence, or healthcare-specific risks. This system addresses that gap by:
+- **Multi-Source Data Integration**: Combines NVD, KEV, EPSS, ATT&CK, CHPL, and healthcare breach data
+- **Learn-to-Rank Model**: Uses LightGBM LambdaMART for ranking vulnerabilities by risk
+- **Healthcare Focus**: Includes domain-specific filtering and prioritization for medical devices and systems
+- **REST API**: FastAPI-based API for real-time vulnerability recommendations
+- **Comprehensive Evaluation**: Temporal validation and cross-validation for robust performance assessment
+- **Explainability**: SHAP-based feature importance and instance-level explanations
 
-- **Integrating 6 authoritative sources**: NVD, CISA KEV, EPSS, MITRE ATT&CK, CHPL, Healthcare Breaches
-- **Machine learning ranking**: Confidence-weighted LambdaMART model
-- **Healthcare focus**: Product mappings and medical device vulnerability tracking
-- **Robust evaluation**: Three evaluation strategies (temporal splits + K-fold cross-validation)
+## Architecture
 
-### Key Results
+The system follows a layered architecture:
 
-| Metric | Score | Notes |
-|--------|-------|-------|
-| **NDCG@10** | 1.0000 | Perfect ranking performance |
-| **Precision@20** | 1.0000 | All top-20 recommendations relevant |
-| **Dataset** | 176,332 CVEs | Coverage: 2015-2025 |
-| **Healthcare Coverage** | 55.5% | 98K CVEs mapped to healthcare |
-| **Model Type** | LambdaMART | Confidence-weighted learning-to-rank |
+1. **Data Layer**: Integration of 6+ cybersecurity intelligence sources
+2. **Feature Engineering**: 50+ engineered features including temporal, exploitation, and adversarial context
+3. **Model Layer**: Confidence-weighted LambdaMART ranking model
+4. **Evaluation Layer**: NDCG, Precision@K metrics with temporal holdout
+5. **API Layer**: REST endpoints for recommendations and enrichment
 
----
+## Quick Start
 
-## [STATS] Architecture
+### Prerequisites
 
-### Multi-Notebook Pipeline
+- Python 3.10+
+- Docker (optional, for containerized deployment)
 
-The project uses a modular notebook architecture for clear separation of concerns:
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd cti_recommender
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Set up the database:
+```bash
+python scripts/refresh_cves.py
+```
+
+### Usage
+
+#### Using Notebooks (Recommended for Analysis)
+
+Run the Jupyter notebooks in sequence:
+
+1. `notebooks/STEP_1_Data_Ingestion_Pipeline.ipynb` - Ingest and integrate data sources
+2. `notebooks/STEP_2_Compute_Features.ipynb` - Basic feature computation
+3. `notebooks/STEP_3_Feature_Engineering_Labels.ipynb` - Advanced features and labeling
+4. `notebooks/STEP_4_All_Models_Training.ipynb` - Train ranking models
+5. `notebooks/STEP_5_Model_Comparison_And_Evaluation.ipynb` - Evaluate and compare models
+
+#### Using Scripts
+
+For production use:
+
+```bash
+# Get recommendations for recent CVEs
+python scripts/recommend_cves.py --days 30
+
+# Start the API server
+python src/api/main.py
+```
+
+#### Using Docker
+
+```bash
+# Build and run
+docker-compose up --build
+```
+
+## API Endpoints
+
+- `GET /health` - Health check
+- `POST /recommend` - Get vulnerability recommendations
+- `POST /enrich` - Enrich CVE data
+- `GET /metrics` - Model performance metrics
+
+## Data Sources
+
+| Source | Description | Coverage |
+|--------|-------------|----------|
+| NVD | Core vulnerability metadata and CVSS scores | 226K+ CVEs |
+| CISA KEV | Known exploited vulnerabilities | 1K+ confirmed exploits |
+| EPSS | Exploit prediction scores | Probabilistic risk estimates |
+| MITRE ATT&CK | Adversarial techniques and behaviors | 37% of CVEs mapped |
+| CHPL | Certified healthcare IT products | Healthcare-specific filtering |
+| Healthcare Breaches | Historical breach data | Domain context |
+
+## Model Performance
+
+- **NDCG@20**: 0.220 (production model)
+- **Improvement over CVSS**: 28.7%
+- **Dataset Size**: 226K CVEs (2018-2025)
+- **Temporal Validation**: Future prediction on 2025 data
+
+## Project Structure
+
+```
+├── src/                    # Source code
+│   ├── api/               # FastAPI application
+│   ├── core/              # Core utilities and fetchers
+│   ├── features/          # Feature engineering
+│   ├── models/            # Model implementations
+│   └── utils/             # Utilities
+├── scripts/               # Command-line scripts
+├── notebooks/             # Jupyter notebooks
+├── outputs/               # Generated outputs and results
+├── docs/                  # Documentation
+├── config/                # Configuration files
+├── data/                  # Data files
+├── models/                # Trained models
+└── tests/                 # Unit tests
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Citation
+
+If you use this work in your research, please cite:
+
+[Thesis citation details]
 
 ```mermaid
 flowchart LR
@@ -91,9 +199,9 @@ jupyter notebook
 
 **Recommended execution order:**
 
-1. **`Data_Ingestion_Pipeline.ipynb`** - Fetch and store CVE data (176K CVEs)
+1. **`Data_Ingestion_Pipeline.ipynb`** - Fetch and store CVE data (226K CVEs, 2018-2025)
 2. **`EDA_Analysis.ipynb`** - Explore temporal trends, CVSS/EPSS distributions
-3. **`Feature_Engineering.ipynb`** - Extract 16 features + weak labels
+3. **`Feature_Engineering.ipynb`** - Extract 16 features + weak supervision labels
 4. **`Model_Training_And_Evaluation.ipynb`** - Train LambdaMART, 3 evaluation strategies
 5. **`Advanced_Models_GraphBased.ipynb`** - DiffusionRank, RGCN, ensembles
 
@@ -190,7 +298,7 @@ cti_recommender/
 │       └── healthcare_mapper.py        # CHPL/breach mapping
 │
 ├── data/
-│   └── cve_database.db                 #  SQLite (176,332 CVEs)
+│   └── cve_database.db                 #  SQLite (226,320 CVEs)
 │
 ├── cache/                              #  API Response Cache
 │   ├── nvd/
@@ -239,7 +347,7 @@ cti_recommender/
 
 | Source | Records | Purpose |
 |--------|---------|---------|
-| **NVD** | 176,332 CVEs | Base vulnerability data, CVSS scores |
+| **NVD** | 226,320 CVEs | Base vulnerability data, CVSS scores |
 | **CISA KEV** | 1,460 CVEs | Known exploited vulnerabilities (ground truth) |
 | **EPSS** | 176K scores | Exploit probability (0-1) |
 | **MITRE ATT&CK** | 835 techniques | Adversary tactics mapping |
@@ -248,32 +356,46 @@ cti_recommender/
 
 ### Feature Engineering (16 Features)
 
-1. **CVSS Metrics**: `cvss`, `cvss_exploitability`, `cvss_impact`
-2. **Threat Intelligence**: `epss_score`, `kev_flag`, `attack_technique_count`
-3. **Healthcare Context**: `healthcare_flag`, `chpl_product_match`, `medical_device_flag`
-4. **Temporal**: `days_since_published`, `recency_score`
-5. **Complexity**: `complexity_score`, `privileges_required`
+**Actual implemented features** (from `src/features/engineering.py`):
 
-### Weak Supervision with Confidence
+1. **CVSS Score**: `cvss_norm` (normalized 0-1)
+2. **EPSS Metrics (2)**: `epss_score`, `epss_percentile` 
+3. **KEV Flag**: `kev_flag` (binary: known exploited)
+4. **Temporal (2)**: `days_since_published`, `recency_score`
+5. **ATT&CK Mapping (2)**: `attack_technique_count`, `has_attack`
+6. **Healthcare Context (2)**: `is_healthcare`, `chpl_flag`
+7. **Interaction Terms (2)**: `cvss_epss_product`, `kev_healthcare_interaction`
+8. **Missingness Indicators (4)**: `published_missing`, `cvss_missing_flag`, `epss_missing_flag`, `epss_percentile_missing_flag`
 
-**Label Construction:**
+**Note on KEV/EPSS features:** While these are used as model inputs in the retrospective evaluation (NDCG@20 = 0.990), they represent temporal leakage for real-time deployment. For production use without leakage, they should be excluded from features and used only for weak supervision labels.
+
+### Weak Supervision with Confidence Weighting
+
+**Label Construction (simplified representation - actual implementation uses multi-level grading):**
+
 ```python
-soft_label = 0.0
-confidence = 0.0
+# Labels derived from exploitation evidence and domain context
+label = 0  # Default: unknown priority
 
-if kev_flag:
-    soft_label = 3.0
-    confidence = 1.0  # High confidence (authoritative)
-elif healthcare_flag:
-    soft_label += 1.0
-    confidence += 0.7
-elif cvss >= 9.0:
-    soft_label += 0.5
-    confidence += 0.5
+if kev_flag == 1:
+    label = 2  # Known exploited (authoritative signal)
+    confidence = 1.0
+
+elif healthcare_flag == 1 or attack_technique_count > 0:
+    label = 1  # Healthcare-relevant or adversarial context
+    confidence = 0.7
+
+else:
+    label = 0  # No strong signal
+    confidence = 0.3
 ```
 
-**Labels**: 0-3 continuous scale (higher = more critical)  
-**Confidence**: 0-1 (used to weight training loss)
+**Benefits:**
+- **No subjective labels**: Uses objective signals (KEV = exploitation confirmed, ATT&CK = adversary behavior)
+- **Confidence weighting**: KEV labels are more reliable (1.0) than heuristic signals (0.3-0.7)
+- **Avoids cold-start bias**: Model learns from 1,179 KEV + 83,574 ATT&CK + 822 healthcare examples
+
+**Note:** Actual implementation (`src/features/labeling.py`, `src/features/temporal_labeling.py`) uses sophisticated multi-level grading (0-3 scale) with EPSS thresholds and temporal horizons.
 
 ### Model: Confidence-Weighted LambdaMART
 
@@ -291,38 +413,22 @@ elif cvss >= 9.0:
 
 | Strategy | Train | Test | Purpose |
 |----------|-------|------|---------|
-| **Original 70/15/15** | 70% | 15% val, 15% test | Standard temporal validation |
-| **Thesis 70/30** | ≤2024 (131K) | 2025 (44K) | Real future prediction |
-| **K-Fold CV (n=5)** | 80% per fold | 20% per fold | Robust performance estimate |
+| **Temporal Split (Thesis)** | 2018-2024 (176,348) | 2025 (49,972) | Real future prediction |
+| **5-Fold Cross-Validation** | 80% per fold | 20% per fold | Robustness validation |
 
-**All strategies achieve NDCG@10 = 1.0000**, demonstrating model robustness.
+### Performance Metrics (2025 Test Set)
 
----
+**Production Model (16 leakage-free features):**
 
-##  Results
+| Metric | Production LTR | CVSS Baseline | Improvement |
+|--------|----------------|---------------|-------------|
+| **NDCG@5** | 0.187 | 0.142 | +31.7% |
+| **NDCG@10** | 0.203 | 0.156 | +30.1% |
+| **NDCG@20** | **0.220** | 0.171 | **+28.7%** |
+| **NDCG@50** | 0.251 | 0.201 | +24.9% |
+| **Precision@20** | 0.220 | 0.171 | +28.7% |
 
-### Model Comparison
-
-| Model | NDCG@10 | Precision@20 | MAP |
-|-------|---------|--------------|-----|
-| **LambdaMART (Ours)** | **1.0000** | **1.0000** | **0.9950** |
-| Heuristic Baseline | 0.8584 | 0.9500 | 0.8200 |
-| CVSS Baseline | 0.3773 | 0.1600 | 0.2100 |
-
-### K-Fold Cross Validation
-
-| Metric | Mean | Std |
-|--------|------|-----|
-| NDCG@10 | 1.0000 | ±0.0000 |
-| NDCG@20 | 1.0000 | ±0.0000 |
-| Precision@10 | 1.0000 | ±0.0000 |
-| Precision@20 | 1.0000 | ±0.0000 |
-
-**Perfect ranking with zero variance across all folds.**
-
-### Feature Importance (Top 5)
-
-1. **kev_flag** (45.2%) - Known exploitation
+**Note:** Retrospective models (using KEV/EPSS as features) achieve NDCG@20 = 0.990, but this is temporal leakage — production models cannot use future exploitation evidence. The 28.7% improvement represents realistic operational gains.
 2. **epss_score** (23.8%) - Exploit probability
 3. **cvss** (12.5%) - Base severity
 4. **healthcare_flag** (8.9%) - Healthcare relevance

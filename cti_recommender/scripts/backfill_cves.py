@@ -4,7 +4,6 @@ Backfill historical CVE data from NVD (2018-2025)
 Fetches data in monthly chunks with rate limiting
 """
 
-import os
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -20,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.core.cve_database import CVEDatabase
 from src.core import cti_recommender
+from config.settings import settings
 
 # Configuration
 START_YEAR = 2018
@@ -34,18 +34,18 @@ def backfill_by_month(start_year: int, end_year: int, api_key: str = None):
     Args:
         start_year: Starting year (e.g., 2018)
         end_year: Ending year (e.g., 2024)
-        api_key: NVD API key (optional, reads from NVD_API_KEY env var)
+        api_key: NVD API key (optional, uses centralized settings if not provided)
     """
     
-    # Get API key from environment if not provided
+    # Get API key from centralized settings if not provided
     if api_key is None:
-        api_key = os.environ.get("NVD_API_KEY")
+        api_key = settings.NVD_API_KEY
     
     if not api_key:
         print("[WARN]  WARNING: No NVD API key found!")
         print("   Rate limit: 5 requests/30 seconds (very slow)")
         print("   Get a free key at: https://nvd.nist.gov/developers/request-an-api-key")
-        print("   Set via: export NVD_API_KEY='your-key-here'")
+        print("   Set NVD_API_KEY in your centralized project settings/.env")
         response = input("\n   Continue anyway? (y/n): ")
         if response.lower() != 'y':
             print("Aborted.")
@@ -163,7 +163,7 @@ if __name__ == "__main__":
 """)
     
     # Check for API key
-    api_key = os.environ.get("NVD_API_KEY")
+    api_key = settings.NVD_API_KEY
     if api_key:
         print(f"[OK] NVD API Key: {'*' * 20}{api_key[-4:]}")
     else:

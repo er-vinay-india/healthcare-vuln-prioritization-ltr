@@ -7,8 +7,6 @@ Never calls API twice for same data.
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-import os
 import json
 import gzip
 import pickle
@@ -28,12 +26,18 @@ except ImportError:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
+try:
+    from config.settings import settings
+except ImportError:
+    settings = None
+
 class CHPLFetcher:
     """Fetches CHPL data with intelligent caching."""
     
     def __init__(self, api_key=None):
         """Initialize with optional API key."""
-        self.api_key = api_key or os.getenv('CHPL_API_KEY')
+        self.api_key = api_key or (settings.CHPL_API_KEY if settings else None)
+        self.api_base = settings.CHPL_API_BASE if settings else "https://chpl.healthit.gov/rest"
         # Use centralized cache directory structure
         self.cache_dir = Path(__file__).parent.parent.parent / 'cache' / 'chpl'
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -100,13 +104,13 @@ class CHPLFetcher:
     def _fetch_from_api(self):
         """Fetch CHPL data from API."""
         if not self.api_key:
-            logger.warning("  [FAIL] No CHPL API key found (set CHPL_API_KEY env var)")
+            logger.warning("  [FAIL] No CHPL API key found in centralized settings")
             logger.info("  Using mock data for testing...")
             return self._create_mock_data()
         
         try:
             # CHPL API v3 search endpoint
-            url = "https://chpl.healthit.gov/rest/search/v3"
+            url = f"{self.api_base.rstrip('/')}/search/v3"
             headers = {'API-Key': self.api_key}
             params = {
                 'pageNumber': 0,

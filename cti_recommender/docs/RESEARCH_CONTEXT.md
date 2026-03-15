@@ -17,10 +17,13 @@ Saved: 2026-01-13
 - There is limited or no prior work that fuses NVD, KEV, and ATT&CK to build a healthcare-specific vulnerability ranking.
 - ML approaches have not been widely applied to joint, multi-source CVE ranking that includes behavioural (ATT&CK) and exploit-validated (KEV) signals.
 
-## 3. Research questions
-1. How can NVD, CISA KEV, and MITRE ATT&CK datasets be combined effectively? 
-2. What features/factors best indicate healthcare-relevant vulnerabilities (e.g., CPE-based mapping, vendor/product criticality, CVSS components, ATT&CK coverage)?
-3. How does multi-source scoring (including CVSS) improve actionable recommendations for healthcare stakeholders?
+## 3. Research Questions
+### Primary Question
+1. How can NVD, CISA KEV, and MITRE ATT&CK datasets be combined?
+
+### Related Other Question
+2. What will be the factors we can utilise to figure out health industry vulnerabilities?
+3. How will the scoring help our recommendation system with those factors, including existing CVSS scores?
 
 ## 4. Aim & objectives
 **Aim:** Develop a data-driven, healthcare-focused vulnerability recommender that integrates NVD, CISA KEV, and MITRE ATT&CK to produce a prioritized ranking of vulnerabilities by recency, exploit validation, and attacker behaviour.
