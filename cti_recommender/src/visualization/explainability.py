@@ -6,6 +6,7 @@ including feature importance and SHAP analysis.
 """
 
 from typing import List, Optional, Tuple
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -219,6 +220,87 @@ def plot_shap_summary(
         print(f"  {row['feature']:30s} {row['mean_abs_shap']:>8.4f} {bar}")
     
     return shap_values
+
+
+def save_shap_beeswarm(
+    model,
+    X: pd.DataFrame,
+    feature_names: Optional[List[str]] = None,
+    output_path: str = 'outputs/plots/shap_beeswarm_figure5_1.png',
+    max_display: int = 20,
+    sample_size: int = 5000,
+    random_seed: int = 42,
+    dpi: int = 300,
+) -> Optional[np.ndarray]:
+    """
+    Save a SHAP beeswarm summary plot (dot plot) to disk.
+
+    Works for LightGBM/XGBoost tree models supported by SHAP TreeExplainer.
+
+    Args:
+        model: Trained tree model
+        X: Feature matrix as DataFrame or ndarray
+        feature_names: Optional feature names override
+        output_path: Target image path
+        max_display: Max features to display in beeswarm
+        sample_size: Max rows sampled for SHAP computation
+        random_seed: Sampling seed
+        dpi: Image resolution
+
+    Returns:
+        SHAP values array if successful, otherwise None
+    """
+    try:
+        import shap
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("SHAP/matplotlib not installed. Run: pip install shap matplotlib")
+        return None
+
+    try:
+        if len(X) > sample_size:
+            sample_idx = np.random.RandomState(random_seed).choice(len(X), sample_size, replace=False)
+            X_sample = X.iloc[sample_idx] if isinstance(X, pd.DataFrame) else X[sample_idx]
+        else:
+            X_sample = X
+
+        if isinstance(X_sample, pd.DataFrame):
+            X_df = X_sample.copy()
+        else:
+            if feature_names is None:
+                feature_names = [f"feature_{i}" for i in range(X_sample.shape[1])]
+            X_df = pd.DataFrame(X_sample, columns=feature_names)
+
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(X_df)
+
+        if isinstance(shap_values, list):
+            shap_values_for_plot = shap_values[0]
+        else:
+            shap_values_for_plot = shap_values
+
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+
+        plt.figure(figsize=(10, 7))
+        shap.summary_plot(
+            shap_values_for_plot,
+            X_df,
+            max_display=max_display,
+            show=False,
+            plot_type='dot'
+        )
+        plt.tight_layout()
+        plt.savefig(output, dpi=dpi, bbox_inches='tight')
+        plt.close()
+
+        print(f"Saved SHAP beeswarm plot: {output}")
+        return shap_values_for_plot
+    except Exception as e:
+        print(f"Failed to create SHAP beeswarm plot: {e}")
+        return None
 
 
 def analyze_top_predictions(
