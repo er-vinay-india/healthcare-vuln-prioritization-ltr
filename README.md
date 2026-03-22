@@ -1,6 +1,6 @@
 # Healthcare Vulnerability Prioritization Using a Learning-to-Rank Framework with Integrated Cyber Threat Intelligence
 
-[![Python CI](https://github.com/er-vinay-india/cti-recommender/actions/workflows/python-ci.yml/badge.svg)](https://github.com/er-vinay-india/cti-recommender/actions/workflows/python-ci.yml)
+[![Python CI](https://github.com/er-vinay-india/healthcare-vuln-prioritization-ltr/actions/workflows/python-ci.yml/badge.svg)](https://github.com/er-vinay-india/healthcare-vuln-prioritization-ltr/actions/workflows/python-ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -85,7 +85,7 @@ cti_recommender/src/
 
 ```bash
 # 1. Clone and create a virtual environment
-git clone https://github.com/er-vinay-india/cti-recommender.git
+git clone https://github.com/er-vinay-india/healthcare-vuln-prioritization-ltr.git
 cd cti-recommender
 python -m venv .venv && source .venv/bin/activate
 
