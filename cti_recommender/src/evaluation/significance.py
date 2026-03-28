@@ -269,6 +269,28 @@ def pairwise_significance_test(
     return pd.DataFrame(results)
 
 
+def cliffs_delta(a: np.ndarray, b: np.ndarray) -> float:
+    """Compute Cliff's delta (non-parametric effect size) between two samples.
+
+    Returns a value in [-1, 1].  |delta| < 0.147 is negligible,
+    0.147–0.33 is small, 0.33–0.474 is medium, >= 0.474 is large.
+
+    Args:
+        a: First sample (e.g. scores of model A).
+        b: Second sample (e.g. scores of model B).
+
+    Returns:
+        Cliff's delta as a float.
+    """
+    a = np.asarray(a)
+    b = np.asarray(b)
+    m, n = len(a), len(b)
+    if m == 0 or n == 0:
+        return 0.0
+    dominance = sum(1 if ai > bi else (-1 if ai < bi else 0) for ai in a for bi in b)
+    return dominance / (m * n)
+
+
 def create_comparison_table(
     model_results: Dict[str, Dict[str, float]],
     baseline_name: str = None,

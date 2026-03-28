@@ -91,31 +91,117 @@ def compute_ap_at_k(y_true: np.ndarray, y_score: np.ndarray, k: int, threshold: 
     return precision_sum / relevant_count
 
 
+def per_group_ndcg(
+    df_in: pd.DataFrame,
+    score_col: str,
+    label_col: str = "soft_label",
+    group_col: str = "published_week",
+    k: int = 20,
+    relevance_threshold: int = 2,
+) -> pd.DataFrame:
+    """Compute NDCG@K per group (e.g. per-week), skipping groups with no relevant items.
+
+    Args:
+        df_in:     DataFrame with scores, labels, and a grouping column.
+        score_col: Column of predicted scores.
+        label_col: Column of true relevance labels.
+        group_col: Column to group by (default: 'published_week').
+        k:         Cutoff for NDCG computation.
+        relevance_threshold: Minimum label to count as relevant.
+
+    Returns:
+        DataFrame with columns ['group', 'ndcg'].
+    """
+    from sklearn.metrics import ndcg_score as _sk_ndcg
+
+    rows = []
+    for g, part in df_in.groupby(group_col):
+        if len(part) < 2:
+            continue
+        y = part[label_col].values
+        if (y >= relevance_threshold).sum() == 0:
+            continue
+        s = part[score_col].values
+        kk = min(k, len(part))
+        try:
+            v = float(_sk_ndcg([y], [s], k=kk))
+            rows.append((g, v))
+        except Exception:
+            continue
+    return pd.DataFrame(rows, columns=["group", "ndcg"])
+
+
 def evaluate_by_week(
     df: pd.DataFrame,
     score_col: str,
     label_col: str,
     date_col: str,
-    k: int = 10
+    k: int = 10,
 ) -> pd.DataFrame:
-    """
-    Evaluate ranking performance week-by-week (temporal evaluation).
-    
+    """Evaluate ranking week-by-week; wraps :func:`per_group_ndcg`.
+
     Args:
-        df: DataFrame with scores, labels, dates
-        score_col: Column name for predicted scores
-        label_col: Column name for true labels
-        date_col: Column name for dates
-        k: K value for NDCG@K
-    
+        df:        DataFrame with scores, labels, and a date column.
+        score_col: Column of predicted scores.
+        label_col: Column of true labels.
+        date_col:  Date column used to derive 'week' groups.
+        k:         Cutoff for NDCG.
+
     Returns:
-        DataFrame with weekly metrics
+        DataFrame with columns ['group', 'ndcg'] (one row per week).
     """
-    # TODO: Implement temporal evaluation
-    # - Group by week
-    # - Compute NDCG@K per week
-    # - Return time series of metrics
-    raise NotImplementedError("To be migrated from notebook")
+    df = df.copy()
+    week_col = "_eval_week"
+    df[week_col] = pd.to_datetime(df[date_col], errors="coerce", utc=True).dt.strftime("%Y-%U")
+    return per_group_ndcg(df, score_col=score_col, label_col=label_col, group_col=week_col, k=k)
+
+
+def compute_flat_ranking_metrics(
+    y_true: np.ndarray,
+    scores: np.ndarray,
+    k_values: List[int],
+    relevance_threshold: int = 2,
+) -> dict:
+    """Compute Precision@K, Recall@K, NDCG@K, and MAP over a flat (non-grouped) ranking.
+
+    Unlike :func:`compute_ranking_metrics`, this operates on the full array at once
+    (using sklearn's ``ndcg_score``) and handles multiple K values in one call.
+
+    Args:
+        y_true:               True relevance labels (array-like).
+        scores:               Predicted scores (array-like).
+        k_values:             List of K cutoffs.
+        relevance_threshold:  Minimum label to count as relevant.
+
+    Returns:
+        Dict with keys like 'NDCG@10', 'Precision@10', 'Recall@10', 'MAP'.
+    """
+    from sklearn.metrics import ndcg_score as _sk_ndcg, average_precision_score
+
+    y_arr = np.asarray(y_true.values if hasattr(y_true, "values") else y_true)
+    s_arr = np.asarray(scores.values if hasattr(scores, "values") else scores)
+    sorted_idx = np.argsort(-s_arr)
+    metrics: dict = {}
+
+    total_rel = int((y_arr >= relevance_threshold).sum())
+    for k in k_values:
+        tk = y_arr[sorted_idx[:k]]
+        metrics[f"Precision@{k}"] = float((tk >= relevance_threshold).sum() / k)
+        metrics[f"Recall@{k}"] = (
+            float((tk >= relevance_threshold).sum() / total_rel) if total_rel > 0 else 0.0
+        )
+        try:
+            metrics[f"NDCG@{k}"] = float(_sk_ndcg([y_arr], [s_arr], k=k))
+        except Exception:
+            metrics[f"NDCG@{k}"] = 0.0
+
+    try:
+        y_bin = (y_arr >= relevance_threshold).astype(int)
+        metrics["MAP"] = float(average_precision_score(y_bin, s_arr))
+    except Exception:
+        metrics["MAP"] = 0.0
+
+    return metrics
 
 
 def compute_ranking_metrics(

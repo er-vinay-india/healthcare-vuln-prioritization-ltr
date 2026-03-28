@@ -432,3 +432,56 @@ def get_default_feature_cols() -> List[str]:
         "epss_missing_flag",
         "epss_percentile_missing_flag",
     ]
+
+
+# -------------------------
+# Categorical encoding helpers
+# -------------------------
+
+def fit_categorical_mapping(
+    df_ref: pd.DataFrame,
+    cat_cols: List[str],
+) -> Dict[str, Dict]:
+    """Fit a value-to-integer mapping from a reference split (train only).
+
+    Args:
+        df_ref:   Reference DataFrame (e.g. train split) to derive categories from.
+        cat_cols: Column names to encode.
+
+    Returns:
+        mapping dict: {col: {'map': {str_val -> int}, 'unknown_code': int}}
+    """
+    mapping: Dict[str, Dict] = {}
+    for col in cat_cols:
+        if col not in df_ref.columns:
+            continue
+        vals = df_ref[col].astype(str).fillna("unknown")
+        col_map = {v: i for i, v in enumerate(vals.unique())}
+        mapping[col] = {"map": col_map, "unknown_code": len(col_map)}
+    return mapping
+
+
+def apply_categorical_mapping(
+    df_in: pd.DataFrame,
+    mapping: Dict[str, Dict],
+) -> pd.DataFrame:
+    """Apply a train-fitted categorical mapping to any split.
+
+    Unseen category values are assigned the ``unknown_code`` from the mapping.
+
+    Args:
+        df_in:   DataFrame to encode.
+        mapping: Output of :func:`fit_categorical_mapping`.
+
+    Returns:
+        New DataFrame with encoded integer columns.
+    """
+    df_out = df_in.copy()
+    for col, spec in mapping.items():
+        if col not in df_out.columns:
+            continue
+        vals = df_out[col].astype(str).fillna("unknown")
+        df_out[col] = (
+            vals.map(spec["map"]).fillna(spec["unknown_code"]).astype(int)
+        )
+    return df_out
