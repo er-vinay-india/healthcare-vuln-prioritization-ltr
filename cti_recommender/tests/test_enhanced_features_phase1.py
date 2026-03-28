@@ -6,6 +6,7 @@ Tests CVSS decomposition and CWE intelligence features.
 
 import pandas as pd
 import sys
+from pathlib import Path
 sys.path.append('.')
 
 from src.features.enhanced_features import extract_all_enhanced_features, get_enhanced_feature_columns
@@ -14,9 +15,23 @@ print("="*80)
 print("TESTING ENHANCED FEATURES - PHASE 1 & 2")
 print("="*80)
 
+
+def _resolve_features_csv() -> Path:
+    """Return the newest features_with_labels snapshot in outputs/features."""
+    features_dir = Path('outputs/features')
+    candidates = sorted(features_dir.glob('features_with_labels_*.csv'))
+    if candidates:
+        return candidates[-1]
+    fallback = features_dir / 'features_with_labels_latest.csv'
+    if fallback.exists():
+        return fallback
+    raise FileNotFoundError('No features_with_labels CSV found in outputs/features')
+
 # Load sample data
 print("\n[1] Loading sample data...")
-df = pd.read_csv('outputs/features/features_with_labels_20260226.csv', nrows=1000)
+features_csv = _resolve_features_csv()
+print(f"  Using: {features_csv}")
+df = pd.read_csv(features_csv, nrows=1000)
 print(f"  Loaded {len(df)} CVEs for testing")
 print(f"  Initial columns: {len(df.columns)}")
 
