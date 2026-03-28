@@ -15,9 +15,27 @@ experiment:
 # Data Configuration
 # -------------------------------------------------------------
 data:
-  database_path: "data/cve_database.db"
   min_cve_date: "2024-01-01"
   train_test_split_date: "2024-11-01"
+  feature_cols:
+    - cvss_norm
+    - epss_score
+    - epss_percentile
+    - kev_flag
+    - days_since_published
+    - recency_score
+    - attack_technique_count
+    - has_attack
+    - chpl_flag
+    - is_healthcare
+    - cvss_epss_product
+    - kev_healthcare_interaction
+  similarity_features:
+    - cvss
+    - epss_score
+    - kev_flag
+    - is_healthcare
+    - attack_technique_count
 
 # -------------------------------------------------------------
 # Temporal Split Configuration (Flexible Strategies)
@@ -54,29 +72,10 @@ feature_engineering:
   reference_date: "2025-01-01"    # Reference date for temporal features
   cvss_missing_fill: 5.0          # Fill missing CVSS with medium severity
   epss_missing_fill: 0.0          # Fill missing EPSS with no exploit likelihood
-  
-  # Feature columns for all models
-  feature_cols:
-    - cvss_norm
-    - epss_score
-    - epss_percentile
-    - kev_flag
-    - days_since_published
-    - recency_score
-    - attack_technique_count
-    - has_attack
-    - chpl_flag
-    - is_healthcare
-    - cvss_epss_product
-    - kev_healthcare_interaction
-  
-  # Features for similarity computation
-  similarity_features:
-    - cvss
-    - epss_score
-    - kev_flag
-    - is_healthcare
-    - attack_technique_count
+  # Deprecated and removed in this profile:
+  # - feature_engineering.feature_cols
+  # - feature_engineering.similarity_features
+  # Use data.feature_cols and data.similarity_features instead.
 
 # -------------------------------------------------------------
 # Sampling Configuration

@@ -13,10 +13,6 @@ import pickle
 import requests
 import pandas as pd
 from datetime import datetime
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 try:
     from src.utils.logging_config import get_logger

@@ -30,3 +30,6 @@ build/
 
 # Temporary work directories (e.g. venvs placed in tmp/)
 tmp/
+
+# Personal/local research material
+vvvip/

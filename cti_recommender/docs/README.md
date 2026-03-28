@@ -16,6 +16,7 @@
 ## Technical
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) - current system architecture and structure
+- [CONFIG_GOVERNANCE.md](CONFIG_GOVERNANCE.md) - runtime vs experiment ownership and precedence
 
 ## Diagrams
 

@@ -20,9 +20,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f cti_recommender/requirements.txt ]; then pip install -r cti_recommender/requirements.txt; fi
+          pip install -e cti_recommender
           pip install pytest
+      - name: Run config audit
+        run: |
+          python cti_recommender/scripts/ops/config_audit.py
       - name: Run tests
-        env:
-          PYTHONPATH: .
         run: |
           pytest -q

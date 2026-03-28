@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cti-recommender"
+version = "0.1.0"
+description = "CTI recommender and vulnerability prioritization toolkit"
+requires-python = ">=3.11"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["config*", "src*"]
+exclude = ["tests*", "notebooks*", "outputs*", "data*", "cache*", "tmp*"]

@@ -68,7 +68,6 @@ class FeatureEngineeringConfig:
 @dataclass
 class DataConfig:
     """Data loading and feature configuration."""
-    database_path: str = "data/cve_database.db"
     min_cve_date: str = "2024-01-01"
     train_test_split_date: str = "2024-11-01"
     feature_cols: List[str] = field(default_factory=lambda: [
@@ -216,7 +215,11 @@ class ExperimentConfig:
     
     @property
     def database_path(self) -> Path:
-        return self._project_root / self.data.database_path
+        try:
+            from config.settings import settings
+            return settings.get_database_path()
+        except Exception:
+            return self._project_root / "data/cve_database.db"
     
     @property
     def model_path(self) -> Path:
@@ -369,8 +372,12 @@ def _dict_to_config(data: Dict[str, Any], profile: str) -> ExperimentConfig:
         cfg.experiment = ExperimentMeta(**data['experiment'])
     if 'data' in data:
         cfg.data = DataConfig(**data['data'])
+    if 'feature_engineering' in data:
+        cfg.feature_engineering = FeatureEngineeringConfig(**data['feature_engineering'])
     if 'sampling' in data:
         cfg.sampling = SamplingConfig(**data['sampling'])
+    if 'temporal_splits' in data:
+        cfg.temporal_splits = TemporalSplitsConfig(**data['temporal_splits'])
     if 'rgcn' in data:
         cfg.rgcn = RGCNConfig(**data['rgcn'])
     if 'diffusion' in data:

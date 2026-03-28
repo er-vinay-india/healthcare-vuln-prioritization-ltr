@@ -6,6 +6,27 @@ from pathlib import Path
 from typing import Optional
 from IPython.display import HTML, display
 import warnings
+import pandas as pd
+
+
+def _prepare_dataframe_for_export(df):
+    """Return a CSV-friendly DataFrame while preserving semantic index labels."""
+    export_df = df.copy()
+
+    if isinstance(export_df.columns, pd.MultiIndex):
+        export_df.columns = [
+            "_".join(str(part) for part in col if str(part) and str(part) != "nan")
+            for col in export_df.columns.to_flat_index()
+        ]
+
+    default_index = pd.RangeIndex(start=0, stop=len(export_df), step=1)
+    if not export_df.index.equals(default_index):
+        index_name = export_df.index.name or 'row_label'
+        export_df = export_df.reset_index()
+        if export_df.columns[0] == 'index':
+            export_df = export_df.rename(columns={'index': index_name})
+
+    return export_df
 
 def save_plot(fig, name: str, subdir: str = 'plots', show_link: bool = True):
     """
@@ -74,15 +95,17 @@ def save_dataframe(df, name: str, subdir: str = 'data', format: str = 'csv'):
     output_dir = Path('outputs') / subdir
     output_dir.mkdir(parents=True, exist_ok=True)
     
+    export_df = _prepare_dataframe_for_export(df)
+
     if format == 'csv':
         output_path = output_dir / f'{name}.csv'
-        df.to_csv(output_path, index=False)
+        export_df.to_csv(output_path, index=False)
     elif format == 'parquet':
         output_path = output_dir / f'{name}.parquet'
-        df.to_parquet(output_path, index=False)
+        export_df.to_parquet(output_path, index=False)
     elif format == 'excel':
         output_path = output_dir / f'{name}.xlsx'
-        df.to_excel(output_path, index=False)
+        export_df.to_excel(output_path, index=False)
     else:
         raise ValueError(f"Unknown format: {format}")
     

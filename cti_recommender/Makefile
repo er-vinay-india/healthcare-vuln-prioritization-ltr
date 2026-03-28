@@ -1,6 +1,7 @@
-.PHONY: help build up up-daemon daemon down restart logs shell test test-fast test-metrics test-coverage cache-prepare enrich train cv ablation clean health jupyter stats doctor
+.PHONY: help build up up-daemon daemon down restart logs shell test test-fast test-metrics test-coverage test-local cache-prepare enrich train cv ablation clean health jupyter stats doctor
 
 COMPOSE := $(shell if command -v docker-compose >/dev/null 2>&1; then echo docker-compose; else echo docker compose; fi)
+PYTHON := $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; else echo python; fi)
 
 # Default target
 .DEFAULT_GOAL := help
@@ -118,6 +119,12 @@ jupyter: ## Start Jupyter notebook server
 # ==============================================================================
 # TESTING
 # ==============================================================================
+
+test-local: ## Run local tests (editable install, no PYTHONPATH)
+	@echo "Running local architect-mode test flow..."
+	@$(PYTHON) -m pip install -e .
+	@$(PYTHON) scripts/ops/config_audit.py
+	@$(PYTHON) -m pytest -q
 
 cache-prepare: ## Prepare required cache artifacts before tests
 	@echo "Preparing cache for test suite..."
