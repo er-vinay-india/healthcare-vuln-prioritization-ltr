@@ -216,7 +216,8 @@ def train_simple_rgcn(
     learning_rate: float = 0.01,
     epochs: int = 100,
     early_stopping_patience: int = 10,
-    verbose: bool = True
+    verbose: bool = True,
+    device: Optional[str] = None
 ) -> Tuple[SimpleRGCN, SimpleRGCNTrainer, Dict]:
     """
     Train SimpleRGCN model (macOS-safe version).
@@ -241,7 +242,17 @@ def train_simple_rgcn(
     print("=" * 50)
     print("SIMPLE RGCN TRAINING (macOS-safe)")
     print("=" * 50)
-    
+
+    # Resolve device (prefer MPS on Apple Silicon, else CPU)
+    if device is None:
+        if torch.backends.mps.is_available():
+            device = 'mps'
+        else:
+            device = 'cpu'
+    _device = torch.device(device)
+    if verbose:
+        print(f"  Using device: {_device}")
+
     # Normalize features
     print("\n[1/4] Normalizing features...")
     scaler = StandardScaler()
@@ -263,19 +274,19 @@ def train_simple_rgcn(
     
     print(f"      Edges: {len(edge_src):,}")
     
-    # Create tensors
+    # Create tensors and move to device
     print("[3/4] Creating tensors...")
-    x = torch.tensor(features_normalized, dtype=torch.float32)
-    edge_index = torch.tensor([edge_src, edge_dst], dtype=torch.long)
-    edge_type = torch.tensor(edge_types, dtype=torch.long)
-    y = torch.tensor(cve_labels, dtype=torch.float32)
-    
-    train_mask = torch.zeros(len(cve_features), dtype=torch.bool)
+    x = torch.tensor(features_normalized, dtype=torch.float32).to(_device)
+    edge_index = torch.tensor([edge_src, edge_dst], dtype=torch.long).to(_device)
+    edge_type = torch.tensor(edge_types, dtype=torch.long).to(_device)
+    y = torch.tensor(cve_labels, dtype=torch.float32).to(_device)
+
+    train_mask = torch.zeros(len(cve_features), dtype=torch.bool, device=_device)
     train_mask[train_idx] = True
-    val_mask = torch.zeros(len(cve_features), dtype=torch.bool)
+    val_mask = torch.zeros(len(cve_features), dtype=torch.bool, device=_device)
     val_mask[val_idx] = True
-    
-    # Create model
+
+    # Create model and move to device
     print("[4/4] Training...")
     model = SimpleRGCN(
         num_features=x.shape[1],
@@ -283,8 +294,8 @@ def train_simple_rgcn(
         num_layers=num_layers,
         num_relations=2,
         dropout=dropout
-    )
-    
+    ).to(_device)
+
     trainer = SimpleRGCNTrainer(model, learning_rate=learning_rate)
     
     history = trainer.fit(

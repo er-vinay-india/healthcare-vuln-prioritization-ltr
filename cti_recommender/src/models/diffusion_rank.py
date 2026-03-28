@@ -71,20 +71,21 @@ def diffusion_rank(
         # No seeds provided, use uniform distribution
         seed_vector = np.ones(n) / n
     
-    # Build transition matrix
-    adj_matrix = nx.to_numpy_array(G, nodelist=nodes, weight='weight')
-    row_sums = adj_matrix.sum(axis=1, keepdims=True)
-    row_sums[row_sums == 0] = 1  # Handle nodes with no outgoing edges
-    transition_matrix = adj_matrix / row_sums
-    
+    # Build sparse transition matrix (avoids dense n×n allocation which OOMs at 210K nodes)
+    from scipy.sparse import diags as sp_diags
+    adj_sparse = nx.adjacency_matrix(G, nodelist=nodes, weight='weight').astype(float)
+    row_sums = np.asarray(adj_sparse.sum(axis=1)).flatten()
+    row_sums[row_sums == 0] = 1.0  # Handle nodes with no outgoing edges
+    transition_matrix = sp_diags(1.0 / row_sums) @ adj_sparse  # sparse row-normalised
+
     # Initialize rank vector
     rank_vector = seed_vector.copy()
-    
+
     # Iterative propagation (power iteration)
     for iteration in range(max_iter):
         # PageRank-style update:
         # r_new = (1 - alpha) * M^T * r + alpha * seed
-        rank_vector_new = (1 - alpha) * transition_matrix.T @ rank_vector + alpha * seed_vector
+        rank_vector_new = (1 - alpha) * (transition_matrix.T @ rank_vector) + alpha * seed_vector
         
         # Check convergence
         diff = np.abs(rank_vector_new - rank_vector).sum()

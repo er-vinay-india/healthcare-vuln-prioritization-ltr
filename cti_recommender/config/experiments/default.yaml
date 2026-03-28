@@ -121,7 +121,7 @@ similarity:
 # Evaluation Configuration
 # -------------------------------------------------------------
 evaluation:
-  k_values: [10, 20, 50, 100]
+  k_values: [10, 20, 100]
   precision_threshold: 3  # Label threshold for precision
 
 # -------------------------------------------------------------

@@ -33,3 +33,6 @@ tmp/
 
 # Personal/local research material
 vvvip/
+
+# Runtime run logs
+cti_recommender/logs/
