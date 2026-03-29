@@ -184,3 +184,17 @@ def print_subheader(title: str, width: int = None) -> None:
     print(sep)
     print(title)
     print(sep)
+
+
+def print_separator(width: int = 70, char: str = '=') -> None:
+    """Print a blank line followed by a separator line.
+
+    Use this for a closing rule after a block of output, e.g. at the end
+    of a section before the next one begins.
+
+    Args:
+        width: Length of the separator line (default 70).
+        char:  Character used (default '=').
+    """
+    print()
+    print(char * width)
