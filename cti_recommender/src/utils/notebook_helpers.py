@@ -150,3 +150,37 @@ def setup_notebook_output():
     warnings.filterwarnings('ignore', category=UserWarning)
     
     print("[OK] Notebook output configured")
+
+
+# ---------------------------------------------------------------------------
+# Console formatting helpers
+# ---------------------------------------------------------------------------
+
+def print_header(title: str, width: int = None) -> None:
+    """Print a section header surrounded by '=' separator lines.
+
+    Args:
+        title: Heading text.
+        width: Separator width. Defaults to the length of the title.
+    """
+    w = width if width is not None else len(title)
+    sep = '=' * w
+    print()
+    print(sep)
+    print(title)
+    print(sep)
+    print()
+
+
+def print_subheader(title: str, width: int = None) -> None:
+    """Print a sub-section header surrounded by '-' separator lines.
+
+    Args:
+        title: Heading text.
+        width: Separator width. Defaults to the length of the title.
+    """
+    w = width if width is not None else len(title)
+    sep = '-' * w
+    print(sep)
+    print(title)
+    print(sep)
