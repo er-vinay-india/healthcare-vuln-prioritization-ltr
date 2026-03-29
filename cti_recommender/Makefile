@@ -217,10 +217,10 @@ clean-all: clean clean-cache ## Clean everything including Docker images
 	@echo "✓ Complete cleanup done"
 
 # ==============================================================================
-# QUICK START (for examiners/reviewers)
+# QUICK START (for reviewers)
 # ==============================================================================
 
-demo: build ## Quick demo: build, start, test (for thesis examiners)
+demo: build ## Quick demo: build, start
 	@echo "=========================================="
 	@echo "CTI Recommender - Quick Demo"
 	@echo "=========================================="

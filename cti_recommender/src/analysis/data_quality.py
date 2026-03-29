@@ -62,7 +62,7 @@ class DataQualityReport:
         """Print human-readable summary"""
         print("\n" + "="*70)
         print("DATA QUALITY REPORT")
-        print("="*70)
+        print_separator()
         
         print("\n[STATS] STATISTICS:")
         for key, value in self.stats.items():
@@ -366,7 +366,7 @@ def generate_quality_report(
         
         print("\n" + "="*70)
         print("TOP RECOMMENDATIONS AUDIT")
-        print("="*70)
+        print_separator()
         print(f"\nTotal recommendations: {audit['total']}")
         print(f"KEV-flagged: {audit['kev_count']} ({audit.get('kev_precision', 0):.1%})")
         print(f"High CVSS (≥9.0): {audit['high_cvss_count']}")

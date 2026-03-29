@@ -15,9 +15,9 @@ def test_schema():
     test_db = Path('data/test_schema_validation.db')
     test_db.unlink(missing_ok=True)
     
-    print("="*70)
+    print_separator()
     print("DATABASE SCHEMA VALIDATION - Phase 2.1")
-    print("="*70)
+    print_separator()
     
     # Create database
     print("\n1. Creating fresh database...")
@@ -127,7 +127,7 @@ def test_schema():
     
     print("\n" + "="*70)
     print("[OK] ALL SCHEMA VALIDATION TESTS PASSED")
-    print("="*70)
+    print_separator()
     print("\nChanges:")
     print("  • Removed ALTER TABLE migration code")
     print("  • All columns now in initial CREATE TABLE")

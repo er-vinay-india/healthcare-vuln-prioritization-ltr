@@ -164,7 +164,7 @@ def print_header(title: str, width: int = None) -> None:
         width: Separator width. Defaults to the length of the title.
     """
     w = width if width is not None else len(title)
-    sep = '=' * w
+    sep = '=' * w + '=' * 2  # Add extra padding for visual separation
     print()
     print(sep)
     print(title)

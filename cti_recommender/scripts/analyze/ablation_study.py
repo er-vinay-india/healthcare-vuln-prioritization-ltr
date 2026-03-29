@@ -160,7 +160,7 @@ def ablation_study():
     """Run ablation study with different feature combinations."""
     print("\n" + "="*70)
     print("ABLATION STUDY: Feature Contribution Analysis")
-    print("="*70)
+    print_separator()
     
     # Load data
     df = load_data()
@@ -222,7 +222,7 @@ def ablation_study():
     
     print("\n" + "="*70)
     print("Training and evaluating variants...")
-    print("="*70)
+    print_separator()
     
     results = []
     for variant_name, feature_list in variants.items():
@@ -242,7 +242,7 @@ def ablation_study():
     
     print("\n" + "="*70)
     print("ABLATION STUDY RESULTS")
-    print("="*70)
+    print_separator()
     print("\n{:<25} {:>6} {:>10} {:>10} {:>10} {:>8} {:>8} {:>8}".format(
         "Variant", "#Feat", "NDCG@5", "NDCG@10", "NDCG@20", "P@10", "P@20", "P@50"
     ))
@@ -263,7 +263,7 @@ def ablation_study():
     # Incremental improvements
     print("\n" + "="*70)
     print("INCREMENTAL IMPROVEMENT (vs previous variant)")
-    print("="*70)
+    print_separator()
     
     for i in range(1, len(results_df)):
         curr = results_df.iloc[i]
@@ -283,14 +283,14 @@ def ablation_study():
     
     print("\n" + "="*70)
     print(f"OVERALL: Full model vs Baseline")
-    print("="*70)
+    print_separator()
     print(f"  NDCG@10: {baseline_ndcg:.4f} -> {full_ndcg:.4f} ({total_gain:+.4f}, {total_gain/baseline_ndcg*100:+.1f}%)")
     print(f"  P@20:    {results_df.iloc[0]['p_20']:.2%} -> {results_df.iloc[-1]['p_20']:.2%}")
     
     # Key findings
     print("\n" + "="*70)
     print("KEY FINDINGS")
-    print("="*70)
+    print_separator()
     
     # Find biggest gains
     gains = []
@@ -305,7 +305,7 @@ def ablation_study():
         print(f"  {i}. {variant}: +{gain:.4f}")
     
     print("\n[OK] Ablation study complete!")
-    print("="*70)
+    print_separator()
     
     # Save results
     output_dir = Path('outputs')

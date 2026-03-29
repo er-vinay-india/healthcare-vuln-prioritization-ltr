@@ -151,7 +151,7 @@ def main() -> int:
 
         print("\n" + "="*70)
         print("CHPL MAPPER TEST")
-        print("="*70)
+        print_separator()
 
         for desc in test_cases:
             result = mapper.check_chpl_match(desc)

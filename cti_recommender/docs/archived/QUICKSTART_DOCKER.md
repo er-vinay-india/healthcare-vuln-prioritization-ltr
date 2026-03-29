@@ -110,8 +110,6 @@ make down
 
 ---
 
-## For Thesis Examiners
-
 **Complete validation in one command:**
 
 ```bash

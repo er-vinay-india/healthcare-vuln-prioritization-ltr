@@ -17,7 +17,6 @@ These documents were moved from active `docs/` in March 2026 as part of consolid
 - ARCHITECTURE_REFACTOR_2026.md
 - ARCHITECTURE_SUMMARY.md
 - DEPLOYMENT.md
-- EXAMINER_BRIEF.md
 - GPU_SETUP.md
 - KT_GUIDE.md
 - PROJECT_REVIEW_2026.md
